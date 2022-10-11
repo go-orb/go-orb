@@ -1,0 +1,9 @@
+go 1.19
+
+use (
+	.
+	./plugins/cli/urfavecli
+	./plugins/log/zerolog
+	./plugins/util/marshaler/gobmarshaler
+	./plugins/util/marshaler/yamlmarshaler
+)
