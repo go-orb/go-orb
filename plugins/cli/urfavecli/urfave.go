@@ -20,19 +20,23 @@ type FlagCLI struct {
 	intFlags         map[string]*cli.IntFlag
 	stringSliceFlags map[string]*cli.StringSliceFlag
 	stringSliceDests map[string]*cli.StringSlice
-	options          *oCli.Options
+	config           oCli.Config
 	ctx              *cli.Context
 }
 
-func New(opts ...oCli.Option) oCli.Cli {
+func New() oCli.Cli {
 	return &FlagCLI{
 		flags:            make(map[string]*oCli.Flag),
 		stringFlags:      make(map[string]*cli.StringFlag),
 		intFlags:         make(map[string]*cli.IntFlag),
 		stringSliceFlags: make(map[string]*cli.StringSliceFlag),
 		stringSliceDests: make(map[string]*cli.StringSlice),
-		options:          oCli.NewCLIOptions(),
 	}
+}
+
+func (c *FlagCLI) Init(config oCli.Config) error {
+	c.config = config
+	return nil
 }
 
 func (c *FlagCLI) Add(opts ...oCli.FlagOption) error {
@@ -85,9 +89,9 @@ func (c *FlagCLI) Get(name string) (*oCli.Flag, bool) {
 	return flag, ok
 }
 
-func (c *FlagCLI) Parse(args []string, opts ...oCli.Option) error {
-	for _, o := range opts {
-		o(c.options)
+func (c *FlagCLI) Parse(args []string) error {
+	if c.config == nil {
+		return oCli.ErrConfigIsNil
 	}
 
 	i := 0
@@ -107,9 +111,9 @@ func (c *FlagCLI) Parse(args []string, opts ...oCli.Option) error {
 
 	var ctx *cli.Context
 	app := &cli.App{
-		Version:     c.options.Version,
-		Description: c.options.Description,
-		Usage:       c.options.Usage,
+		Version:     c.config.Version(),
+		Description: c.config.Description(),
+		Usage:       c.config.Usage(),
 		Flags:       flags,
 		Action: func(fCtx *cli.Context) error {
 			// Extract the ctx from the urfave app
@@ -118,7 +122,7 @@ func (c *FlagCLI) Parse(args []string, opts ...oCli.Option) error {
 			return nil
 		},
 	}
-	if len(c.options.Version) < 1 {
+	if len(c.config.Version()) < 1 {
 		app.HideVersion = true
 	}
 

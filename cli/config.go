@@ -18,18 +18,29 @@ const (
 type Config interface {
 	chelp.PluginConfig
 
+	// Required
 	Name() string
 	Version() string
 
+	// Optional
 	Description() string
 	Usage() string
-	NoFlags() bool
+	NoFlags() *bool
 	ArgPrefix() string
 	Config() string
+
+	// Setters for hardcoded settings
+	SetName(n string)
+	SetVersion(n string)
+	SetDescription(n string)
+	SetUsage(n string)
+	SetNoFlags(n *bool)
+	SetArgPrefix(n string)
+	SetConfig(n string)
 }
 
 type BaseConfig struct {
-	*chelp.BasicPlugin
+	*chelp.BasePluginConfig
 
 	// Required
 	name    string
@@ -41,14 +52,11 @@ type BaseConfig struct {
 	noFlags     *bool
 	argPrefix   string
 	config      string
-
-	// No config option but here as helper
-	Flags []Flag
 }
 
 func NewConfig() Config {
 	return &BaseConfig{
-		BasicPlugin: chelp.NewBasicPlugin(),
+		BasePluginConfig: chelp.NewBasePluginConfig(),
 	}
 }
 
@@ -56,7 +64,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 	var result error
 
 	// Required
-	if err := c.BasicPlugin.Load(m); err != nil {
+	if err := c.BasePluginConfig.Load(m); err != nil {
 		result = multierror.Append(err)
 	}
 	var err error
@@ -89,7 +97,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 func (c *BaseConfig) Store(m map[string]any) error {
 	var result error
 
-	if err := c.BasicPlugin.Store(m); err != nil {
+	if err := c.BasePluginConfig.Store(m); err != nil {
 		result = multierror.Append(err)
 	}
 
@@ -109,6 +117,14 @@ func (c *BaseConfig) Name() string        { return c.name }
 func (c *BaseConfig) Version() string     { return c.version }
 func (c *BaseConfig) Description() string { return c.description }
 func (c *BaseConfig) Usage() string       { return c.usage }
-func (c *BaseConfig) NoFlags() bool       { return *c.noFlags }
+func (c *BaseConfig) NoFlags() *bool      { return c.noFlags }
 func (c *BaseConfig) ArgPrefix() string   { return c.argPrefix }
 func (c *BaseConfig) Config() string      { return c.config }
+
+func (c *BaseConfig) SetName(n string)        { c.name = n }
+func (c *BaseConfig) SetVersion(n string)     { c.version = n }
+func (c *BaseConfig) SetDescription(n string) { c.description = n }
+func (c *BaseConfig) SetUsage(n string)       { c.usage = n }
+func (c *BaseConfig) SetNoFlags(n *bool)      { c.noFlags = n }
+func (c *BaseConfig) SetArgPrefix(n string)   { c.argPrefix = n }
+func (c *BaseConfig) SetConfig(n string)      { c.config = n }

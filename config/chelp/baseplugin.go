@@ -5,16 +5,16 @@ const (
 	CONFIG_ENABLED = "enabled"
 )
 
-type BasicPlugin struct {
+type BasePluginConfig struct {
 	plugin  string
 	enabled *bool
 }
 
-func NewBasicPlugin() *BasicPlugin {
-	return &BasicPlugin{}
+func NewBasePluginConfig() *BasePluginConfig {
+	return &BasePluginConfig{}
 }
 
-func (c *BasicPlugin) Load(m map[string]any) error {
+func (c *BasePluginConfig) Load(m map[string]any) error {
 	var err error
 	if c.plugin, err = Get(m, CONFIG_PLUGIN, ""); err != nil {
 		return err
@@ -26,12 +26,12 @@ func (c *BasicPlugin) Load(m map[string]any) error {
 	return nil
 }
 
-func (c *BasicPlugin) Store(m map[string]any) error {
+func (c *BasePluginConfig) Store(m map[string]any) error {
 	m[CONFIG_PLUGIN] = c.plugin
 	m[CONFIG_ENABLED] = c.enabled
 
 	return nil
 }
 
-func (c *BasicPlugin) Plugin() string { return c.plugin }
-func (c *BasicPlugin) Enabled() *bool { return c.enabled }
+func (c *BasePluginConfig) Plugin() string { return c.plugin }
+func (c *BasePluginConfig) Enabled() *bool { return c.enabled }

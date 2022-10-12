@@ -20,7 +20,7 @@ type Config interface {
 }
 
 type BaseConfig struct {
-	*chelp.BasicPlugin
+	*chelp.BasePluginConfig
 	fields          map[string]any
 	level           string
 	callerSkipFrame int
@@ -28,14 +28,14 @@ type BaseConfig struct {
 
 func NewConfig() Config {
 	return &BaseConfig{
-		BasicPlugin: chelp.NewBasicPlugin(),
+		BasePluginConfig: chelp.NewBasePluginConfig(),
 	}
 }
 
 func (c *BaseConfig) Load(m map[string]any) error {
 	var result error
 
-	if err := c.BasicPlugin.Load(m); err != nil {
+	if err := c.BasePluginConfig.Load(m); err != nil {
 		result = multierror.Append(err)
 	}
 
@@ -55,7 +55,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 }
 
 func (c *BaseConfig) Store(m map[string]any) error {
-	if err := c.BasicPlugin.Store(m); err != nil {
+	if err := c.BasePluginConfig.Store(m); err != nil {
 		return err
 	}
 

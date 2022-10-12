@@ -5,6 +5,6 @@ import (
 )
 
 var Plugins = container.NewPlugins(
-	func(opts ...Option) Cli { return nil }, // Plugin factory
-	func() Config { return nil },            // Config factory
+	func() Cli { return nil },    // Plugin factory
+	func() Config { return nil }, // Config factory
 )

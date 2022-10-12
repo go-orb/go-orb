@@ -1,10 +1,11 @@
 package urfave
 
 import (
-	"reflect"
 	"testing"
 
 	"jochum.dev/orb/orb/cli"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -12,36 +13,35 @@ const (
 	FlagInt    = "int"
 )
 
-func expect(t *testing.T, a interface{}, b interface{}) {
-	t.Helper()
-
-	if !reflect.DeepEqual(a, b) {
-		t.Fatalf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-	}
-}
-
 func TestParse(t *testing.T) {
-	myCli := New(
-		cli.CliName("test"),
-		cli.CliVersion("v0.0.1"),
-		cli.CliDescription("Test Description"),
-		cli.CliUsage("Test Usage"),
-	)
+	myCli := New()
 
-	err := myCli.Add(
+	myConfig := cli.NewConfig()
+	myConfig.SetName("test")
+	myConfig.SetVersion("v0.0.1")
+	myConfig.SetDescription("Test Description")
+	myConfig.SetUsage("Test Usage")
+
+	err := myCli.Parse([]string{})
+	assert.ErrorIs(t, cli.ErrConfigIsNil, err)
+
+	assert.Nil(t, myCli.Init(myConfig))
+
+	err = myCli.Add(
 		cli.Name(FlagString),
-		cli.Default("micro!1!1"),
+		cli.Default("orb!1!1"),
 		cli.EnvVars("STRINGFLAG"),
 		cli.Usage("string flag usage"),
 	)
-	expect(t, err, nil)
+	assert.Nil(t, err)
 
 	err = myCli.Add(
 		cli.Name(FlagInt),
+		cli.Default(0),
 		cli.EnvVars("INTFLAG"),
 		cli.Usage("int flag usage"),
 	)
-	expect(t, err, nil)
+	assert.Nil(t, err)
 
 	err = myCli.Parse(
 		[]string{
@@ -52,10 +52,10 @@ func TestParse(t *testing.T) {
 			"42",
 		},
 	)
-	expect(t, err, nil)
+	assert.Nil(t, err)
 
 	flagString, _ := myCli.Get(FlagString)
-	expect(t, cli.FlagValue(flagString, ""), "demo")
+	assert.Equal(t, "demo", cli.FlagValue(flagString, ""))
 	flagInt, _ := myCli.Get(FlagInt)
-	expect(t, cli.FlagValue(flagInt, 0), 42)
+	assert.Equal(t, 42, cli.FlagValue(flagInt, 0))
 }
