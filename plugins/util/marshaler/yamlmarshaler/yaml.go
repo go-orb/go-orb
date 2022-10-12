@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"gopkg.in/yaml.v3"
-	"jochum.dev/jochumdev/orb/util/marshaler"
+	"jochum.dev/orb/orb/util/marshaler"
 )
 
 type Marshaler struct {

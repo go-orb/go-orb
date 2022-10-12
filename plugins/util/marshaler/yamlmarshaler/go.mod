@@ -1,4 +1,4 @@
-module jochum.dev/jochumdev/orb/plugins/util/marshaler/yamlmarshaler
+module jochum.dev/orb/orb/plugins/util/marshaler/yamlmarshaler
 
 go 1.19
 

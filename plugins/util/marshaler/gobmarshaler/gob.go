@@ -4,7 +4,7 @@ import (
 	"encoding/gob"
 	"io"
 
-	"jochum.dev/jochumdev/orb/util/marshaler"
+	"jochum.dev/orb/orb/util/marshaler"
 )
 
 type Marshaler struct {

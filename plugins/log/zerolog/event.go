@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog"
-	"jochum.dev/jochumdev/orb/log"
+	"jochum.dev/orb/orb/log"
 )
 
 func newEvent(l zerolog.Logger, level zerolog.Level) log.Event {

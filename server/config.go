@@ -2,8 +2,8 @@ package component
 
 import (
 	"github.com/hashicorp/go-multierror"
-	"jochum.dev/jochumdev/orb/config/chelp"
-	"jochum.dev/jochumdev/orb/log"
+	"jochum.dev/orb/orb/config/chelp"
+	"jochum.dev/orb/orb/log"
 )
 
 const (
@@ -41,17 +41,17 @@ type BaseConfig struct {
 func NewBaseConfig() Config {
 	return &BaseConfig{
 		BasicPlugin: chelp.NewBasicPlugin(),
-		logger:      log.NewBaseConfig(),
+		logger:      log.NewConfig(),
 	}
 }
 
 func (c *BaseConfig) Load(m map[string]any) error {
 	var result error
 
+	// Required
 	if err := c.BasicPlugin.Load(m); err != nil {
 		result = multierror.Append(err)
 	}
-
 	var err error
 	if c.name, err = chelp.Get(m, CONFIG_KEY_NAME, ""); err != nil {
 		result = multierror.Append(err)
@@ -60,6 +60,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 		result = multierror.Append(err)
 	}
 
+	// Optional
 	if err := c.logger.Load(m); err != nil && err != chelp.ErrNotExistant {
 		result = multierror.Append(err)
 	}
@@ -75,8 +76,10 @@ func (c *BaseConfig) Load(m map[string]any) error {
 }
 
 func (c *BaseConfig) Store(m map[string]any) error {
+	var result error
+
 	if err := c.BasicPlugin.Store(m); err != nil {
-		return err
+		result = multierror.Append(err)
 	}
 
 	m[CONFIG_KEY_NAME] = c.name
@@ -84,14 +87,14 @@ func (c *BaseConfig) Store(m map[string]any) error {
 
 	logger := make(map[string]any)
 	if err := c.logger.Store(logger); err != nil {
-		return err
+		result = multierror.Append(err)
 	}
 	m[CONFIG_KEY_LOGGER] = logger
 
 	m[CONFIG_KEY_ID] = c.id
 	m[CONFIG_KEY_METADATA] = c.metadata
 
-	return nil
+	return result
 }
 
 func (c *BaseConfig) Name() string                { return c.name }

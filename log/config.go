@@ -2,7 +2,7 @@ package log
 
 import (
 	"github.com/hashicorp/go-multierror"
-	"jochum.dev/jochumdev/orb/config/chelp"
+	"jochum.dev/orb/orb/config/chelp"
 )
 
 const (
@@ -26,7 +26,7 @@ type BaseConfig struct {
 	callerSkipFrame int
 }
 
-func NewBaseConfig() Config {
+func NewConfig() Config {
 	return &BaseConfig{
 		BasicPlugin: chelp.NewBasicPlugin(),
 	}
@@ -39,12 +39,12 @@ func (c *BaseConfig) Load(m map[string]any) error {
 		result = multierror.Append(err)
 	}
 
-	// Optionals
+	// Optional
 	var err error
 	if c.fields, err = chelp.Get(m, CONFIG_KEY_FIELDS, map[string]any{}); err != nil && err != chelp.ErrNotExistant {
 		result = multierror.Append(err)
 	}
-	if c.level, err = chelp.Get(m, CONFIG_KEY_LEVEL, ""); err != nil && err != chelp.ErrNotExistant {
+	if c.level, err = chelp.Get(m, CONFIG_KEY_LEVEL, "info"); err != nil && err != chelp.ErrNotExistant {
 		result = multierror.Append(err)
 	}
 	if c.callerSkipFrame, err = chelp.Get(m, CONFIG_KEY_CALLERSKIPFRAME, 0); err != nil && err != chelp.ErrNotExistant {

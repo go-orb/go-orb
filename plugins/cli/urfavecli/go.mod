@@ -1,4 +1,4 @@
-module jochum.dev/jochumdev/orb/plugins/cli/urfavecli
+module jochum.dev/orb/orb/plugins/cli/urfavecli
 
 go 1.18
 

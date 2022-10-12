@@ -1,7 +1,10 @@
 package cli
 
 import (
-	"jochum.dev/jochumdev/orb/util/container"
+	"jochum.dev/orb/orb/util/container"
 )
 
-var Plugins = container.New(func(opts ...Option) Cli { return nil })
+var Plugins = container.NewPlugins(
+	func(opts ...Option) Cli { return nil }, // Plugin factory
+	func() Config { return nil },            // Config factory
+)

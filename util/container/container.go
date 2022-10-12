@@ -1,8 +1,11 @@
 package container
 
 import (
-	"fmt"
+	"errors"
 )
+
+var ErrExists = errors.New("element exists already")
+var ErrUnknown = errors.New("unknown element given")
 
 func New[T any](cType T) *Container[T] {
 	return &Container[T]{
@@ -16,7 +19,7 @@ type Container[T any] struct {
 
 func (c *Container[T]) Add(name string, element T) error {
 	if _, nok := c.elements[name]; nok {
-		return fmt.Errorf("element '%s' does already exists", name)
+		return ErrExists
 	}
 
 	c.elements[name] = element
@@ -27,7 +30,7 @@ func (c *Container[T]) Get(name string) (T, error) {
 	p, ok := c.elements[name]
 	if !ok {
 		var result T
-		return result, fmt.Errorf("unknown element '%s' given", name)
+		return result, ErrUnknown
 	}
 
 	return p, nil

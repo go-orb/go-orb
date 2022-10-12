@@ -1,0 +1,26 @@
+version: "3"
+
+tasks:
+  check:
+    cmds:
+      - trunk check -a
+  pre-commit:
+    cmds:
+      - trunk check --ci
+  tidy:
+    desc: Run "go mod tidy -go=1.8" in all packages
+    cmds:
+      - find . -name 'go.mod' -exec /bin/bash -c 'pushd `dirname $1`; go mod tidy -go=1.18; popd' '_' {} \;
+  update:
+    desc: Run "go get -u ./..." in all packages
+    cmds:
+      - find . -name 'go.mod' -exec /bin/bash -c 'pushd `dirname $1`; go get -u ./...; popd' '_' {} \;
+  test:
+    desc: Run "go test ./..." in all packages
+    cmds:
+      - find . -name 'go.mod' -exec /bin/bash -c 'pushd `dirname $1`; go test ./...; popd' '_' {} \;
+  workuse:
+    desc: Add all plugins to go.work
+    cmds:
+      - go work init . || exit 0
+      - go work use $(find . -name 'go.mod' -printf "%h\n")

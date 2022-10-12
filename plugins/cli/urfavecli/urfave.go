@@ -5,11 +5,13 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v2"
-	oCli "jochum.dev/jochumdev/orb/cli"
+	oCli "jochum.dev/orb/orb/cli"
 )
 
 func init() {
-	_ = oCli.Plugins.Add("urfave", NewCLI)
+	if err := oCli.Plugins.Add("urfave", New, oCli.NewConfig); err != nil {
+		panic(err)
+	}
 }
 
 type FlagCLI struct {
@@ -22,7 +24,7 @@ type FlagCLI struct {
 	ctx              *cli.Context
 }
 
-func NewCLI(opts ...oCli.Option) oCli.Cli {
+func New(opts ...oCli.Option) oCli.Cli {
 	return &FlagCLI{
 		flags:            make(map[string]*oCli.Flag),
 		stringFlags:      make(map[string]*cli.StringFlag),

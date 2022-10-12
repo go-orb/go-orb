@@ -4,8 +4,14 @@ import (
 	"os"
 
 	"github.com/rs/zerolog"
-	"jochum.dev/jochumdev/orb/log"
+	"jochum.dev/orb/orb/log"
 )
+
+func init() {
+	if err := log.Plugins.Add("zerolog", New, log.NewConfig); err != nil {
+		panic(err)
+	}
+}
 
 type Logger struct {
 	L zerolog.Logger
@@ -13,7 +19,7 @@ type Logger struct {
 	config log.Config
 }
 
-func NewLogger() *Logger { return &Logger{} }
+func New() log.Logger { return &Logger{} }
 
 func (l *Logger) Init(config log.Config, parent log.Logger) error {
 	level, err := zerolog.ParseLevel(config.Level())

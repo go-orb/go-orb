@@ -1,4 +1,4 @@
-module jochum.dev/jochumdev/orb/plugins/log/zerolog
+module jochum.dev/orb/orb/plugins/log/zerolog
 
 go 1.19
 

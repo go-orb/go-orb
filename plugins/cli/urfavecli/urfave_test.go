@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"jochum.dev/jochumdev/orb/cli"
+	"jochum.dev/orb/orb/cli"
 )
 
 const (
@@ -21,7 +21,7 @@ func expect(t *testing.T, a interface{}, b interface{}) {
 }
 
 func TestParse(t *testing.T) {
-	myCli := NewCLI(
+	myCli := New(
 		cli.CliName("test"),
 		cli.CliVersion("v0.0.1"),
 		cli.CliDescription("Test Description"),
