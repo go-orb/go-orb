@@ -10,7 +10,7 @@ type BasePluginConfig struct {
 	enabled *bool
 }
 
-func NewBasePluginConfig() *BasePluginConfig {
+func NewPluginConfig() *BasePluginConfig {
 	return &BasePluginConfig{}
 }
 

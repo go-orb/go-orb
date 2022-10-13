@@ -12,14 +12,14 @@ type Config interface {
 }
 
 type ConfigImpl struct {
-	registry.Config
+	*registry.BaseConfig
 
 	domain string
 }
 
 func NewConfig() Config {
 	return &ConfigImpl{
-		Config: registry.NewConfig(),
+		BaseConfig: registry.NewConfig(),
 	}
 }
 

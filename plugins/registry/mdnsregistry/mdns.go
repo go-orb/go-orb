@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"jochum.dev/orb/orb/config/chelp"
 	"jochum.dev/orb/orb/log"
 	"jochum.dev/orb/orb/plugins/registry/mdnsregistry/mdnsutil"
 	"jochum.dev/orb/orb/registry"
@@ -39,10 +40,8 @@ type mdnsEntry struct {
 }
 
 type mdnsRegistry struct {
-	config registry.Config
-
-	// the mdns domain
-	domain string
+	config *ConfigImpl
+	log    log.Logger
 
 	sync.Mutex
 	services map[string][]*mdnsEntry
@@ -129,50 +128,49 @@ func decode(record []string) (*mdnsTxt, error) {
 
 	return txt, nil
 }
-func newRegistry(opts ...Option) Registry {
-	mergedOpts := append([]Option{Timeout(time.Millisecond * 100)}, opts...)
-	options := NewOptions(mergedOpts...)
-
-	// set the domain
-	domain := mdnsDomain
-
-	d, ok := options.Context.Value("mdns.domain").(string)
-	if ok {
-		domain = d
-	}
-
+func New() registry.Registry {
 	return &mdnsRegistry{
-		domain:   domain,
 		services: make(map[string][]*mdnsEntry),
 		watchers: make(map[string]*mdnsWatcher),
 	}
 }
 
-func (m *mdnsRegistry) Init(config registry.Config) error {
-	if config.Timeout() == 0 {
-		config.SetTimeout(100)
+func (m *mdnsRegistry) Init(aConfig any, opts ...registry.Option) error {
+	switch tConfig := aConfig.(type) {
+	case *ConfigImpl:
+		m.config = tConfig
+	default:
+		return chelp.ErrUnknownConfig
 	}
-	m.config = config
+
+	if m.config.Timeout() == 0 {
+		m.config.SetTimeout(100)
+	}
+	if m.config.Domain() == "" {
+		m.config.SetDomain(mdnsDomain)
+	}
+
+	options := registry.NewOptions(opts...)
+	m.log = options.Logger
 
 	return nil
 }
 
-func (m *mdnsRegistry) Options() Options {
-	return *m.opts
+func (m *mdnsRegistry) Config() any {
+	return m.Config
 }
 
 func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.RegisterOption) error {
 	m.Lock()
 	defer m.Unlock()
 
-	logger := m.opts.Logger
 	entries, ok := m.services[service.Name]
 	// first entry, create wildcard used for list queries
 	if !ok {
 		s, err := mdnsutil.NewMDNSService(
 			service.Name,
 			"_services",
-			m.domain+".",
+			m.config.Domain()+".",
 			"",
 			9999,
 			[]net.IP{net.ParseIP("0.0.0.0")},
@@ -200,7 +198,6 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 		for _, entry := range entries {
 			if node.Id == entry.id {
 				seen = true
-				e = entry
 				break
 			}
 		}
@@ -232,13 +229,13 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 		}
 		port, _ := strconv.Atoi(pt)
 
-		logger.Logf(log.DebugLevel, "[mdns] registry create new service with ip: %s for: %s", net.ParseIP(host).String(), host)
+		m.log.Debug().Msgf("[mdns] registry create new service with ip: %s for: %s", net.ParseIP(host).String(), host)
 
 		// we got here, new node
 		s, err := mdnsutil.NewMDNSService(
 			node.Id,
 			service.Name,
-			m.domain+".",
+			m.config.Domain()+".",
 			"",
 			port,
 			[]net.IP{net.ParseIP(host)},
@@ -278,7 +275,9 @@ func (m *mdnsRegistry) Deregister(service *registry.Service, opts ...registry.De
 
 		for _, node := range service.Nodes {
 			if node.Id == entry.id {
-				entry.node.Shutdown()
+				if err := entry.node.Shutdown(); err != nil {
+					m.log.Err().Err(err).Send()
+				}
 				remove = true
 				break
 			}
@@ -292,7 +291,9 @@ func (m *mdnsRegistry) Deregister(service *registry.Service, opts ...registry.De
 
 	// last entry is the wildcard for list queries. Remove it.
 	if len(newEntries) == 1 && newEntries[0].id == "*" {
-		newEntries[0].node.Shutdown()
+		if err := newEntries[0].node.Shutdown(); err != nil {
+			m.log.Err().Err(err).Send()
+		}
 		delete(m.services, service.Name)
 	} else {
 		m.services[service.Name] = newEntries
@@ -302,7 +303,6 @@ func (m *mdnsRegistry) Deregister(service *registry.Service, opts ...registry.De
 }
 
 func (m *mdnsRegistry) GetService(service string, opts ...registry.GetOption) ([]*registry.Service, error) {
-	logger := m.opts.Logger
 	serviceMap := make(map[string]*registry.Service)
 	entries := make(chan *mdnsutil.ServiceEntry, 10)
 	done := make(chan bool)
@@ -310,12 +310,12 @@ func (m *mdnsRegistry) GetService(service string, opts ...registry.GetOption) ([
 	p := mdnsutil.DefaultParams(service)
 	// set context with timeout
 	var cancel context.CancelFunc
-	p.Context, cancel = context.WithTimeout(context.Background(), m.opts.Timeout)
+	p.Context, cancel = context.WithTimeout(context.Background(), time.Duration(m.config.Timeout())*time.Millisecond)
 	defer cancel()
 	// set entries channel
 	p.Entries = entries
 	// set the domain
-	p.Domain = m.domain
+	p.Domain = m.config.Domain()
 
 	go func() {
 		for {
@@ -325,7 +325,7 @@ func (m *mdnsRegistry) GetService(service string, opts ...registry.GetOption) ([
 				if p.Service == "_services" {
 					continue
 				}
-				if p.Domain != m.domain {
+				if p.Domain != m.config.Domain() {
 					continue
 				}
 				if e.TTL == 0 {
@@ -357,7 +357,7 @@ func (m *mdnsRegistry) GetService(service string, opts ...registry.GetOption) ([
 				} else if len(e.AddrV6) > 0 {
 					addr = net.JoinHostPort(e.AddrV6.String(), fmt.Sprint(e.Port))
 				} else {
-					logger.Logf(log.InfoLevel, "[mdns]: invalid endpoint received: %v", e)
+					m.log.Info().Msgf("[mdns]: invalid endpoint received: %v", e)
 					continue
 				}
 				s.Nodes = append(s.Nodes, &registry.Node{
@@ -400,12 +400,12 @@ func (m *mdnsRegistry) ListServices(opts ...registry.ListOption) ([]*registry.Se
 	p := mdnsutil.DefaultParams("_services")
 	// set context with timeout
 	var cancel context.CancelFunc
-	p.Context, cancel = context.WithTimeout(context.Background(), m.opts.Timeout)
+	p.Context, cancel = context.WithTimeout(context.Background(), time.Duration(m.config.Timeout())*time.Millisecond)
 	defer cancel()
 	// set entries channel
 	p.Entries = entries
 	// set domain
-	p.Domain = m.domain
+	p.Domain = m.config.Domain()
 
 	var services []*registry.Service
 
@@ -453,7 +453,7 @@ func (m *mdnsRegistry) Watch(opts ...registry.WatchOption) (registry.Watcher, er
 		wo:       wo,
 		ch:       make(chan *mdnsutil.ServiceEntry, 32),
 		exit:     make(chan struct{}),
-		domain:   m.domain,
+		domain:   m.config.Domain(),
 		registry: m,
 	}
 
@@ -522,7 +522,11 @@ func (m *mdnsRegistry) Watch(opts ...registry.WatchOption) (registry.Watcher, er
 			}()
 
 			// start listening, blocking call
-			mdnsutil.Listen(ch, exit)
+			if err := mdnsutil.Listen(ch, exit); err != nil {
+				m.log.Err().Err(err).Send()
+			} else {
+				m.log.Info().Msg("Listening")
+			}
 
 			// mdns.Listen has unblocked
 			// kill the saved listener
@@ -592,7 +596,7 @@ func (m *mdnsWatcher) Next() (*registry.Result, error) {
 				Metadata: txt.Metadata,
 			})
 
-			return &Result{
+			return &registry.Result{
 				Action:  action,
 				Service: service,
 			}, nil
@@ -613,9 +617,4 @@ func (m *mdnsWatcher) Stop() {
 		delete(m.registry.watchers, m.id)
 		m.registry.mtx.Unlock()
 	}
-}
-
-// NewRegistry returns a new default registry which is mdns.
-func NewRegistry(opts ...Option) Registry {
-	return newRegistry(opts...)
 }

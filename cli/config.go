@@ -40,7 +40,7 @@ type Config interface {
 }
 
 type BaseConfig struct {
-	*chelp.BasePluginConfig
+	chelp.PluginConfig
 
 	// Required
 	name    string
@@ -56,7 +56,7 @@ type BaseConfig struct {
 
 func NewConfig() Config {
 	return &BaseConfig{
-		BasePluginConfig: chelp.NewBasePluginConfig(),
+		PluginConfig: chelp.NewPluginConfig(),
 	}
 }
 
@@ -64,7 +64,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 	var result error
 
 	// Required
-	if err := c.BasePluginConfig.Load(m); err != nil {
+	if err := c.PluginConfig.Load(m); err != nil {
 		result = multierror.Append(err)
 	}
 	var err error
@@ -97,7 +97,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 func (c *BaseConfig) Store(m map[string]any) error {
 	var result error
 
-	if err := c.BasePluginConfig.Store(m); err != nil {
+	if err := c.PluginConfig.Store(m); err != nil {
 		result = multierror.Append(err)
 	}
 

@@ -109,7 +109,7 @@ func Listen(entries chan<- *ServiceEntry, exit chan struct{}) error {
 	}
 	defer client.Close()
 
-	client.setInterface(nil, true)
+	// client.setInterface(nil, true)
 
 	// Start listening for response packets
 	msgCh := make(chan *dns.Msg, 32)
@@ -218,8 +218,12 @@ func newClient() (*client, error) {
 
 	p1 := ipv4.NewPacketConn(mconn4)
 	p2 := ipv6.NewPacketConn(mconn6)
-	p1.SetMulticastLoopback(true)
-	p2.SetMulticastLoopback(true)
+	if err := p1.SetMulticastLoopback(true); err != nil {
+		return nil, err
+	}
+	if err := p2.SetMulticastLoopback(true); err != nil {
+		return nil, err
+	}
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -300,8 +304,12 @@ func (c *client) setInterface(iface *net.Interface, loopback bool) error {
 	}
 
 	if loopback {
-		p.SetMulticastLoopback(true)
-		p2.SetMulticastLoopback(true)
+		if err := p.SetMulticastLoopback(true); err != nil {
+			return err
+		}
+		if err := p2.SetMulticastLoopback(true); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -390,10 +398,14 @@ func (c *client) sendQuery(q *dns.Msg) error {
 		return err
 	}
 	if c.ipv4UnicastConn != nil {
-		c.ipv4UnicastConn.WriteToUDP(buf, ipv4Addr)
+		if _, err := c.ipv4UnicastConn.WriteToUDP(buf, ipv4Addr); err != nil {
+			return err
+		}
 	}
 	if c.ipv6UnicastConn != nil {
-		c.ipv6UnicastConn.WriteToUDP(buf, ipv6Addr)
+		if _, err := c.ipv6UnicastConn.WriteToUDP(buf, ipv6Addr); err != nil {
+			return err
+		}
 	}
 	return nil
 }

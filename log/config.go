@@ -17,10 +17,14 @@ type Config interface {
 	Fields() map[string]any
 	Level() string
 	CallerSkipFrame() int
+
+	SetFields(map[string]any)
+	SetLevel(string)
+	SetCallerSkipFrame(int)
 }
 
 type BaseConfig struct {
-	*chelp.BasePluginConfig
+	chelp.PluginConfig
 	fields          map[string]any
 	level           string
 	callerSkipFrame int
@@ -28,14 +32,14 @@ type BaseConfig struct {
 
 func NewConfig() Config {
 	return &BaseConfig{
-		BasePluginConfig: chelp.NewBasePluginConfig(),
+		PluginConfig: chelp.NewPluginConfig(),
 	}
 }
 
 func (c *BaseConfig) Load(m map[string]any) error {
 	var result error
 
-	if err := c.BasePluginConfig.Load(m); err != nil {
+	if err := c.PluginConfig.Load(m); err != nil {
 		result = multierror.Append(err)
 	}
 
@@ -55,7 +59,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 }
 
 func (c *BaseConfig) Store(m map[string]any) error {
-	if err := c.BasePluginConfig.Store(m); err != nil {
+	if err := c.PluginConfig.Store(m); err != nil {
 		return err
 	}
 
@@ -69,3 +73,7 @@ func (c *BaseConfig) Store(m map[string]any) error {
 func (c *BaseConfig) Fields() map[string]any { return c.fields }
 func (c *BaseConfig) Level() string          { return c.level }
 func (c *BaseConfig) CallerSkipFrame() int   { return c.callerSkipFrame }
+
+func (c *BaseConfig) SetFields(n map[string]any) { c.fields = n }
+func (c *BaseConfig) SetLevel(n string)          { c.level = n }
+func (c *BaseConfig) SetCallerSkipFrame(n int)   { c.callerSkipFrame = n }

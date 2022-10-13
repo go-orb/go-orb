@@ -1,10 +1,15 @@
 package cli
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var ErrConfigIsNil = errors.New("config is nil")
 
 type Cli interface {
+	fmt.Stringer
+
 	Init(config Config) error
 
 	// Add adds a Flag to CLI
@@ -15,7 +20,4 @@ type Cli interface {
 
 	// Parse parses flags from args you MUST Add Flags first
 	Parse(args []string) error
-
-	// String returns the name of the current implementation
-	String() string
 }

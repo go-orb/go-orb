@@ -16,13 +16,15 @@ type Event interface {
 	Fields(fields interface{}) Event
 	Strs(key string, vals []string) Event
 	Stringer(key string, val fmt.Stringer) Event
+	AnErr(key string, err error) Event
+	Err(err error) Event
 }
 
 type Logger interface {
 	fmt.Stringer
 
-	Init(config Config, parent Logger) error
-	Config() Config
+	Init(config any, parent Logger) error
+	Config() any
 
 	Level() string
 

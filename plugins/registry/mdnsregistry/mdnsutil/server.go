@@ -101,8 +101,12 @@ func NewServer(config *Config) (*Server, error) {
 	// Join multicast groups to receive announcements
 	p1 := ipv4.NewPacketConn(ipv4List)
 	p2 := ipv6.NewPacketConn(ipv6List)
-	p1.SetMulticastLoopback(true)
-	p2.SetMulticastLoopback(true)
+	if err := p1.SetMulticastLoopback(true); err != nil {
+		return nil, err
+	}
+	if err := p2.SetMulticastLoopback(true); err != nil {
+		return nil, err
+	}
 
 	if config.Iface != nil {
 		if err := p1.JoinGroup(config.Iface, &net.UDPAddr{IP: mdnsGroupIPv4}); err != nil {
@@ -163,7 +167,9 @@ func (s *Server) Shutdown() error {
 
 	s.shutdown = true
 	close(s.shutdownCh)
-	s.unregister()
+	if err := s.unregister(); err != nil {
+		return err
+	}
 
 	if s.ipv4List != nil {
 		s.ipv4List.Close()
@@ -428,10 +434,14 @@ func (s *Server) SendMulticast(msg *dns.Msg) error {
 		return err
 	}
 	if s.ipv4List != nil {
-		s.ipv4List.WriteToUDP(buf, ipv4Addr)
+		if _, err := s.ipv4List.WriteToUDP(buf, ipv4Addr); err != nil {
+			return err
+		}
 	}
 	if s.ipv6List != nil {
-		s.ipv6List.WriteToUDP(buf, ipv6Addr)
+		if _, err := s.ipv6List.WriteToUDP(buf, ipv6Addr); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -460,7 +470,9 @@ func (s *Server) sendResponse(resp *dns.Msg, from net.Addr) error {
 	// Sending two responses is OK
 	if s.config.LocalhostChecking && addr.IP.Equal(s.outboundIP) {
 		// ignore any errors, this is best efforts
-		conn.WriteToUDP(buf, &net.UDPAddr{IP: backupTarget, Port: addr.Port})
+		if _, err := conn.WriteToUDP(buf, &net.UDPAddr{IP: backupTarget, Port: addr.Port}); err != nil {
+			return err
+		}
 	}
 	return err
 }

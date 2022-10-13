@@ -3,7 +3,6 @@ go 1.19
 use (
 	.
 	./plugins/cli/urfavecli
-	./plugins/log/zerolog
 	./plugins/registry/mdnsregistry
 	./plugins/util/marshaler/gobmarshaler
 	./plugins/util/marshaler/yamlmarshaler

@@ -27,17 +27,17 @@ type Config interface {
 }
 
 type BaseConfig struct {
-	*chelp.BasePluginConfig
+	chelp.PluginConfig
 
 	logger    log.Config
 	addresses []string
 	timeout   int
 }
 
-func NewConfig() Config {
+func NewConfig() *BaseConfig {
 	return &BaseConfig{
-		BasePluginConfig: chelp.NewBasePluginConfig(),
-		logger:           log.NewConfig(),
+		PluginConfig: chelp.NewPluginConfig(),
+		logger:       log.NewConfig(),
 	}
 }
 
@@ -45,7 +45,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 	var result error
 
 	// Required
-	if err := c.BasePluginConfig.Load(m); err != nil {
+	if err := c.PluginConfig.Load(m); err != nil {
 		result = multierror.Append(err)
 	}
 	var err error
@@ -66,7 +66,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 func (c *BaseConfig) Store(m map[string]any) error {
 	var result error
 
-	if err := c.BasePluginConfig.Store(m); err != nil {
+	if err := c.PluginConfig.Store(m); err != nil {
 		result = multierror.Append(err)
 	}
 

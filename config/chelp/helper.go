@@ -6,6 +6,8 @@ import (
 )
 
 var (
+	ErrUnknownConfig = errors.New("unknown config given")
+
 	ErrNotExistant    = errors.New("no such config key")
 	ErrTypesDontMatch = errors.New("config key requested type and actual type don't match")
 )

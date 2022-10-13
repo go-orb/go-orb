@@ -69,16 +69,11 @@ func TestMDNS(t *testing.T) {
 		},
 	}
 
-	travis := os.Getenv("TRAVIS")
-
-	var opts []Option
-
-	if travis == "true" {
-		opts = append(opts, Timeout(time.Millisecond*100))
-	}
-
 	// new registry
-	r := NewRegistry(opts...)
+	r := New()
+	if err := r.Init(NewConfig()); err != nil {
+		t.Fatal(err)
+	}
 
 	for _, service := range testData {
 		// register service
@@ -211,10 +206,6 @@ func TestEncoding(t *testing.T) {
 }
 
 func TestWatcher(t *testing.T) {
-	if travis := os.Getenv("TRAVIS"); travis == "true" {
-		t.Skip()
-	}
-
 	testData := []*registry.Service{
 		{
 			Name:    "test1",
@@ -298,16 +289,11 @@ func TestWatcher(t *testing.T) {
 		}
 	}
 
-	travis := os.Getenv("TRAVIS")
-
-	var opts []Option
-
-	if travis == "true" {
-		opts = append(opts, Timeout(time.Millisecond*100))
-	}
-
 	// new registry
-	r := NewRegistry(opts...)
+	r := New()
+	if err := r.Init(NewConfig()); err != nil {
+		t.Fatal(err)
+	}
 
 	w, err := r.Watch()
 	if err != nil {

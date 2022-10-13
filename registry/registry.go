@@ -16,13 +16,13 @@ var (
 // and an abstraction over varying implementations
 // {consul, etcd, zookeeper, ...}.
 type Registry interface {
-	Init(Config) error
-	Config() Config
+	Init(aConfig any, opts ...Option) error
+	Config() any
 	Register(*Service, ...RegisterOption) error
 	Deregister(*Service, ...DeregisterOption) error
 	GetService(string, ...GetOption) ([]*Service, error)
 	ListServices(...ListOption) ([]*Service, error)
-	// Watch(...WatchOption) (Watcher, error)
+	Watch(...WatchOption) (Watcher, error)
 	String() string
 }
 
