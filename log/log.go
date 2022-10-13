@@ -1,3 +1,4 @@
+// Package log is the log component of Orb.
 package log
 
 import (
@@ -5,7 +6,8 @@ import (
 	"fmt"
 )
 
-var ErrSubLoggerNotPossible = errors.New("making a sublogger of a different parent logger is not possible")
+// ErrSubLogger is returned on Init() when it's not possible to make a sublogger of the parent/internalParent.
+var ErrSubLogger = errors.New("making a sublogger of a different parent logger is not possible")
 
 type Event interface {
 	Enabled() bool
@@ -23,7 +25,7 @@ type Event interface {
 type Logger interface {
 	fmt.Stringer
 
-	Init(config any, parent Logger) error
+	Init(config any, opts ...Option) error
 	Config() any
 
 	Level() string

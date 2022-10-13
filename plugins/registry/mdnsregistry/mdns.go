@@ -1,4 +1,4 @@
-// Package mdns is a multicast dns registry
+// Package mdnsregistry is a multicast dns registry
 package mdnsregistry
 
 import (
@@ -21,6 +21,16 @@ import (
 	"jochum.dev/orb/orb/plugins/registry/mdnsregistry/mdnsutil"
 	"jochum.dev/orb/orb/registry"
 )
+
+func init() {
+	if err := registry.Plugins.Add(
+		"mdns",
+		func() registry.Registry { return &mdnsRegistry{} },
+		func() any { return NewConfig() },
+	); err != nil {
+		panic(err)
+	}
+}
 
 var (
 	// use a .micro domain rather than .local.
@@ -79,7 +89,10 @@ func encode(txt *mdnsTxt) ([]string, error) {
 	if _, err := w.Write(b); err != nil {
 		return nil, err
 	}
-	w.Close()
+
+	if err := w.Close(); err != nil {
+		return nil, err
+	}
 
 	encoded := hex.EncodeToString(buf.Bytes())
 
@@ -110,6 +123,7 @@ func decode(record []string) (*mdnsTxt, error) {
 	}
 
 	br := bytes.NewReader(hr)
+
 	zr, err := zlib.NewReader(br)
 	if err != nil {
 		return nil, err
@@ -146,6 +160,7 @@ func (m *mdnsRegistry) Init(aConfig any, opts ...registry.Option) error {
 	if m.config.Timeout() == 0 {
 		m.config.SetTimeout(100)
 	}
+
 	if m.config.Domain() == "" {
 		m.config.SetDomain(mdnsDomain)
 	}

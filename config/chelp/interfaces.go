@@ -12,4 +12,7 @@ type PluginConfig interface {
 
 	Plugin() string
 	Enabled() *bool
+
+	SetPlugin(n string)
+	SetEnabled(n *bool)
 }

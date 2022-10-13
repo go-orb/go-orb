@@ -8,7 +8,11 @@ import (
 )
 
 func init() {
-	if err := Plugins.Add("zerolog", newZero, NewConfig); err != nil {
+	if err := Plugins.Add(
+		"zerolog",
+		func() Logger { return &zeroLogger{} },
+		func() any { return NewConfig() },
+	); err != nil {
 		panic(err)
 	}
 }
@@ -19,9 +23,7 @@ type zeroLogger struct {
 	config *BaseConfig
 }
 
-func newZero() Logger { return &zeroLogger{} }
-
-func (l *zeroLogger) Init(aConfig any, parent Logger) error {
+func (l *zeroLogger) Init(aConfig any, opts ...Option) error {
 	switch tConfig := aConfig.(type) {
 	case *BaseConfig:
 		l.config = tConfig
@@ -34,12 +36,22 @@ func (l *zeroLogger) Init(aConfig any, parent Logger) error {
 		return err
 	}
 
-	if parent == nil {
-		l.L = zerolog.New(os.Stderr).Level(level)
-	} else if parent.String() != l.String() {
-		return ErrSubLoggerNotPossible
-	} else {
-		l.L = parent.(*zeroLogger).L.Level(level)
+	// Options handling
+	options := NewOptions(opts...)
+	switch il := options.InternalParent.(type) {
+	case nil:
+		switch options.Parent.String() {
+		case "":
+			l.L = zerolog.New(os.Stderr).Level(level)
+		case l.String():
+			l.L = options.Parent.(*zeroLogger).L.Level(level)
+		default:
+			return ErrSubLogger
+		}
+	case zerolog.Logger:
+		l.L = il.Level(level)
+	default:
+		return ErrSubLogger
 	}
 
 	return nil
@@ -57,10 +69,58 @@ func (l *zeroLogger) Level() string {
 	return l.config.Level()
 }
 
-func (l *zeroLogger) Trace() Event { return newZeroEvent(l.L, zerolog.TraceLevel) }
-func (l *zeroLogger) Debug() Event { return newZeroEvent(l.L, zerolog.DebugLevel) }
-func (l *zeroLogger) Info() Event  { return newZeroEvent(l.L, zerolog.InfoLevel) }
-func (l *zeroLogger) Warn() Event  { return newZeroEvent(l.L, zerolog.WarnLevel) }
-func (l *zeroLogger) Err() Event   { return newZeroEvent(l.L, zerolog.ErrorLevel) }
-func (l *zeroLogger) Fatal() Event { return newZeroEvent(l.L, zerolog.FatalLevel) }
-func (l *zeroLogger) Panic() Event { return newZeroEvent(l.L, zerolog.PanicLevel) }
+func (l *zeroLogger) Trace() Event {
+	if !l.should(zerolog.TraceLevel) {
+		return nil
+	}
+
+	return newZeroEvent(l.config, l.L, zerolog.TraceLevel)
+}
+
+func (l *zeroLogger) Debug() Event {
+	if !l.should(zerolog.DebugLevel) {
+		return nil
+	}
+
+	return newZeroEvent(l.config, l.L, zerolog.DebugLevel)
+}
+
+func (l *zeroLogger) Info() Event {
+	if !l.should(zerolog.InfoLevel) {
+		return nil
+	}
+
+	return newZeroEvent(l.config, l.L, zerolog.InfoLevel)
+}
+
+func (l *zeroLogger) Warn() Event {
+	if !l.should(zerolog.WarnLevel) {
+		return nil
+	}
+
+	return newZeroEvent(l.config, l.L, zerolog.WarnLevel)
+}
+
+func (l *zeroLogger) Err() Event {
+	if !l.should(zerolog.ErrorLevel) {
+		return nil
+	}
+
+	return newZeroEvent(l.config, l.L, zerolog.ErrorLevel)
+}
+
+func (l *zeroLogger) Fatal() Event {
+	return newZeroEvent(l.config, l.L, zerolog.FatalLevel)
+}
+
+func (l *zeroLogger) Panic() Event {
+	return newZeroEvent(l.config, l.L, zerolog.PanicLevel)
+}
+
+func (l *zeroLogger) should(lvl zerolog.Level) bool {
+	if lvl < l.L.GetLevel() || lvl < zerolog.GlobalLevel() {
+		return false
+	}
+
+	return true
+}

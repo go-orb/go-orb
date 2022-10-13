@@ -72,15 +72,15 @@ func Usage(n string) FlagOption {
 
 func Default[T any](n T) FlagOption {
 	return func(o *Flag) {
-		switch any(n).(type) {
+		switch def := any(n).(type) {
 		case string:
-			o.DefaultString = any(n).(string)
+			o.DefaultString = def
 			o.FlagType = FlagTypeString
 		case int:
-			o.DefaultInt = any(n).(int)
+			o.DefaultInt = def
 			o.FlagType = FlagTypeInt
 		case []string:
-			o.DefaultStringSlice = any(n).([]string)
+			o.DefaultStringSlice = def
 			o.FlagType = FlagTypeStringSlice
 		default:
 			o.FlagType = FlagTypeNone
@@ -89,13 +89,13 @@ func Default[T any](n T) FlagOption {
 }
 
 func UpdateFlagValue[T any](f *Flag, v T) error {
-	switch any(v).(type) {
+	switch def := any(v).(type) {
 	case string:
-		f.ValueString = any(v).(string)
+		f.ValueString = def
 	case []string:
-		f.ValueStringSlice = any(v).([]string)
+		f.ValueStringSlice = def
 	case int:
-		f.ValueInt = any(v).(int)
+		f.ValueInt = def
 	default:
 		return errors.New("failed to update flag")
 	}

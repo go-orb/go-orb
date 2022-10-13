@@ -1,3 +1,4 @@
+// Package cli is the Cli component of orb.
 package cli
 
 import (
@@ -5,12 +6,15 @@ import (
 	"fmt"
 )
 
+// ErrConfigIsNil indicates that the given config is nil.
 var ErrConfigIsNil = errors.New("config is nil")
 
+// Cli is the component interface for every Cli plugin.
 type Cli interface {
 	fmt.Stringer
 
-	Init(config Config) error
+	Init(config any) error
+	Config() any
 
 	// Add adds a Flag to CLI
 	Add(opts ...FlagOption) error

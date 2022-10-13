@@ -17,7 +17,7 @@ type ConfigImpl struct {
 	domain string
 }
 
-func NewConfig() Config {
+func NewConfig() *ConfigImpl {
 	return &ConfigImpl{
 		BaseConfig: registry.NewConfig(),
 	}

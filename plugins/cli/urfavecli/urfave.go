@@ -1,15 +1,22 @@
-package urfave
+// Package urfavecli is a cli wrapper for urfave.
+package urfavecli
 
 import (
 	"errors"
 	"os"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/urfave/cli/v2"
 	oCli "jochum.dev/orb/orb/cli"
+	"jochum.dev/orb/orb/config/chelp"
 )
 
 func init() {
-	if err := oCli.Plugins.Add("urfave", New, oCli.NewConfig); err != nil {
+	if err := oCli.Plugins.Add(
+		"urfave",
+		New,
+		func() any { return oCli.NewConfig() },
+	); err != nil {
 		panic(err)
 	}
 }
@@ -34,9 +41,19 @@ func New() oCli.Cli {
 	}
 }
 
-func (c *FlagCLI) Init(config oCli.Config) error {
-	c.config = config
+func (c *FlagCLI) Init(aConfig any) error {
+	switch config := aConfig.(type) {
+	case *oCli.BaseConfig:
+		c.config = config
+	default:
+		return chelp.ErrUnknownConfig
+	}
+
 	return nil
+}
+
+func (c *FlagCLI) Config() any {
+	return c.config
 }
 
 func (c *FlagCLI) Add(opts ...oCli.FlagOption) error {
@@ -96,20 +113,24 @@ func (c *FlagCLI) Parse(args []string) error {
 
 	i := 0
 	flags := make([]cli.Flag, len(c.stringFlags)+len(c.intFlags)+len(c.stringSliceFlags))
+
 	for _, f := range c.stringFlags {
 		flags[i] = f
-		i += 1
+		i++
 	}
+
 	for _, f := range c.intFlags {
 		flags[i] = f
-		i += 1
+		i++
 	}
+
 	for _, f := range c.stringSliceFlags {
 		flags[i] = f
-		i += 1
+		i++
 	}
 
 	var ctx *cli.Context
+
 	app := &cli.App{
 		Version:     c.config.Version(),
 		Description: c.config.Description(),
@@ -122,6 +143,7 @@ func (c *FlagCLI) Parse(args []string) error {
 			return nil
 		},
 	}
+
 	if len(c.config.Version()) < 1 {
 		app.HideVersion = true
 	}
@@ -129,17 +151,21 @@ func (c *FlagCLI) Parse(args []string) error {
 	if err := app.Run(args); err != nil {
 		return err
 	}
+
 	c.ctx = ctx
 
 	if c.ctx == nil {
 		os.Exit(0)
 	}
 
+	var err error
 	for n, f := range c.stringSliceDests {
-		_ = oCli.UpdateFlagValue(c.flags[n], f.Get())
+		if err = oCli.UpdateFlagValue(c.flags[n], f.Get()); err != nil {
+			err = multierror.Append(err)
+		}
 	}
 
-	return nil
+	return err
 }
 
 func (c *FlagCLI) String() string {

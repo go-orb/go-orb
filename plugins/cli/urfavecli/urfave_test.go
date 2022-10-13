@@ -1,11 +1,10 @@
-package urfave
+package urfavecli
 
 import (
 	"testing"
 
-	"jochum.dev/orb/orb/cli"
-
 	"github.com/stretchr/testify/assert"
+	"jochum.dev/orb/orb/cli"
 )
 
 const (

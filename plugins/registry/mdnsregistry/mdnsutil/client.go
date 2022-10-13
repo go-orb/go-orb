@@ -1,3 +1,4 @@
+// Package mdnsutil contains mdns utils ;P.
 package mdnsutil
 
 import (

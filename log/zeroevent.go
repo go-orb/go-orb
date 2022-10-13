@@ -6,29 +6,37 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func newZeroEvent(l zerolog.Logger, level zerolog.Level) Event {
+func newZeroEvent(config Config, l zerolog.Logger, level zerolog.Level) Event {
+	var event *zeroEvent
+
 	switch level {
 	case zerolog.TraceLevel:
-		return &zeroEvent{z: l.Trace(), level: level}
+		event = &zeroEvent{z: l.Trace(), level: level}
 	case zerolog.DebugLevel:
-		return &zeroEvent{z: l.Debug(), level: level}
+		event = &zeroEvent{z: l.Debug(), level: level}
 	case zerolog.InfoLevel:
-		return &zeroEvent{z: l.Info(), level: level}
+		event = &zeroEvent{z: l.Info(), level: level}
 	case zerolog.WarnLevel:
-		return &zeroEvent{z: l.Warn(), level: level}
+		event = &zeroEvent{z: l.Warn(), level: level}
 	case zerolog.ErrorLevel:
-		return &zeroEvent{z: l.Error().Caller(2), level: level}
+		event = &zeroEvent{z: l.Error().Caller(2), level: level}
 	case zerolog.FatalLevel:
-		return &zeroEvent{z: l.Fatal().Caller(2), level: level}
+		event = &zeroEvent{z: l.Fatal().Caller(2), level: level}
 	case zerolog.PanicLevel:
-		return &zeroEvent{z: l.Panic().Caller(2), level: level}
+		event = &zeroEvent{z: l.Panic().Caller(2), level: level}
 	case zerolog.NoLevel:
-		return &zeroEvent{z: l.Log(), level: level}
+		event = &zeroEvent{z: l.Log(), level: level}
 	case zerolog.Disabled:
-		return &zeroEvent{z: nil, level: level}
+		event = &zeroEvent{z: nil, level: level}
 	default:
-		return &zeroEvent{z: nil, level: level}
+		event = &zeroEvent{z: nil, level: level}
 	}
+
+	if config.Fields() != nil {
+		event.Fields(config.Fields())
+	}
+
+	return event
 }
 
 type zeroEvent struct {
@@ -53,11 +61,11 @@ func (e *zeroEvent) Send() {
 	e.z.Send()
 }
 
-func (e *zeroEvent) Msgf(msg string, v ...interface{}) Event {
+func (e *zeroEvent) Msgf(msg string, v ...any) Event {
 	e.z.Msgf(msg, v...)
 	return e
 }
-func (e *zeroEvent) Fields(fields interface{}) Event {
+func (e *zeroEvent) Fields(fields any) Event {
 	e.z.Fields(fields)
 	return e
 }

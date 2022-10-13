@@ -2,17 +2,18 @@ package cli
 
 import (
 	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 	"jochum.dev/orb/orb/config/chelp"
 )
 
 const (
-	CONFIG_KEY_NAME        = "name"
-	CONFIG_KEY_VERSION     = "version"
-	CONFIG_KEY_DESCRIPTION = "description"
-	CONFIG_KEY_USAGE       = "usage"
-	CONFIG_KEY_NO_FLAGS    = "no_flags"
-	CONFIG_KEY_ARG_PREFIX  = "arg_prefix"
-	CONFIG_KEY_CONFIG      = "config"
+	configKeyName        = "name"
+	configKeyVersion     = "version"
+	configKeyDescription = "description"
+	configKeyUsage       = "usage"
+	configKeyNoFlags     = "no_flags"
+	configKeyArgPrefix   = "arg_prefix"
+	configKeyConfig      = "config"
 )
 
 type Config interface {
@@ -37,6 +38,10 @@ type Config interface {
 	SetNoFlags(n *bool)
 	SetArgPrefix(n string)
 	SetConfig(n string)
+
+	// Internal to transfer Options
+	Flags() []Flag
+	SetFlags(n []Flag)
 }
 
 type BaseConfig struct {
@@ -52,9 +57,12 @@ type BaseConfig struct {
 	noFlags     *bool
 	argPrefix   string
 	config      string
+
+	// Internal
+	flags []Flag
 }
 
-func NewConfig() Config {
+func NewConfig() *BaseConfig {
 	return &BaseConfig{
 		PluginConfig: chelp.NewPluginConfig(),
 	}
@@ -67,30 +75,39 @@ func (c *BaseConfig) Load(m map[string]any) error {
 	if err := c.PluginConfig.Load(m); err != nil {
 		result = multierror.Append(err)
 	}
+
 	var err error
-	if c.name, err = chelp.Get(m, CONFIG_KEY_NAME, c.name); err != nil {
+	if c.name, err = chelp.Get(m, configKeyName, c.name); err != nil {
 		result = multierror.Append(err)
 	}
-	if c.version, err = chelp.Get(m, CONFIG_KEY_VERSION, c.version); err != nil {
+
+	if c.version, err = chelp.Get(m, configKeyVersion, c.version); err != nil {
 		result = multierror.Append(err)
 	}
 
 	// Optional
-	if c.description, err = chelp.Get(m, CONFIG_KEY_DESCRIPTION, c.description); err != nil && err != chelp.ErrNotExistant {
+	c.description, err = chelp.Get(m, configKeyDescription, c.description)
+	if err != nil && !errors.Is(err, chelp.ErrNotExistant) {
 		result = multierror.Append(err)
 	}
-	if c.usage, err = chelp.Get(m, CONFIG_KEY_USAGE, c.usage); err != nil && err != chelp.ErrNotExistant {
+
+	if c.usage, err = chelp.Get(m, configKeyUsage, c.usage); err != nil && !errors.Is(err, chelp.ErrNotExistant) {
 		result = multierror.Append(err)
 	}
-	if c.noFlags, err = chelp.Get(m, CONFIG_KEY_NO_FLAGS, c.noFlags); err != nil && err != chelp.ErrNotExistant {
+
+	if c.noFlags, err = chelp.Get(m, configKeyNoFlags, c.noFlags); err != nil && !errors.Is(err, chelp.ErrNotExistant) {
 		result = multierror.Append(err)
 	}
-	if c.argPrefix, err = chelp.Get(m, CONFIG_KEY_ARG_PREFIX, c.argPrefix); err != nil && err != chelp.ErrNotExistant {
+
+	c.argPrefix, err = chelp.Get(m, configKeyArgPrefix, c.argPrefix)
+	if err != nil && !errors.Is(err, chelp.ErrNotExistant) {
 		result = multierror.Append(err)
 	}
-	if c.config, err = chelp.Get(m, CONFIG_KEY_CONFIG, c.config); err != nil && err != chelp.ErrNotExistant {
+
+	if c.config, err = chelp.Get(m, configKeyConfig, c.config); err != nil && !errors.Is(err, chelp.ErrNotExistant) {
 		result = multierror.Append(err)
 	}
+
 	return result
 }
 
@@ -101,14 +118,14 @@ func (c *BaseConfig) Store(m map[string]any) error {
 		result = multierror.Append(err)
 	}
 
-	m[CONFIG_KEY_NAME] = c.name
-	m[CONFIG_KEY_VERSION] = c.version
+	m[configKeyName] = c.name
+	m[configKeyVersion] = c.version
 
-	m[CONFIG_KEY_DESCRIPTION] = c.description
-	m[CONFIG_KEY_USAGE] = c.usage
-	m[CONFIG_KEY_NO_FLAGS] = c.noFlags
-	m[CONFIG_KEY_ARG_PREFIX] = c.argPrefix
-	m[CONFIG_KEY_CONFIG] = c.config
+	m[configKeyDescription] = c.description
+	m[configKeyUsage] = c.usage
+	m[configKeyNoFlags] = c.noFlags
+	m[configKeyArgPrefix] = c.argPrefix
+	m[configKeyConfig] = c.config
 
 	return result
 }
@@ -128,3 +145,6 @@ func (c *BaseConfig) SetUsage(n string)       { c.usage = n }
 func (c *BaseConfig) SetNoFlags(n *bool)      { c.noFlags = n }
 func (c *BaseConfig) SetArgPrefix(n string)   { c.argPrefix = n }
 func (c *BaseConfig) SetConfig(n string)      { c.config = n }
+
+func (c *BaseConfig) Flags() []Flag     { return c.flags }
+func (c *BaseConfig) SetFlags(n []Flag) { c.flags = n }

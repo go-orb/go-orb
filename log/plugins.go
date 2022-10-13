@@ -6,5 +6,5 @@ import (
 
 var Plugins = container.NewPlugins(
 	func() Logger { return nil }, // Plugin factory
-	func() Config { return nil }, // Config factory
+	func() any { return nil },    // Config factory
 )

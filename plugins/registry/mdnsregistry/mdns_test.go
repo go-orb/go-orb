@@ -1,7 +1,6 @@
 package mdnsregistry
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -9,11 +8,6 @@ import (
 )
 
 func TestMDNS(t *testing.T) {
-	// skip test in travis because of sendto: operation not permitted error
-	if travis := os.Getenv("TRAVIS"); travis == "true" {
-		t.Skip()
-	}
-
 	testData := []*registry.Service{
 		{
 			Name:    "test1",

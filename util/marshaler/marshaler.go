@@ -1,3 +1,4 @@
+// Package marshaler contains a basic interface for marshalers.
 package marshaler
 
 import (
@@ -6,6 +7,7 @@ import (
 )
 
 var (
+	// ErrNoSocket happens when you give wrong options to Marshaler.Init().
 	ErrNoSocket = errors.New("no socket given")
 )
 

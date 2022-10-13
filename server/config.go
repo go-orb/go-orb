@@ -1,17 +1,18 @@
-package component
+package server
 
 import (
 	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
 	"jochum.dev/orb/orb/config/chelp"
 	"jochum.dev/orb/orb/log"
 )
 
 const (
-	CONFIG_KEY_LOGGER   = "logger"
-	CONFIG_KEY_ID       = "id"
-	CONFIG_KEY_NAME     = "name"
-	CONFIG_KEY_VERSION  = "version"
-	CONFIG_KEY_METADATA = "metadata"
+	configKeyLogger   = "logger"
+	configKeyID       = "id"
+	configKeyName     = "name"
+	configKeyVersion  = "version"
+	configKeyMetadata = "metadata"
 )
 
 type Config interface {
@@ -22,26 +23,40 @@ type Config interface {
 	Version() string
 
 	// Optional
-	Logger() log.Config
+	Logger() any
 	ID() string
 	Metadata() map[string]string
+	Address() string
+	RegisterTTL() int
+	RegisterInterval() int
+
+	SetName(n string)
+	SetVersion(n string)
+	SetLogger(n any)
+	SetID(n string)
+	SetMetadata(n map[string]string)
+	SetAddress(n string)
+	SetRegisterTTL(n int)
+	SetRegisterInterval(n int)
 }
 
 type BaseConfig struct {
-	chelp.PluginConfig
+	*chelp.BasePluginConfig
 
 	name    string
 	version string
 
-	logger   log.Config
-	id       string
-	metadata map[string]string
+	logger           any
+	id               string
+	metadata         map[string]string
+	address          string
+	registerTTL      int
+	registerInterval int
 }
 
-func NewBaseConfig() Config {
+func NewConfig() *BaseConfig {
 	return &BaseConfig{
-		PluginConfig: chelp.NewPluginConfig(),
-		logger:       log.NewConfig(),
+		BasePluginConfig: chelp.NewPluginConfig(),
 	}
 }
 
@@ -49,26 +64,31 @@ func (c *BaseConfig) Load(m map[string]any) error {
 	var result error
 
 	// Required
-	if err := c.PluginConfig.Load(m); err != nil {
+	if err := c.BasePluginConfig.Load(m); err != nil {
 		result = multierror.Append(err)
 	}
+
 	var err error
-	if c.name, err = chelp.Get(m, CONFIG_KEY_NAME, ""); err != nil {
+	if c.name, err = chelp.Get(m, configKeyName, ""); err != nil {
 		result = multierror.Append(err)
 	}
-	if c.version, err = chelp.Get(m, CONFIG_KEY_VERSION, ""); err != nil {
+
+	if c.version, err = chelp.Get(m, configKeyVersion, ""); err != nil {
 		result = multierror.Append(err)
 	}
 
 	// Optional
-	if err := c.logger.Load(m); err != nil && err != chelp.ErrNotExistant {
+	c.logger, err = log.LoadConfig(m, configKeyLogger)
+	if !errors.Is(err, chelp.ErrNotExistant) {
 		result = multierror.Append(err)
 	}
 
-	if c.id, err = chelp.Get(m, CONFIG_KEY_ID, ""); err != nil && err != chelp.ErrNotExistant {
+	if c.id, err = chelp.Get(m, configKeyID, ""); !errors.Is(err, chelp.ErrNotExistant) {
 		result = multierror.Append(err)
 	}
-	if c.metadata, err = chelp.Get(m, CONFIG_KEY_METADATA, map[string]string{}); err != nil && err != chelp.ErrNotExistant {
+
+	c.metadata, err = chelp.Get(m, configKeyMetadata, map[string]string{})
+	if !errors.Is(err, chelp.ErrNotExistant) {
 		result = multierror.Append(err)
 	}
 
@@ -78,27 +98,40 @@ func (c *BaseConfig) Load(m map[string]any) error {
 func (c *BaseConfig) Store(m map[string]any) error {
 	var result error
 
-	if err := c.PluginConfig.Store(m); err != nil {
+	if err := c.BasePluginConfig.Store(m); err != nil {
 		result = multierror.Append(err)
 	}
 
-	m[CONFIG_KEY_NAME] = c.name
-	m[CONFIG_KEY_VERSION] = c.version
+	m[configKeyName] = c.name
+	m[configKeyVersion] = c.version
 
-	logger := make(map[string]any)
-	if err := c.logger.Store(logger); err != nil {
+	var err error
+
+	m[configKeyLogger], err = log.StoreConfig(c.logger)
+	if !errors.Is(err, chelp.ErrNotExistant) {
 		result = multierror.Append(err)
 	}
-	m[CONFIG_KEY_LOGGER] = logger
 
-	m[CONFIG_KEY_ID] = c.id
-	m[CONFIG_KEY_METADATA] = c.metadata
+	m[configKeyID] = c.id
+	m[configKeyMetadata] = c.metadata
 
 	return result
 }
 
 func (c *BaseConfig) Name() string                { return c.name }
 func (c *BaseConfig) Version() string             { return c.version }
-func (c *BaseConfig) Logger() log.Config          { return c.logger }
+func (c *BaseConfig) Logger() any                 { return c.logger }
 func (c *BaseConfig) ID() string                  { return c.id }
 func (c *BaseConfig) Metadata() map[string]string { return c.metadata }
+func (c *BaseConfig) Address() string             { return c.address }
+func (c *BaseConfig) RegisterTTL() int            { return c.registerTTL }
+func (c *BaseConfig) RegisterInterval() int       { return c.registerInterval }
+
+func (c *BaseConfig) SetName(n string)                { c.name = n }
+func (c *BaseConfig) SetVersion(n string)             { c.version = n }
+func (c *BaseConfig) SetLogger(n any)                 { c.logger = n }
+func (c *BaseConfig) SetID(n string)                  { c.id = n }
+func (c *BaseConfig) SetMetadata(n map[string]string) { c.metadata = n }
+func (c *BaseConfig) SetAddress(n string)             { c.address = n }
+func (c *BaseConfig) SetRegisterTTL(n int)            { c.registerTTL = n }
+func (c *BaseConfig) SetRegisterInterval(n int)       { c.registerInterval = n }
