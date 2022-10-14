@@ -42,6 +42,68 @@ func NewConfig() *BaseConfig {
 	}
 }
 
+// DefaultConfig returns the default config for a given Plugin.
+func DefaultConfig(name string) (any, error) {
+	confFactory, err := Plugins.Config(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return confFactory(), nil
+}
+
+func getConfig(m map[string]any) (any, error) {
+	pconf := chelp.NewPluginConfig()
+	if err := pconf.Load(m); err != nil {
+		return nil, err
+	}
+
+	return DefaultConfig(pconf.Plugin())
+}
+
+// LoadConfig loads the config from map `m` with the key `key`.
+func LoadConfig(m map[string]any, key string) (any, error) {
+	// Optional
+	myMap, err := chelp.Get(m, key, map[string]any{})
+	if err != nil {
+		return nil, err
+	}
+
+	myConf, err := getConfig(myMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if loader, ok := myConf.(chelp.ConfigLoadStore); ok {
+		if err := loader.Load(myMap); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, chelp.ErrUnknownConfig
+	}
+
+	return myConf, nil
+}
+
+// StoreConfig stores the config to map[string]any.
+func StoreConfig(config any) (map[string]any, error) {
+	result := make(map[string]any)
+	if config == nil {
+		return result, chelp.ErrNotExistant
+	}
+
+	if storer, ok := config.(chelp.ConfigLoadStore); ok {
+		if err := storer.Store(result); err != nil {
+			return result, err
+		}
+	} else {
+		return result, chelp.ErrUnknownConfig
+	}
+
+	return result, nil
+}
+
+// Load loads this config from map[string]any.
 func (c *BaseConfig) Load(m map[string]any) error {
 	var result error
 
@@ -73,6 +135,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 	return result
 }
 
+// Store stores this config in a map[string]any.
 func (c *BaseConfig) Store(m map[string]any) error {
 	var result error
 

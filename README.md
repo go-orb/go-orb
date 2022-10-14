@@ -4,7 +4,7 @@ Orb is a framework for distributed systems development, it can be seen as the su
 
 ## WIP
 
-This project is a WIP, please do not use yet!
+This project is a work in progress, please do not use yet!
 
 ## Authors
 

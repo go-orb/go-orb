@@ -20,6 +20,7 @@ func NewPluginConfig() *BasePluginConfig {
 	return &BasePluginConfig{}
 }
 
+// Load loads this config from map[string]any.
 func (c *BasePluginConfig) Load(m map[string]any) error {
 	var (
 		result error
@@ -37,6 +38,7 @@ func (c *BasePluginConfig) Load(m map[string]any) error {
 	return result
 }
 
+// Store stores this config in a map[string]any.
 func (c *BasePluginConfig) Store(m map[string]any) error {
 	m[configPlugin] = c.plugin
 	m[configEnabled] = c.enabled
@@ -44,7 +46,34 @@ func (c *BasePluginConfig) Store(m map[string]any) error {
 	return nil
 }
 
-func (c *BasePluginConfig) Plugin() string     { return c.plugin }
-func (c *BasePluginConfig) Enabled() *bool     { return c.enabled }
+// Merge merges a config into this config.
+func (c *BasePluginConfig) Merge(aConfig any) error {
+	toMerge, ok := aConfig.(PluginConfig)
+	if !ok {
+		return ErrUnknownConfig
+	}
+
+	defConfig := NewPluginConfig()
+
+	if toMerge.Plugin() != defConfig.Plugin() {
+		c.SetPlugin(toMerge.Plugin())
+	}
+
+	if toMerge.Enabled() != defConfig.Enabled() {
+		c.SetEnabled(toMerge.Enabled())
+	}
+
+	return nil
+}
+
+// Plugin returns the plugin.
+func (c *BasePluginConfig) Plugin() string { return c.plugin }
+
+// Enabled returns if this component has been enabled.
+func (c *BasePluginConfig) Enabled() *bool { return c.enabled }
+
+// SetPlugin updates plugin.
 func (c *BasePluginConfig) SetPlugin(n string) { c.plugin = n }
+
+// SetEnabled updates enabled.
 func (c *BasePluginConfig) SetEnabled(n *bool) { c.enabled = n }

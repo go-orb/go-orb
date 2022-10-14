@@ -1,11 +1,14 @@
+// Package container contains generic containers.
 package container
 
 import (
 	"errors"
 )
 
-var ErrExists = errors.New("element exists already")
-var ErrUnknown = errors.New("unknown element given")
+var (
+	ErrExists  = errors.New("element exists already")
+	ErrUnknown = errors.New("unknown element given")
+)
 
 func New[T any](cType T) *Container[T] {
 	return &Container[T]{
@@ -23,6 +26,7 @@ func (c *Container[T]) Add(name string, element T) error {
 	}
 
 	c.elements[name] = element
+
 	return nil
 }
 

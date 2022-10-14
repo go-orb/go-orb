@@ -40,13 +40,9 @@ func NewConfig() *BaseConfig {
 	}
 }
 
-func getConfig(m map[string]any) (any, error) {
-	pconf := chelp.NewPluginConfig()
-	if err := pconf.Load(m); err != nil {
-		return nil, err
-	}
-
-	_, confFactory, err := Plugins.Get(pconf.Plugin())
+// DefaultConfig returns the default config for a given Plugin.
+func DefaultConfig(name string) (any, error) {
+	confFactory, err := Plugins.Config(name)
 	if err != nil {
 		return nil, err
 	}
@@ -54,37 +50,47 @@ func getConfig(m map[string]any) (any, error) {
 	return confFactory(), nil
 }
 
+func getConfig(m map[string]any) (any, error) {
+	pconf := chelp.NewPluginConfig()
+	if err := pconf.Load(m); err != nil {
+		return nil, err
+	}
+
+	return DefaultConfig(pconf.Plugin())
+}
+
 // LoadConfig loads the config from map `m` with the key `key`.
 func LoadConfig(m map[string]any, key string) (any, error) {
 	// Optional
-	loggerMap, err := chelp.Get(m, key, map[string]any{})
+	myMap, err := chelp.Get(m, key, map[string]any{})
 	if err != nil {
 		return nil, err
 	}
 
-	loggerConf, err := getConfig(loggerMap)
+	myConf, err := getConfig(myMap)
 	if err != nil {
 		return nil, err
 	}
 
-	if loader, ok := loggerConf.(chelp.ConfigLoadStore); ok {
-		if err := loader.Load(loggerMap); err != nil {
+	if loader, ok := myConf.(chelp.ConfigLoadStore); ok {
+		if err := loader.Load(myMap); err != nil {
 			return nil, err
 		}
 	} else {
 		return nil, chelp.ErrUnknownConfig
 	}
 
-	return loggerConf, nil
+	return myConf, nil
 }
 
-func StoreConfig(logger any) (map[string]any, error) {
+// StoreConfig stores the config to map[string]any.
+func StoreConfig(config any) (map[string]any, error) {
 	result := make(map[string]any)
-	if logger == nil {
+	if config == nil {
 		return result, chelp.ErrNotExistant
 	}
 
-	if storer, ok := logger.(chelp.ConfigLoadStore); ok {
+	if storer, ok := config.(chelp.ConfigLoadStore); ok {
 		if err := storer.Store(result); err != nil {
 			return result, err
 		}
@@ -95,6 +101,7 @@ func StoreConfig(logger any) (map[string]any, error) {
 	return result, nil
 }
 
+// Load loads this config from map[string]any.
 func (c *BaseConfig) Load(m map[string]any) error {
 	var result error
 
@@ -123,6 +130,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 	return result
 }
 
+// Store stores this config in a map[string]any.
 func (c *BaseConfig) Store(m map[string]any) error {
 	if err := c.PluginConfig.Store(m); err != nil {
 		return err
