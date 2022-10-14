@@ -1,4 +1,4 @@
-package orb
+package quickorb
 
 import (
 	"errors"

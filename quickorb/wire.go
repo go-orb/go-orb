@@ -1,7 +1,7 @@
 //go:build wireinject
 // +build wireinject
 
-package orb
+package quickorb
 
 import (
 	"github.com/google/wire"

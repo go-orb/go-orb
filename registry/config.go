@@ -109,7 +109,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 
 	// Required
 	if err := c.BasePluginConfig.Load(m); err != nil {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	var (
@@ -119,17 +119,17 @@ func (c *BaseConfig) Load(m map[string]any) error {
 	// Optional
 	c.logger, err = log.LoadConfig(m, configKeyLogger)
 	if !errors.Is(err, chelp.ErrNotExistant) {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	c.addresses, err = chelp.Get(m, configKeyAddresses, c.addresses)
 	if !errors.Is(err, chelp.ErrNotExistant) {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	c.timeout, err = chelp.Get(m, configKeyTimeout, c.timeout)
 	if !errors.Is(err, chelp.ErrNotExistant) {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	return result
@@ -140,14 +140,14 @@ func (c *BaseConfig) Store(m map[string]any) error {
 	var result error
 
 	if err := c.BasePluginConfig.Store(m); err != nil {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	var err error
 
 	m[configKeyLogger], err = log.StoreConfig(c.logger)
 	if !errors.Is(err, chelp.ErrNotExistant) {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	m[configKeyAddresses] = c.addresses

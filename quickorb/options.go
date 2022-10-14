@@ -1,4 +1,4 @@
-package orb
+package quickorb
 
 import (
 	"jochum.dev/orb/orb/cli"
@@ -8,6 +8,7 @@ type HookFunc func(service *Service) error
 
 // Options for orb service.
 type Options struct {
+	ConfigSection    string
 	ArgPrefix        string
 	Address          string
 	Name             string
@@ -15,7 +16,7 @@ type Options struct {
 	Version          string
 	Usage            string
 	NoFlags          bool
-	ConfigFile       string
+	ConfigURLs       []string
 	RegisterTTL      int
 	RegisterInterval int
 	Metadata         map[string]string

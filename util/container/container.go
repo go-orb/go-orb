@@ -30,6 +30,10 @@ func (c *Container[T]) Add(name string, element T) error {
 	return nil
 }
 
+func (c *Container[T]) All() map[string]T {
+	return c.elements
+}
+
 func (c *Container[T]) Get(name string) (T, error) {
 	p, ok := c.elements[name]
 	if !ok {

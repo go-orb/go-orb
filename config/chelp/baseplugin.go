@@ -28,11 +28,11 @@ func (c *BasePluginConfig) Load(m map[string]any) error {
 	)
 
 	if c.plugin, err = Get(m, configPlugin, ""); err != nil {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	if c.enabled, err = Get[*bool](m, configEnabled, nil); err != nil {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	return result

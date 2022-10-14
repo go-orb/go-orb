@@ -23,8 +23,9 @@ type Config interface { // /nolint:interfacebloat
 
 	// Required
 	Name() string
-	Version() string
 	SetName(n string)
+
+	Version() string
 	SetVersion(n string)
 
 	// Optional
@@ -36,6 +37,9 @@ type Config interface { // /nolint:interfacebloat
 
 	NoFlags() *bool
 	SetNoFlags(n *bool)
+
+	ConfigSection() string
+	SetConfigSection(n string)
 
 	ArgPrefix() string
 	SetArgPrefix(n string)
@@ -50,27 +54,28 @@ type Config interface { // /nolint:interfacebloat
 
 // BaseConfig is the base config for this component.
 type BaseConfig struct {
-	*chelp.BasePluginConfig
+	chelp.PluginConfig
 
 	// Required
 	name    string
 	version string
 
 	// Optional
-	description string
-	usage       string
-	noFlags     *bool
-	argPrefix   string
-	config      []string
+	description   string
+	usage         string
+	noFlags       *bool
+	configSection string
+	argPrefix     string
+	config        []string
 
 	// Internal
 	flags []Flag
 }
 
 // NewConfig returns the base component config.
-func NewConfig() *BaseConfig {
+func NewConfig() Config {
 	return &BaseConfig{
-		BasePluginConfig: chelp.NewPluginConfig(),
+		PluginConfig: chelp.NewPluginConfig(),
 	}
 }
 
@@ -140,40 +145,40 @@ func (c *BaseConfig) Load(inputMap map[string]any) error {
 	var result error
 
 	// Required
-	if err := c.BasePluginConfig.Load(inputMap); err != nil {
-		result = multierror.Append(err)
+	if err := c.PluginConfig.Load(inputMap); err != nil {
+		result = multierror.Append(result, err)
 	}
 
 	var err error
 	if c.name, err = chelp.Get(inputMap, configKeyName, c.name); err != nil {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	if c.version, err = chelp.Get(inputMap, configKeyVersion, c.version); err != nil {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	// Optional
 	c.description, err = chelp.Get(inputMap, configKeyDescription, c.description)
 	if err != nil && !errors.Is(err, chelp.ErrNotExistant) {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	if c.usage, err = chelp.Get(inputMap, configKeyUsage, c.usage); !errors.Is(err, chelp.ErrNotExistant) {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	if c.noFlags, err = chelp.Get(inputMap, configKeyNoFlags, c.noFlags); !errors.Is(err, chelp.ErrNotExistant) {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	c.argPrefix, err = chelp.Get(inputMap, configKeyArgPrefix, c.argPrefix)
 	if err != nil && !errors.Is(err, chelp.ErrNotExistant) {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	if c.config, err = chelp.Get(inputMap, configKeyConfig, c.config); !errors.Is(err, chelp.ErrNotExistant) {
-		result = multierror.Append(err)
+		result = multierror.Append(result, err)
 	}
 
 	return result
@@ -183,8 +188,8 @@ func (c *BaseConfig) Load(inputMap map[string]any) error {
 func (c *BaseConfig) Store(m map[string]any) error {
 	var result error
 
-	if err := c.BasePluginConfig.Store(m); err != nil {
-		result = multierror.Append(err)
+	if err := c.PluginConfig.Store(m); err != nil {
+		result = multierror.Append(result, err)
 	}
 
 	m[configKeyName] = c.name
@@ -201,7 +206,7 @@ func (c *BaseConfig) Store(m map[string]any) error {
 
 // Merge merges aConfig into this.
 func (c *BaseConfig) Merge(aConfig any) error {
-	if err := c.BasePluginConfig.Merge(aConfig); err != nil {
+	if err := c.PluginConfig.Merge(aConfig); err != nil {
 		return err
 	}
 
@@ -236,7 +241,7 @@ func (c *BaseConfig) Merge(aConfig any) error {
 		c.SetArgPrefix(toMerge.ArgPrefix())
 	}
 
-	if !slices.Compare(toMerge.Config(), defConfig.Config()) {
+	if slices.Compare(toMerge.Config(), defConfig.Config()) != 0 {
 		c.SetConfig(toMerge.Config())
 	}
 
@@ -258,20 +263,23 @@ func (c *BaseConfig) Usage() string { return c.usage }
 // NoFlags indicates if we want to disable Flags.
 func (c *BaseConfig) NoFlags() *bool { return c.noFlags }
 
+// ConfigSection returns the section for orb internal components.
+func (c *BaseConfig) ConfigSection() string { return c.configSection }
+
 // ArgPrefix sets the prefix for orb internal Flags.
 func (c *BaseConfig) ArgPrefix() string { return c.argPrefix }
 
 // Config sets the config urls.
 func (c *BaseConfig) Config() []string { return c.config }
 
-// SetName sets the apps name.
-func (c *BaseConfig) SetName(n string)        { c.name = n }
-func (c *BaseConfig) SetVersion(n string)     { c.version = n }
-func (c *BaseConfig) SetDescription(n string) { c.description = n }
-func (c *BaseConfig) SetUsage(n string)       { c.usage = n }
-func (c *BaseConfig) SetNoFlags(n *bool)      { c.noFlags = n }
-func (c *BaseConfig) SetArgPrefix(n string)   { c.argPrefix = n }
-func (c *BaseConfig) SetConfig(n []string)    { c.config = n }
+func (c *BaseConfig) SetName(n string)          { c.name = n }
+func (c *BaseConfig) SetVersion(n string)       { c.version = n }
+func (c *BaseConfig) SetDescription(n string)   { c.description = n }
+func (c *BaseConfig) SetUsage(n string)         { c.usage = n }
+func (c *BaseConfig) SetNoFlags(n *bool)        { c.noFlags = n }
+func (c *BaseConfig) SetConfigSection(n string) { c.configSection = n }
+func (c *BaseConfig) SetArgPrefix(n string)     { c.argPrefix = n }
+func (c *BaseConfig) SetConfig(n []string)      { c.config = n }
 
 func (c *BaseConfig) Flags() []Flag     { return c.flags }
 func (c *BaseConfig) SetFlags(n []Flag) { c.flags = n }

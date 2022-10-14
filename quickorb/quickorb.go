@@ -1,5 +1,5 @@
-// Package orb is the main entry for the orb framework.
-package orb
+// Package quickorb is the quick start entry for the orb framework.
+package quickorb
 
 import (
 	"errors"
@@ -18,9 +18,10 @@ func NewService(opts ...Option) (*Service, error) {
 	cliConfig.SetVersion(options.Version)
 	cliConfig.SetDescription(options.Description)
 	cliConfig.SetUsage(options.Usage)
+	cliConfig.SetConfigSection(options.ConfigSection)
 	cliConfig.SetArgPrefix(options.ArgPrefix)
 	cliConfig.SetNoFlags(&options.NoFlags)
-	cliConfig.SetConfig(options.ConfigFile)
+	cliConfig.SetConfig(options.ConfigURLs)
 	cliConfig.SetFlags(options.Flags)
 
 	serverConfig := server.NewConfig()

@@ -58,7 +58,7 @@ func ProvideConfig(
 	config Config,
 	c cli.Cli,
 	cliConfig cli.Config,
-	configor config.Config,
+	confiData []config.Data,
 ) (DiConfig, error) {
 	defConfig := NewConfig()
 	cfg := sourceConfig{Registry: *defConfig}
