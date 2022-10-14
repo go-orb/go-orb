@@ -2,30 +2,45 @@
 package config
 
 import (
-	"github.com/hashicorp/go-multierror"
+	"errors"
+	"net/url"
+
 	"jochum.dev/orb/orb/config/configsource"
 )
 
+var (
+	ErrUnknownScheme = errors.New("unknown config source scheme")
+)
+
 type Data struct {
-	URL  string
-	Data map[string]any
+	URL   url.URL
+	Data  map[string]any
+	Error error
 }
 
-func Read(urls []string) ([]Data, error) {
-	var (
-		result    []Data
-		resultErr error
-	)
+func Read(urls []url.URL) []Data {
+	result := make([]Data, len(urls))
 
-	for _, url := range urls {
-		d, err := readURL(url)
-		result = append(result, d)
-		resultErr = multierror.Append(resultErr, err)
+	configsources := []configsource.Source{}
+	for _, csFunc := range configsource.Plugins.All() {
+		configsources = append(configsources, csFunc())
 	}
 
-	return result, resultErr
-}
+	for idx, u := range urls {
+		found := false
+		for _, cs := range configsources {
+			if u.Scheme == cs.String() {
+				d, err := cs.Read(u)
+				result[idx] = Data{URL: u, Data: d, Error: err}
+				found = true
+				break
+			}
+		}
 
-func readURL(url string) (Data, error) {
-	return Data{}, configsource.ErrUnknown
+		if !found {
+			result[idx] = Data{URL: u, Error: ErrUnknownScheme}
+		}
+	}
+
+	return result
 }

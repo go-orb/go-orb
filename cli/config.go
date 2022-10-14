@@ -19,7 +19,7 @@ const (
 
 // Config is the interface every plugin must implement.
 type Config interface { // /nolint:interfacebloat
-	chelp.PluginConfig
+	chelp.Plugin
 
 	// Required
 	Name() string
@@ -54,7 +54,7 @@ type Config interface { // /nolint:interfacebloat
 
 // BaseConfig is the base config for this component.
 type BaseConfig struct {
-	chelp.PluginConfig
+	chelp.Plugin
 
 	// Required
 	name    string
@@ -75,7 +75,7 @@ type BaseConfig struct {
 // NewConfig returns the base component config.
 func NewConfig() Config {
 	return &BaseConfig{
-		PluginConfig: chelp.NewPluginConfig(),
+		Plugin: chelp.NewPluginConfig(),
 	}
 }
 
@@ -111,7 +111,7 @@ func LoadConfig(m map[string]any, key string) (any, error) {
 		return nil, err
 	}
 
-	if loader, ok := myConf.(chelp.ConfigLoadStore); ok {
+	if loader, ok := myConf.(chelp.ConfigMethods); ok {
 		if err := loader.Load(myMap); err != nil {
 			return nil, err
 		}
@@ -129,7 +129,7 @@ func StoreConfig(config any) (map[string]any, error) {
 		return result, chelp.ErrNotExistant
 	}
 
-	if storer, ok := config.(chelp.ConfigLoadStore); ok {
+	if storer, ok := config.(chelp.ConfigMethods); ok {
 		if err := storer.Store(result); err != nil {
 			return result, err
 		}
@@ -145,7 +145,7 @@ func (c *BaseConfig) Load(inputMap map[string]any) error {
 	var result error
 
 	// Required
-	if err := c.PluginConfig.Load(inputMap); err != nil {
+	if err := c.Plugin.Load(inputMap); err != nil {
 		result = multierror.Append(result, err)
 	}
 
@@ -188,7 +188,7 @@ func (c *BaseConfig) Load(inputMap map[string]any) error {
 func (c *BaseConfig) Store(m map[string]any) error {
 	var result error
 
-	if err := c.PluginConfig.Store(m); err != nil {
+	if err := c.Plugin.Store(m); err != nil {
 		result = multierror.Append(result, err)
 	}
 
@@ -206,7 +206,7 @@ func (c *BaseConfig) Store(m map[string]any) error {
 
 // Merge merges aConfig into this.
 func (c *BaseConfig) Merge(aConfig any) error {
-	if err := c.PluginConfig.Merge(aConfig); err != nil {
+	if err := c.Plugin.Merge(aConfig); err != nil {
 		return err
 	}
 

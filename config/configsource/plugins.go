@@ -5,4 +5,4 @@ import (
 )
 
 // Plugins is the configsource plugin container.
-var Plugins = container.New(func() ConfigSource { return nil }) //nolint:gochecknoglobals
+var Plugins = container.New(func() Source { return nil }) //nolint:gochecknoglobals

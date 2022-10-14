@@ -4,11 +4,14 @@ package registry
 
 import (
 	"fmt"
-	"jochum.dev/orb/orb/log"
+
+	"github.com/google/wire"
+	"github.com/pkg/errors"
 	"jochum.dev/orb/orb/cli"
 	"jochum.dev/orb/orb/config"
+	"jochum.dev/orb/orb/config/chelp"
 	"jochum.dev/orb/orb/di"
-	"github.com/google/wire"
+	"jochum.dev/orb/orb/log"
 )
 
 type DiFlags struct{}
@@ -58,52 +61,74 @@ func ProvideConfig(
 	config Config,
 	c cli.Cli,
 	cliConfig cli.Config,
-	confiData []config.Data,
+	configDatas []config.Data,
 ) (DiConfig, error) {
-	defConfig := NewConfig()
-	cfg := sourceConfig{Registry: *defConfig}
 
-	if configor != nil {
-		if err := configor.Scan(&cfg); err != nil {
+	for _, configData := range configDatas {
+		// Go own section deeper to the config section.
+		var err error
+		data := configData.Data
+		if cliConfig.ConfigSection() != "" {
+			if data, err = chelp.Get(data, cliConfig.ConfigSection(), map[string]any{}); err != nil {
+				// Ignore unknown configSection in config.
+				if errors.Is(err, chelp.ErrNotExistant) {
+					log.Warn().
+						Fields(map[string]string{"section": cliConfig.ConfigSection(), "url": configData.URL.String()}).
+						Msg("unknown config section in config")
+					continue
+				}
+				return DiConfig{}, err
+			}
+		}
+
+		// Now fetch my own section.
+		if data, err = chelp.Get(data, Name, map[string]any{}); err != nil {
+			// Ignore unknown section in config.
+			if errors.Is(err, chelp.ErrNotExistant) {
+				log.Warn().
+					Fields(map[string]string{"section": Name, "url": configData.URL.String()}).
+					Msg("unknown config section in config")
+				continue
+			}
 			return DiConfig{}, err
 		}
-	}
-	if err := config.Merge(&cfg.Registry); err != nil {
-		return DiConfig{}, err
+
+		// Create a new config.
+		aNew, err := NewConfig(config.Plugin())
+		if err != nil {
+			return DiConfig{}, err
+		}
+
+		newCfg, ok := aNew.(chelp.ConfigMethods)
+		if !ok {
+			return DiConfig{}, chelp.ErrUnknownConfig
+		}
+
+		// Load the new config.
+		if err := newCfg.Load(data); err != nil {
+			return DiConfig{}, err
+		}
+
+		// Merge it into the previous one.
+		if err := config.Merge(newCfg); err != nil {
+			return DiConfig{}, err
+		}
 	}
 
 	if *cliConfig.NoFlags() {
-		// Dont parse flags if NoFlags has been given
+		// Dont parse flags if NoFlags has been given.
 		return DiConfig{}, nil
 	}
 
-	defConfig = NewConfig()
+	// Read flags into config.
+	newCfg := NewBaseConfig()
 	if f, ok := c.Get(cli.PrefixName(cliConfig.ArgPrefix(), cliArgPlugin)); ok {
-		defConfig.SetPlugin(cli.FlagValue(f, defConfig.Plugin()))
+		newCfg.SetPlugin(cli.FlagValue(f, newCfg.Plugin()))
 	}
 	if f, ok := c.Get(cli.PrefixName(cliConfig.ArgPrefix(), cliArgAddresses)); ok {
-		defConfig.SetAddresses(cli.FlagValue(f, defConfig.Addresses()))
+		newCfg.SetAddresses(cli.FlagValue(f, newCfg.Addresses()))
 	}
-	if err := config.Merge(defConfig); err != nil {
-		return DiConfig{}, err
-	}
-
-	return DiConfig{}, nil
-}
-
-func ProvideConfigNoFlags(
-	config Config,
-	configor config.Config,
-) (DiConfig, error) {
-	defConfig := NewConfig()
-	c := sourceConfig{Registry: *defConfig}
-
-	if configor != nil {
-		if err := configor.Scan(&c); err != nil {
-			return DiConfig{}, err
-		}
-	}
-	if err := config.Merge(&c.Registry); err != nil {
+	if err := config.Merge(newCfg); err != nil {
 		return DiConfig{}, err
 	}
 
@@ -144,4 +169,3 @@ func Provide(
 }
 
 var DiSet = wire.NewSet(ProvideFlags, ProvideConfig, Provide)
-var DiNoCliSet = wire.NewSet(ProvideConfigNoFlags, Provide)

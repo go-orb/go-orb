@@ -1,4 +1,4 @@
-// Package registry is an interface for service discovery
+// Package registry is a component for service discovery
 package registry
 
 import (

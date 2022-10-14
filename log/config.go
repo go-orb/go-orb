@@ -14,7 +14,7 @@ const (
 
 // Config is the basic configuration which every log plugin config should implement.
 type Config interface {
-	chelp.PluginConfig
+	chelp.Plugin
 
 	Fields() map[string]any
 	Level() string
@@ -27,7 +27,7 @@ type Config interface {
 
 // BaseConfig is a basic configuration for loggers.
 type BaseConfig struct {
-	chelp.PluginConfig
+	chelp.Plugin
 	fields          map[string]any
 	level           string
 	callerSkipFrame int
@@ -36,7 +36,7 @@ type BaseConfig struct {
 // NewConfig creates a new BaseConfig.
 func NewConfig() *BaseConfig {
 	return &BaseConfig{
-		PluginConfig: chelp.NewPluginConfig(),
+		Plugin: chelp.NewPluginConfig(),
 	}
 }
 
@@ -72,7 +72,7 @@ func LoadConfig(m map[string]any, key string) (any, error) {
 		return nil, err
 	}
 
-	if loader, ok := myConf.(chelp.ConfigLoadStore); ok {
+	if loader, ok := myConf.(chelp.ConfigMethods); ok {
 		if err := loader.Load(myMap); err != nil {
 			return nil, err
 		}
@@ -90,7 +90,7 @@ func StoreConfig(config any) (map[string]any, error) {
 		return result, chelp.ErrNotExistant
 	}
 
-	if storer, ok := config.(chelp.ConfigLoadStore); ok {
+	if storer, ok := config.(chelp.ConfigMethods); ok {
 		if err := storer.Store(result); err != nil {
 			return result, err
 		}
@@ -105,7 +105,7 @@ func StoreConfig(config any) (map[string]any, error) {
 func (c *BaseConfig) Load(m map[string]any) error {
 	var result error
 
-	if err := c.PluginConfig.Load(m); err != nil {
+	if err := c.Plugin.Load(m); err != nil {
 		result = multierror.Append(err)
 	}
 
@@ -132,7 +132,7 @@ func (c *BaseConfig) Load(m map[string]any) error {
 
 // Store stores this config in a map[string]any.
 func (c *BaseConfig) Store(m map[string]any) error {
-	if err := c.PluginConfig.Store(m); err != nil {
+	if err := c.Plugin.Store(m); err != nil {
 		return err
 	}
 

@@ -2,16 +2,11 @@
 package configsource
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 )
 
-var (
-	ErrUnknownScheme = errors.New("unknown config source scheme")
-)
-
-type ConfigSource interface {
+type Source interface {
 	fmt.Stringer
 
 	Init() error

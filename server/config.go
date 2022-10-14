@@ -16,7 +16,7 @@ const (
 )
 
 type Config interface {
-	chelp.PluginConfig
+	chelp.Plugin
 
 	// Required
 	Name() string

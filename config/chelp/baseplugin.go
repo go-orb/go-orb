@@ -48,7 +48,7 @@ func (c *BasePluginConfig) Store(m map[string]any) error {
 
 // Merge merges a config into this config.
 func (c *BasePluginConfig) Merge(aConfig any) error {
-	toMerge, ok := aConfig.(PluginConfig)
+	toMerge, ok := aConfig.(Plugin)
 	if !ok {
 		return ErrUnknownConfig
 	}

@@ -12,7 +12,7 @@ const configKeyAddresses = "addresses"
 const configKeyTimeout = "timeout"
 
 type Config interface {
-	chelp.PluginConfig
+	chelp.Plugin
 
 	// Optional
 	Logger() any
@@ -35,16 +35,16 @@ type BaseConfig struct {
 	timeout   int
 }
 
-func NewConfig() *BaseConfig {
+func NewBaseConfig() *BaseConfig {
 	return &BaseConfig{
 		BasePluginConfig: chelp.NewPluginConfig(),
 		logger:           log.NewConfig(),
 	}
 }
 
-// DefaultConfig returns the default config for a given Plugin.
-func DefaultConfig(name string) (any, error) {
-	confFactory, err := Plugins.Config(name)
+// NewConfig returns the default config for a given Plugin.
+func NewConfig(plugin string) (any, error) {
+	confFactory, err := Plugins.Config(plugin)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func getConfig(m map[string]any) (any, error) {
 		return nil, err
 	}
 
-	return DefaultConfig(pconf.Plugin())
+	return NewConfig(pconf.Plugin())
 }
 
 // LoadConfig loads the config from map `m` with the key `key`.
@@ -74,7 +74,7 @@ func LoadConfig(m map[string]any, key string) (any, error) {
 		return nil, err
 	}
 
-	if loader, ok := myConf.(chelp.ConfigLoadStore); ok {
+	if loader, ok := myConf.(chelp.ConfigMethods); ok {
 		if err := loader.Load(myMap); err != nil {
 			return nil, err
 		}
@@ -92,7 +92,7 @@ func StoreConfig(config any) (map[string]any, error) {
 		return result, chelp.ErrNotExistant
 	}
 
-	if storer, ok := config.(chelp.ConfigLoadStore); ok {
+	if storer, ok := config.(chelp.ConfigMethods); ok {
 		if err := storer.Store(result); err != nil {
 			return result, err
 		}

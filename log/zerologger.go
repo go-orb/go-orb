@@ -20,14 +20,13 @@ func init() {
 type zeroLogger struct {
 	L zerolog.Logger
 
-	config *BaseConfig
+	config Config
 }
 
 func (l *zeroLogger) Init(aConfig any, opts ...Option) error {
-	switch tConfig := aConfig.(type) {
-	case *BaseConfig:
-		l.config = tConfig
-	default:
+	if config, ok := aConfig.(Config); ok {
+		l.config = config
+	} else {
 		return chelp.ErrUnknownConfig
 	}
 
