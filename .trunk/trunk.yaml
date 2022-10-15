@@ -13,7 +13,7 @@ runtimes:
 lint:
   enabled:
     - git-diff-check
-    - gitleaks@8.14.1
+    - gitleaks@8.15.0
     - gofmt@1.19.2
     - golangci-lint@1.50.0
     - markdownlint@0.32.2

@@ -8,7 +8,7 @@ var GlobalLogger Logger //nolint:gochecknoglobals
 func init() {
 	GlobalLogger = &zeroLogger{}
 
-	err := GlobalLogger.Init(NewConfig(), WithInternalParent(log.Logger))
+	err := GlobalLogger.Init(NewComponentConfig(), WithInternalParent(log.Logger))
 	if err != nil {
 		panic(err)
 	}

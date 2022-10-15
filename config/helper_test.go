@@ -1,4 +1,4 @@
-package chelp
+package config
 
 import (
 	"encoding/json"
@@ -54,7 +54,7 @@ func TestReadString(t *testing.T) {
 
 	// Must return default
 	str, err = Get(data, "string2", "x")
-	assert.ErrorIs(t, err, ErrNotExistant)
+	assert.ErrorIs(t, err, ErrNotExistent)
 	assert.Equal(t, str, "x")
 }
 
@@ -72,7 +72,7 @@ func TestReadStringSlice(t *testing.T) {
 
 	// Must return default
 	strs, err = Get(data, "stringslice2", []string{"a", "b"})
-	assert.ErrorIs(t, err, ErrNotExistant)
+	assert.ErrorIs(t, err, ErrNotExistent)
 	assert.Equal(t, []string{"a", "b"}, strs)
 }
 
@@ -103,7 +103,7 @@ func TestReadStringMap(t *testing.T) {
 
 	// Must return default
 	maps, err = Get(data, "stringslice2", map[string]string{"a": "a"})
-	assert.ErrorIs(t, err, ErrNotExistant)
+	assert.ErrorIs(t, err, ErrNotExistent)
 	assert.Equal(t, map[string]string{"a": "a"}, maps)
 }
 

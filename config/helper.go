@@ -1,5 +1,4 @@
-// Package chelp contains basic helpers for config handling.
-package chelp
+package config
 
 import (
 	"errors"
@@ -9,13 +8,13 @@ import (
 var (
 	ErrUnknownConfig = errors.New("unknown config given")
 
-	ErrNotExistant    = errors.New("no such config key")
+	ErrNotExistent    = errors.New("no such config key")
 	ErrTypesDontMatch = errors.New("config key requested type and actual type don't match")
 )
 
 /* Get returns either the value of "key" in "data" or the default value "def".
  * If types don't match it returns ErrTypesDontMatch.
- * If key hasn't been found it returns ErrNotExistant as well as the default value "def".
+ * If key hasn't been found it returns ErrNotExistent as well as the default value "def".
  *
  * It supports the following datatypes:
  * - any non-container (string/float64/uvm.)
@@ -28,7 +27,7 @@ var (
 func Get[T any](data map[string]any, key string, def T) (T, error) {
 	value, ok := data[key]
 	if !ok {
-		return def, ErrNotExistant
+		return def, ErrNotExistent
 	}
 
 	var tmp T

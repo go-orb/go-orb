@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"jochum.dev/orb/orb/config/configsource"
+	"jochum.dev/orb/orb/util/marshaler"
 )
 
 var (
@@ -13,9 +14,10 @@ var (
 )
 
 type Data struct {
-	URL   url.URL
-	Data  map[string]any
-	Error error
+	URL       url.URL
+	Data      map[string]any
+	Marshaler marshaler.Marshaler
+	Error     error
 }
 
 func Read(urls []url.URL) []Data {
@@ -30,8 +32,8 @@ func Read(urls []url.URL) []Data {
 		found := false
 		for _, cs := range configsources {
 			if u.Scheme == cs.String() {
-				d, err := cs.Read(u)
-				result[idx] = Data{URL: u, Data: d, Error: err}
+				d, m, err := cs.Read(u)
+				result[idx] = Data{URL: u, Data: d, Marshaler: m, Error: err}
 				found = true
 				break
 			}

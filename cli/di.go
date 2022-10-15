@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"jochum.dev/orb/orb/config"
 	"jochum.dev/orb/orb/di"
 )
 
@@ -13,7 +14,7 @@ type DiParsed struct{}
 func ProvideCli(
 	config Config,
 ) (Cli, error) {
-	p, _, err := Plugins.Get(config.Plugin())
+	p, _, err := Plugins.Get(config.GetPlugin())
 	if err != nil {
 		return nil, fmt.Errorf("unknown cli given: %w", err)
 	}
@@ -29,18 +30,18 @@ func ProvideParsed(
 	result := DiParsed{}
 
 	// User flags
-	for _, f := range config.Flags() {
+	for _, f := range config.GetFlags() {
 		if err := c.Add(f.AsOptions()...); err != nil {
 			return result, err
 		}
 	}
 
-	if config.NoFlags() == nil || !*config.NoFlags() {
+	if config.GetNoFlags() == nil || !*config.GetNoFlags() {
 		if err := c.Add(
-			Name(PrefixName(config.ArgPrefix(), "config")),
-			Usage("Config file"),
-			Default(config.Config()),
-			EnvVars(PrefixEnv(config.ArgPrefix(), "config")),
+			Name(PrefixName(config.GetArgPrefix(), "config")),
+			Usage("Config urls"),
+			Default(config.GetConfig()),
+			EnvVars(PrefixEnv(config.GetArgPrefix(), "config")),
 		); err != nil {
 			return result, err
 		}
@@ -62,11 +63,19 @@ func ProvideConfig(
 	c Cli,
 	cfg Config,
 ) (di.DiConfig, error) {
-	if cfg.NoFlags() == nil || *cfg.NoFlags() {
-		defConfig := NewConfig()
+	if cfg.GetNoFlags() == nil || *cfg.GetNoFlags() {
+		aDefConfig, err := NewConfig(cfg.GetPlugin())
+		if err != nil {
+			return di.DiConfig{}, err
+		}
+
+		defConfig, ok := aDefConfig.(Config)
+		if !ok {
+			return di.DiConfig{}, config.ErrUnknownConfig
+		}
 
 		if f, ok := c.Get("config"); ok {
-			defConfig.SetConfig(FlagValue(f, defConfig.Config()))
+			defConfig.SetConfig(FlagValue(f, defConfig.GetConfig()))
 		}
 
 		if err := cfg.Merge(defConfig); err != nil {
@@ -74,5 +83,5 @@ func ProvideConfig(
 		}
 	}
 
-	return di.DiConfig(cfg.Config()), nil
+	return di.DiConfig(cfg.GetConfig()), nil
 }

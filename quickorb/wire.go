@@ -11,6 +11,7 @@ import (
 func newService(
 	options *Options,
 	cliConfig cli.Config,
+	logConfig log.Config,
 	registryConfig registry.Config,
 ) (*Service, error) {
 	panic(wire.Build(

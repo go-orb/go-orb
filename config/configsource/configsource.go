@@ -4,6 +4,8 @@ package configsource
 import (
 	"fmt"
 	"net/url"
+
+	"jochum.dev/orb/orb/util/marshaler"
 )
 
 type Source interface {
@@ -11,6 +13,6 @@ type Source interface {
 
 	Init() error
 
-	Read(u url.URL) (map[string]any, error)
+	Read(u url.URL) (map[string]any, marshaler.Marshaler, error)
 	Write(u url.URL, data map[string]any) error
 }

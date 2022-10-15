@@ -32,8 +32,8 @@ func newZeroEvent(config Config, l zerolog.Logger, level zerolog.Level) Event {
 		event = &zeroEvent{z: nil, level: level}
 	}
 
-	if config.Fields() != nil {
-		event.Fields(config.Fields())
+	if config.GetFields() != nil {
+		event.Fields(config.GetFields())
 	}
 
 	return event

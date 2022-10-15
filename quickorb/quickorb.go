@@ -5,30 +5,25 @@ import (
 	"errors"
 
 	"jochum.dev/orb/orb/cli"
-	"jochum.dev/orb/orb/server"
 )
 
 func NewService(opts ...Option) (*Service, error) {
 	options := NewOptions(opts...)
 
 	// Setup cli
-	cliConfig := cli.NewConfig()
-	cliConfig.SetPlugin("urfave")
-	cliConfig.SetName(options.Name)
-	cliConfig.SetVersion(options.Version)
-	cliConfig.SetDescription(options.Description)
-	cliConfig.SetUsage(options.Usage)
-	cliConfig.SetConfigSection(options.ConfigSection)
-	cliConfig.SetArgPrefix(options.ArgPrefix)
-	cliConfig.SetNoFlags(&options.NoFlags)
-	cliConfig.SetConfig(options.ConfigURLs)
-	cliConfig.SetFlags(options.Flags)
-
-	serverConfig := server.NewConfig()
-	serverConfig.SetAddress(options.Address)
-	serverConfig.SetRegisterTTL(options.RegisterTTL)
-	serverConfig.SetRegisterInterval(options.RegisterInterval)
-	serverConfig.SetMetadata(options.Metadata)
+	cliConfig := cli.NewComponentConfig()
+	bTrue := true
+	cliConfig.Enabled = &bTrue
+	cliConfig.Plugin = "urfave"
+	cliConfig.Name = options.Name
+	cliConfig.Version = options.Version
+	cliConfig.Description = options.Description
+	cliConfig.Usage = options.Usage
+	cliConfig.ConfigSection = options.ConfigSection
+	cliConfig.ArgPrefix = options.ArgPrefix
+	cliConfig.NoFlags = &options.NoFlags
+	cliConfig.Config = options.ConfigURLs
+	cliConfig.Flags = options.Flags
 
 	return nil, errors.New("unimplemented")
 }

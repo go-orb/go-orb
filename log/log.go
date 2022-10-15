@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"jochum.dev/orb/orb/config/chelp"
+	"jochum.dev/orb/orb/config"
 )
 
 // ErrSubLogger is returned on Init() when it's not possible to make a sublogger of the parent/internalParent.
@@ -55,19 +55,19 @@ func FromConfig(aConfig any, parent Logger) (Logger, error) {
 		return parent, nil
 	}
 
-	config, ok := aConfig.(Config)
+	cfg, ok := aConfig.(Config)
 	if !ok {
-		return nil, chelp.ErrUnknownConfig
+		return nil, config.ErrUnknownConfig
 	}
 
-	pFunc, err := Plugins.Plugin(config.Plugin())
+	pFunc, err := Plugins.Plugin(cfg.GetPlugin())
 	if err != nil {
 		return nil, err
 	}
 
 	p := pFunc()
 
-	if parent.String() == config.Plugin() {
+	if parent.String() == cfg.GetPlugin() {
 		if err := p.Init(aConfig, WithParent(parent)); err != nil {
 			return nil, err
 		}

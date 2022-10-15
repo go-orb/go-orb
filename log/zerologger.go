@@ -4,14 +4,14 @@ import (
 	"os"
 
 	"github.com/rs/zerolog"
-	"jochum.dev/orb/orb/config/chelp"
+	"jochum.dev/orb/orb/config"
 )
 
 func init() {
 	if err := Plugins.Add(
 		"zerolog",
 		func() Logger { return &zeroLogger{} },
-		func() any { return NewConfig() },
+		func() any { return NewComponentConfig() },
 	); err != nil {
 		panic(err)
 	}
@@ -24,13 +24,13 @@ type zeroLogger struct {
 }
 
 func (l *zeroLogger) Init(aConfig any, opts ...Option) error {
-	if config, ok := aConfig.(Config); ok {
-		l.config = config
+	if cfg, ok := aConfig.(Config); ok {
+		l.config = cfg
 	} else {
-		return chelp.ErrUnknownConfig
+		return config.ErrUnknownConfig
 	}
 
-	level, err := zerolog.ParseLevel(l.config.Level())
+	level, err := zerolog.ParseLevel(l.config.GetLevel())
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (l *zeroLogger) String() string {
 }
 
 func (l *zeroLogger) Level() string {
-	return l.config.Level()
+	return l.config.GetLevel()
 }
 
 func (l *zeroLogger) Trace() Event {
