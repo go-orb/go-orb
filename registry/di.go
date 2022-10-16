@@ -1,12 +1,9 @@
 package registry
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 
 	"github.com/google/wire"
-	"github.com/pkg/errors"
 	"jochum.dev/orb/orb/cli"
 	"jochum.dev/orb/orb/config"
 	"jochum.dev/orb/orb/di"
@@ -62,76 +59,6 @@ func ProvideConfig(
 	cliConfig cli.Config,
 	configDatas []config.Data,
 ) (DiConfig, error) {
-	plugin, err := config.GetPluginFromConfigData(cliConfig.GetConfigSection(), Name, configDatas)
-	if err != nil {
-		return DiConfig{}, err
-	}
-
-	previousConfig := any(cfg)
-	for _, configData := range configDatas {
-		// Go own section deeper.
-		var err error
-		data := configData.Data
-		if cliConfig.GetConfigSection() != "" {
-			if data, err = config.Get(data, cliConfig.GetConfigSection(), map[string]any{}); err != nil {
-				// Ignore unknown configSection in config.
-				if errors.Is(err, config.ErrNotExistent) {
-					log.Warn().
-						Fields(map[string]string{"section": cliConfig.GetConfigSection(), "url": configData.URL.String()}).
-						Msg("unknown config section in config")
-					continue
-				}
-				return DiConfig{}, err
-			}
-		}
-
-		// Now fetch my own section.
-		if data, err = config.Get(data, Name, map[string]any{}); err != nil {
-			// Ignore unknown section in config.
-			if errors.Is(err, config.ErrNotExistent) {
-				log.Warn().
-					Fields(map[string]string{"section": Name, "url": configData.URL.String()}).
-					Msg("unknown config section in config")
-				continue
-			}
-			return DiConfig{}, err
-		}
-
-		// Create a new config.
-		aNew, err := NewConfig(plugin)
-		if err != nil {
-			return DiConfig{}, err
-		}
-
-		// Create a marshaler for this section.
-		buf := bytes.Buffer{}
-		if err := configData.Marshaler.Init(bufio.NewReader(&buf), bufio.NewWriter(&buf)); err != nil {
-			return DiConfig{}, err
-		}
-
-		// Encode this section into the bufr.
-		if err := configData.Marshaler.EncodeSocket(data); err != nil {
-			return DiConfig{}, err
-		}
-
-		// Decode this section from the bufr.
-		if err := configData.Marshaler.DecodeSocket(aNew); err != nil {
-			return DiConfig{}, err
-		}
-
-		merger, ok := aNew.(config.ConfigMerge)
-		if !ok {
-			return DiConfig{}, config.ErrUnknownConfig
-		}
-
-		// Merge previous config into this one.
-		if err := merger.MergePrevious(previousConfig); err != nil {
-			return DiConfig{}, err
-		}
-
-		// Update previousConfig for the next run
-		previousConfig = aNew
-	}
 
 	if cliConfig.GetNoFlags() != nil && *cliConfig.GetNoFlags() {
 		// Dont parse flags if NoFlags has been given.

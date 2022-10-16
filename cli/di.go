@@ -78,7 +78,7 @@ func ProvideConfig(
 			defConfig.SetConfig(FlagValue(f, defConfig.GetConfig()))
 		}
 
-		if err := cfg.Merge(defConfig); err != nil {
+		if err := defConfig.MergePrevious(cfg); err != nil {
 			return di.DiConfig{}, err
 		}
 	}
