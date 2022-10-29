@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"jochum.dev/orb/orb/log"
+	"github.com/orb-org/orb/log"
 )
 
 type Options struct {

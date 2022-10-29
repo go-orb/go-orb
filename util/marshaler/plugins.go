@@ -1,7 +1,7 @@
 package marshaler
 
 import (
-	"jochum.dev/orb/orb/util/container"
+	"github.com/orb-org/orb/util/container"
 )
 
 // Plugins is the marshaler plugin container.

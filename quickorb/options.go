@@ -1,7 +1,7 @@
 package quickorb
 
 import (
-	"jochum.dev/orb/orb/cli"
+	"github.com/orb-org/orb/cli"
 )
 
 type HookFunc func(service *Service) error

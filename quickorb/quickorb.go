@@ -4,7 +4,7 @@ package quickorb
 import (
 	"errors"
 
-	"jochum.dev/orb/orb/cli"
+	"github.com/orb-org/orb/cli"
 )
 
 func NewService(opts ...Option) (*Service, error) {

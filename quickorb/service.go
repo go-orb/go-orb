@@ -3,8 +3,8 @@ package quickorb
 import (
 	"errors"
 
-	"jochum.dev/orb/orb/log"
-	"jochum.dev/orb/orb/registry"
+	"github.com/orb-org/orb/log"
+	"github.com/orb-org/orb/registry"
 )
 
 // ErrRequiredOption is returned when an required option haven't been given.

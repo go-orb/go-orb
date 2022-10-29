@@ -1,81 +1,81 @@
-// Package log is the log component of Orb.
+// Package log contains a golang.org/x/exp/slog compatible logger.
 package log
 
 import (
-	"errors"
-	"fmt"
-
-	"jochum.dev/orb/orb/config"
+	"github.com/orb-org/config"
+	"github.com/orb-org/config/source"
+	"github.com/orb-org/orb/types"
+	"golang.org/x/exp/slog"
 )
 
-// ErrSubLogger is returned on Init() when it's not possible to make a sublogger of the parent/internalParent.
-var ErrSubLogger = errors.New("making a sublogger of a different parent logger is not possible")
+// Logger is the logger we use.
+type Logger struct {
+	*slog.Logger
 
-type Event interface {
-	Enabled() bool
-	Discard() Event
-	Msg(msg string)
-	Send()
-	Msgf(msg string, v ...interface{}) Event
-	Fields(fields interface{}) Event
-	Strs(key string, vals []string) Event
-	Stringer(key string, val fmt.Stringer) Event
-	AnErr(key string, err error) Event
-	Err(err error) Event
+	plugin string
 }
 
-type Logger interface {
-	fmt.Stringer
+// This is here to make sure Logger implements types.Component.
+var _ types.Component = &Logger{}
 
-	Init(config any, opts ...Option) error
-	Config() any
-
-	Level() string
-
-	// Trace starts a new message with trace level.
-	Trace() Event
-
-	// Debug starts a new message with debug level.
-	Debug() Event
-
-	Info() Event
-
-	Warn() Event
-
-	Err() Event
-
-	Fatal() Event
-
-	Panic() Event
+func (l *Logger) Start() error {
+	return nil
 }
 
-// FromConfig converts "aConfig" into a Logger using "parent" as parent.
-func FromConfig(aConfig any, parent Logger) (Logger, error) {
-	if aConfig == nil {
-		return parent, nil
-	}
+func (l *Logger) Stop() error {
+	return nil
+}
 
-	cfg, ok := aConfig.(Config)
-	if !ok {
-		return nil, config.ErrUnknownConfig
-	}
+func (l *Logger) String() string {
+	return l.plugin
+}
 
-	pFunc, err := Plugins.Plugin(cfg.GetPlugin())
+func (l *Logger) Type() string {
+	return "logger"
+}
+
+// New creates a new Logger from a Config..
+func New(cfg *Config) (*Logger, error) {
+	level, err := ParseLevel(cfg.Level)
 	if err != nil {
 		return nil, err
 	}
 
-	p := pFunc()
-
-	if parent.String() == cfg.GetPlugin() {
-		if err := p.Init(aConfig, WithParent(parent)); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := p.Init(aConfig); err != nil {
-			return nil, err
-		}
+	handlerFunc, err := Plugins.Get(cfg.Plugin)
+	if err != nil {
+		return nil, err
 	}
 
-	return p, nil
+	h, err := handlerFunc(level)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Logger{
+		plugin: cfg.Plugin,
+		Logger: slog.New(h),
+	}, nil
+}
+
+// Provide provides a new logger to wire.
+func Provide(
+	serviceName types.ServiceName,
+	datas []source.Data,
+) (*Logger, error) {
+	cfg := NewConfig()
+
+	sections := types.SplitServiceName(serviceName)
+	if err := config.Parse(append(sections, "logger"), datas, cfg); err != nil {
+		return nil, err
+	}
+
+	logger, err := New(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Make it the default logger.
+	slog.SetDefault(logger.Logger)
+
+	return logger, nil
 }

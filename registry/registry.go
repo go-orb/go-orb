@@ -3,6 +3,8 @@ package registry
 
 import (
 	"errors"
+
+	"github.com/orb-org/config/source/cli"
 )
 
 var (
@@ -11,6 +13,18 @@ var (
 	// Watcher stopped error when watcher is stopped.
 	ErrWatcherStopped = errors.New("watcher stopped")
 )
+
+func init() {
+	err := cli.Flags.Add(cli.NewFlag(
+		"registry",
+		"mdns",
+		cli.CPSlice([]string{"registry", "plugin"}),
+		cli.Usage("Registry for discovery. etcd, mdns"),
+	))
+	if err != nil {
+		panic(err)
+	}
+}
 
 // The registry provides an interface for service discovery
 // and an abstraction over varying implementations
