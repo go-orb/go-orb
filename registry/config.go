@@ -1,8 +1,8 @@
 package registry
 
 import (
+	"github.com/go-orb/config/source/cli"
 	"github.com/go-orb/orb/log"
-	"github.com/orb-org/config/source/cli"
 )
 
 const DefaultRegistry = "mdns"

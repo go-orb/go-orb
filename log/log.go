@@ -2,9 +2,9 @@
 package log
 
 import (
+	"github.com/go-orb/config"
+	"github.com/go-orb/config/source"
 	"github.com/go-orb/orb/types"
-	"github.com/orb-org/config"
-	"github.com/orb-org/config/source"
 	"golang.org/x/exp/slog"
 )
 

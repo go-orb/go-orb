@@ -3,8 +3,8 @@ package log
 import (
 	"os"
 
-	"github.com/orb-org/config/source/cli"
-	"github.com/orb-org/config/util/container"
+	"github.com/go-orb/config/source/cli"
+	"github.com/go-orb/config/util/container"
 	"golang.org/x/exp/slog"
 )
 
