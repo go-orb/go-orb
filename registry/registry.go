@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	// Not found error when GetService is called.
+	// ErrNotFound is a not found error when GetService is called.
 	ErrNotFound = errors.New("service not found")
-	// Watcher stopped error when watcher is stopped.
+	// ErrWatcherStopped is a error when watcher is stopped.
 	ErrWatcherStopped = errors.New("watcher stopped")
 )
 
@@ -25,6 +25,10 @@ type Registry interface {
 	GetService(string, ...GetOption) ([]*Service, error)
 	ListServices(...ListOption) ([]*Service, error)
 	Watch(...WatchOption) (Watcher, error)
+}
+
+type OrbRegistry struct {
+	Registry
 }
 
 type Service struct {

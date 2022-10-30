@@ -5,8 +5,10 @@ import (
 	"github.com/go-orb/orb/log"
 )
 
-const DefaultRegistry = "mdns"
-const DefaultTimout = 600
+const ComponentType = "registry"
+
+var DefaultRegistry = "mdns"
+var DefaultTimout = 600
 
 func init() {
 	err := cli.Flags.Add(cli.NewFlag(

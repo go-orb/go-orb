@@ -3,25 +3,7 @@ package registry
 import (
 	"context"
 	"time"
-
-	"github.com/go-orb/orb/log"
 )
-
-type Options struct {
-	Logger log.Logger
-}
-
-func NewOptions(opts ...Option) Options {
-	options := Options{
-		Logger: log.GlobalLogger,
-	}
-
-	for _, o := range opts {
-		o(&options)
-	}
-
-	return options
-}
 
 type RegisterOptions struct {
 	TTL time.Duration
@@ -38,8 +20,6 @@ type WatchOptions struct {
 	// can be stored in a context
 	Context context.Context
 }
-
-type Option func(*Options)
 
 type RegisterOption func(*RegisterOptions)
 
@@ -61,12 +41,6 @@ type GetOptions struct {
 
 type ListOptions struct {
 	Context context.Context
-}
-
-func WithLogger(n log.Logger) Option {
-	return func(o *Options) {
-		o.Logger = n
-	}
 }
 
 func RegisterTTL(t time.Duration) RegisterOption {
