@@ -34,7 +34,7 @@ func (l *Logger) Type() string {
 	return "logger"
 }
 
-// New creates a new Logger from a Config..
+// New creates a new Logger from a Config.
 func New(cfg *Config) (*Logger, error) {
 	level, err := ParseLevel(cfg.Level)
 	if err != nil {
