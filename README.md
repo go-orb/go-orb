@@ -8,8 +8,8 @@ This project is a work in progress, please do not use yet!
 
 ## Authors
 
-- [René Jochum](https://github.com/jochumdev)
 - [David Brouwer](https://github.com/Davincible/)
+- [René Jochum](https://github.com/jochumdev)
 
 ## License
 

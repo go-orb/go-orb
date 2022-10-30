@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/orb-org/orb/log"
+	"github.com/go-orb/orb/log"
 )
 
 type Options struct {

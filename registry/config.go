@@ -1,8 +1,34 @@
 package registry
 
 import (
-	"github.com/orb-org/orb/log"
+	"github.com/go-orb/orb/log"
+	"github.com/orb-org/config/source/cli"
 )
+
+const DefaultRegistry = "mdns"
+const DefaultTimout = 600
+
+func init() {
+	err := cli.Flags.Add(cli.NewFlag(
+		"registry",
+		DefaultRegistry,
+		cli.CPSlice([]string{"registry", "plugin"}),
+		cli.Usage("Registry for discovery. etcd, mdns"),
+	))
+	if err != nil {
+		panic(err)
+	}
+
+	err = cli.Flags.Add(cli.NewFlag(
+		"registry_timout",
+		DefaultTimout,
+		cli.CPSlice([]string{"registry", "timeout"}),
+		cli.Usage("Registry timeout."),
+	))
+	if err != nil {
+		panic(err)
+	}
+}
 
 type Config struct {
 	Plugin  string      `json:"plugin,omitempty" yaml:"plugin,omitempty"`

@@ -4,8 +4,8 @@
 package quickorb
 
 import (
+	"github.com/go-orb/orb/cli"
 	"github.com/google/wire"
-	"github.com/orb-org/orb/cli"
 	"jochum.dev/orb/orb/log"
 	"jochum.dev/orb/orb/registry"
 )

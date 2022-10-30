@@ -4,7 +4,7 @@ package registry
 import (
 	"errors"
 
-	"github.com/orb-org/config/source/cli"
+	"github.com/go-orb/orb/types"
 )
 
 var (
@@ -14,30 +14,17 @@ var (
 	ErrWatcherStopped = errors.New("watcher stopped")
 )
 
-func init() {
-	err := cli.Flags.Add(cli.NewFlag(
-		"registry",
-		"mdns",
-		cli.CPSlice([]string{"registry", "plugin"}),
-		cli.Usage("Registry for discovery. etcd, mdns"),
-	))
-	if err != nil {
-		panic(err)
-	}
-}
-
 // The registry provides an interface for service discovery
 // and an abstraction over varying implementations
 // {consul, etcd, zookeeper, ...}.
 type Registry interface {
-	Init(aConfig any, opts ...Option) error
-	Config() any
+	types.Component
+
 	Register(*Service, ...RegisterOption) error
 	Deregister(*Service, ...DeregisterOption) error
 	GetService(string, ...GetOption) ([]*Service, error)
 	ListServices(...ListOption) ([]*Service, error)
 	Watch(...WatchOption) (Watcher, error)
-	String() string
 }
 
 type Service struct {
