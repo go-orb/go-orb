@@ -5,9 +5,9 @@ package quickorb
 
 import (
 	"github.com/go-orb/orb/cli"
+	"github.com/go-orb/orb/log"
+	"github.com/go-orb/orb/registry"
 	"github.com/google/wire"
-	"jochum.dev/orb/orb/log"
-	"jochum.dev/orb/orb/registry"
 )
 
 func newService(

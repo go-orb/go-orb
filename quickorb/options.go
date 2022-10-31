@@ -1,9 +1,5 @@
 package quickorb
 
-import (
-	"github.com/go-orb/orb/cli"
-)
-
 type HookFunc func(service *Service) error
 
 // Options for orb service.
@@ -20,7 +16,6 @@ type Options struct {
 	RegisterTTL      int
 	RegisterInterval int
 	Metadata         map[string]string
-	Flags            []cli.Flag
 
 	// Wrappers
 	// WrapSubscriber []server.SubscriberWrapper
