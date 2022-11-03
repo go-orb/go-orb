@@ -2,6 +2,9 @@
 package log
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/go-orb/config"
 	"github.com/go-orb/config/source"
 	"golang.org/x/exp/slog"
@@ -24,6 +27,33 @@ type Logger struct {
 	slog.Logger
 
 	plugin string
+
+	// plugins is a cache of lazyloaded plugin handlers.
+	// In order to prevent creating multiple handlers, and thus potentially
+	// multiple connections, depending on the handler, we cache the handlers, and
+	// wrap them with a LevelHandler by default. This way we only create one
+	// handler per plugin, for use in any amount of loggers.
+	plugins map[string]slog.Handler
+}
+
+// Plugin will return the plugin handler with set to TRACE level. To enable
+// a custom level wrap it with a LevelHandler.
+func (l *Logger) Plugin(plugin string) (slog.Handler, error) {
+	if h, ok := l.plugins[plugin]; ok {
+		return h, nil
+	}
+
+	p, err := Plugins.Get(plugin)
+	if err != nil {
+		return nil, err
+	}
+
+	handler, err := p(TraceLevel)
+	if err != nil {
+		return nil, fmt.Errorf("create new plugin handler: %w", err)
+	}
+
+	return handler, nil
 }
 
 func (l *Logger) Start() error {
@@ -44,25 +74,26 @@ func (l *Logger) Type() component.Type {
 
 // New creates a new Logger from a Config.
 func New(cfg Config) (Logger, error) {
+	l := Logg  er{
+		plugin: cfg.Plugin,
+		plugins: make(map[string]slog.Handler),
+	}
+
 	level, err := ParseLevel(cfg.Level)
 	if err != nil {
 		return Logger{}, err
 	}
 
-	handlerFunc, err := Plugins.Get(cfg.Plugin)
+	h, err := l.Plugin(cfg.Plugin)
 	if err != nil {
 		return Logger{}, err
 	}
 
-	h, err := handlerFunc(level)
-	if err != nil {
-		return Logger{}, err
-	}
+	h = NewLevelHandler(level, h)
 
-	return Logger{
-		plugin: cfg.Plugin,
-		Logger: slog.New(h),
-	}, nil
+	l.Logger = slog.New(h)
+
+	return l, nil
 }
 
 // ProvideLogger provides a new logger to wire.
@@ -86,4 +117,36 @@ func ProvideLogger(serviceName types.ServiceName, data []source.Data, opts ...Op
 	slog.SetDefault(logger.Logger)
 
 	return logger, nil
+}
+
+func NewComponentLogger(l log.Logger, component, name, plugin, level string) ( log.Logger, error ) {
+	lvl, err := ParseLevel(level)
+	if err != nil {
+		l.LogDepth(1, ErrorLevel, "invalid log level provided", err)
+	}
+
+	handler, err := l.Plugin(plugin)
+	if err != nil {
+		l.LogDepth(1, ErrorLevel, "invalid log level provided", err)
+	}
+
+	// Optionally avoid wrapping a handler if the level is the same as the parent
+	// logger. To check the handler level it needs to implent the Leveler interface,
+	// which is not provided by default on slog handlers.
+	noWrapper := false
+	if level, ok := l.Handler().(slog.Leveler); ok && level == lvl {
+		noWrapper = true
+	}
+
+	handler := l.Plugin(plugin)
+
+	handler := LevelHandler{level: lvl, handler: handler}
+
+	ctx := l.With(
+		slog.String("component", component),
+		slog.String("plugin", name),
+	).Context()
+	l = slog.New(handler).WithContext(ctx)
+
+	return l
 }
