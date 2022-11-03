@@ -4,8 +4,9 @@ package log
 import (
 	"github.com/go-orb/config"
 	"github.com/go-orb/config/source"
-	"github.com/go-orb/orb/types"
 	"golang.org/x/exp/slog"
+
+	"github.com/go-orb/orb/types"
 )
 
 // Logger is the logger we use.
