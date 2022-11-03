@@ -20,7 +20,7 @@ func Warn(msg string, args ...any) {
 // Error calls Logger.Error on the default logger.
 func Error(msg string, err error, args ...any) {
 	if err != nil {
-		// TODO: avoid the copy.
+		// TODO: copy over again from the pkg when copy is avoided
 		args = append(args[:len(args):len(args)], slog.Any("err", err))
 	}
 
