@@ -1,0 +1,21 @@
+name: Release
+on: 
+  workflow_dispatch:
+    inputs:
+      releasePackages:
+        description: 'Release Packages'     
+        required: true
+        default: 'all'
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Release Packages
+        run: ./scripts/release.sh  "${{ github.event.inputs.releasePackages }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
