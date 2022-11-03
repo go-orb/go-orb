@@ -6,18 +6,25 @@ import (
 	"github.com/go-orb/config/source"
 	"golang.org/x/exp/slog"
 
+	"go-micro.dev/v5/types/component"
+
 	"github.com/go-orb/orb/types"
 )
 
-// Logger is the logger we use.
+// This is here to make sure Logger implements the component interface.
+var _ component.Component = &Logger{}
+
+const (
+	ComponentType component.Type = "logger"
+)
+
+// Logger is a go-micro logger, it is the slog.Logger, with some added methods
+// to implement the component interface.
 type Logger struct {
-	*slog.Logger
+	slog.Logger
 
 	plugin string
 }
-
-// This is here to make sure Logger implements types.Component.
-var _ types.Component = &Logger{}
 
 func (l *Logger) Start() error {
 	return nil
@@ -31,51 +38,51 @@ func (l *Logger) String() string {
 	return l.plugin
 }
 
-func (l *Logger) Type() string {
-	return "logger"
+func (l *Logger) Type() component.Type {
+	return ComponentType
 }
 
 // New creates a new Logger from a Config.
-func New(cfg *Config) (*Logger, error) {
+func New(cfg Config) (Logger, error) {
 	level, err := ParseLevel(cfg.Level)
 	if err != nil {
-		return nil, err
+		return Logger{}, err
 	}
 
 	handlerFunc, err := Plugins.Get(cfg.Plugin)
 	if err != nil {
-		return nil, err
+		return Logger{}, err
 	}
 
 	h, err := handlerFunc(level)
 	if err != nil {
-		return nil, err
+		return Logger{}, err
 	}
 
-	return &Logger{
+	return Logger{
 		plugin: cfg.Plugin,
 		Logger: slog.New(h),
 	}, nil
 }
 
-// Provide provides a new logger to wire.
-func Provide(
-	serviceName types.ServiceName,
-	datas []source.Data,
-) (*Logger, error) {
+// ProvideLogger provides a new logger to wire.
+func ProvideLogger(serviceName types.ServiceName, data []source.Data, opts ...Option) (Logger, error) {
 	cfg := NewConfig()
 
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	sections := types.SplitServiceName(serviceName)
-	if err := config.Parse(append(sections, "logger"), datas, cfg); err != nil {
-		return nil, err
+	if err := config.Parse(append(sections, "logger"), data, cfg); err != nil {
+		return Logger{}, err
 	}
 
 	logger, err := New(cfg)
 	if err != nil {
-		return nil, err
+		return Logger{}, err
 	}
 
-	// Make it the default logger.
 	slog.SetDefault(logger.Logger)
 
 	return logger, nil

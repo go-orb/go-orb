@@ -1,5 +1,7 @@
 package log
 
+// These functions are global functions copied over from the slog library.
+
 import "golang.org/x/exp/slog"
 
 // Debug calls Logger.Debug on the default logger.
