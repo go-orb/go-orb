@@ -2,7 +2,7 @@ package registry
 
 import (
 	"github.com/go-orb/config/source/cli"
-	"github.com/go-orb/orb/log"
+	"go-micro.dev/v5/log"
 )
 
 const ComponentType = "registry"

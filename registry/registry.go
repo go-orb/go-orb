@@ -4,7 +4,7 @@ package registry
 import (
 	"errors"
 
-	"github.com/go-orb/orb/types"
+	"go-micro.dev/v5/types/component"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 // and an abstraction over varying implementations
 // {consul, etcd, zookeeper, ...}.
 type Registry interface {
-	types.Component
+	component.Component
 
 	Register(*Service, ...RegisterOption) error
 	Deregister(*Service, ...DeregisterOption) error

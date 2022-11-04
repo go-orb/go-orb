@@ -2,9 +2,9 @@ package registry
 
 import (
 	"github.com/go-orb/config/source"
-	"github.com/go-orb/orb/log"
-	"github.com/go-orb/orb/types"
-	"github.com/go-orb/orb/util/container"
+	"go-micro.dev/v5/log"
+	"go-micro.dev/v5/types"
+	"go-micro.dev/v5/util/container"
 )
 
 // Plugins is the plugins container for registry.

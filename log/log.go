@@ -3,7 +3,6 @@ package log
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/go-orb/config"
 	"github.com/go-orb/config/source"
@@ -11,7 +10,7 @@ import (
 
 	"go-micro.dev/v5/types/component"
 
-	"github.com/go-orb/orb/types"
+	"go-micro.dev/v5/types"
 )
 
 // This is here to make sure Logger implements the component interface.
@@ -45,7 +44,7 @@ func (l *Logger) Plugin(plugin string) (slog.Handler, error) {
 
 	p, err := Plugins.Get(plugin)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("logger plugin '%s' does not exist, please register your plugin", plugin)
 	}
 
 	handler, err := p(TraceLevel)
@@ -74,8 +73,8 @@ func (l *Logger) Type() component.Type {
 
 // New creates a new Logger from a Config.
 func New(cfg Config) (Logger, error) {
-	l := Logg  er{
-		plugin: cfg.Plugin,
+	l := Logger{
+		plugin:  cfg.Plugin,
 		plugins: make(map[string]slog.Handler),
 	}
 
@@ -119,34 +118,49 @@ func ProvideLogger(serviceName types.ServiceName, data []source.Data, opts ...Op
 	return logger, nil
 }
 
-func NewComponentLogger(l log.Logger, component, name, plugin, level string) ( log.Logger, error ) {
+// NewComponentLogger will create a sub logger for a component inheriting all
+// parrent logger fields, and optionally set a new level and handler.
+// If you want to use the parrent handler and log level, pass empty strings.
+// It will add two fields to the sub logger, the component (e.g. broker)
+// and the component plugin implementation (e.g. NATS).
+func NewComponentLogger(logger Logger, component component.Type, name, plugin, level string) (Logger, error) {
+	errMsg := "(component: %s, name: %s, plugin: %s) create component logger: %w"
+
 	lvl, err := ParseLevel(level)
 	if err != nil {
-		l.LogDepth(1, ErrorLevel, "invalid log level provided", err)
-	}
-
-	handler, err := l.Plugin(plugin)
-	if err != nil {
-		l.LogDepth(1, ErrorLevel, "invalid log level provided", err)
+		return Logger{}, fmt.Errorf(errMsg, component, name, plugin, err)
 	}
 
 	// Optionally avoid wrapping a handler if the level is the same as the parent
-	// logger. To check the handler level it needs to implent the Leveler interface,
-	// which is not provided by default on slog handlers.
+	// logger, and not different handler is requested. To check the handler level
+	// it needs to implent the Leveler interface, which is not provided by default
+	// on slog handlers, and needs to be implemented manually on handler plugins.
 	noWrapper := false
-	if level, ok := l.Handler().(slog.Leveler); ok && level == lvl {
-		noWrapper = true
+
+	// If a new handler is requested, fetch one from cache or creata a new on.
+	// If no new handler is requested check if we can skip handler wrapping.
+	var handler slog.Handler
+	if len(plugin) > 0 {
+		handler, err = logger.Plugin(plugin)
+		if err != nil {
+			return Logger{}, fmt.Errorf(errMsg, component, name, plugin, err)
+		}
+	} else {
+		if level, ok := logger.Handler().(slog.Leveler); ok && level == lvl {
+			noWrapper = true
+		}
 	}
 
-	handler := l.Plugin(plugin)
+	if !noWrapper {
+		handler = NewLevelHandler(lvl, handler)
+	}
 
-	handler := LevelHandler{level: lvl, handler: handler}
-
-	ctx := l.With(
-		slog.String("component", component),
+	ctx := logger.With(
+		slog.String("component", string(component)),
 		slog.String("plugin", name),
 	).Context()
-	l = slog.New(handler).WithContext(ctx)
 
-	return l
+	logger.Logger = slog.New(handler).WithContext(ctx)
+
+	return logger, nil
 }

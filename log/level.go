@@ -30,6 +30,6 @@ func ParseLevel(l string) (slog.Level, error) {
 	case "ERROR":
 		return ErrorLevel, nil
 	default:
-		return InfoLevel, fmt.Errorf("unknown level %s", l)
+		return InfoLevel, fmt.Errorf("parselevel: unknown level %s", l)
 	}
 }
