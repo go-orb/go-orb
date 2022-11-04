@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slog"
+
+	"go-micro.dev/v5/types/component"
 )
 
 func TestChangeLevel(t *testing.T) {
@@ -13,7 +15,7 @@ func TestChangeLevel(t *testing.T) {
 	require.NoError(t, err)
 
 	dCfg := NewConfig()
-	dCfg.Level = "debug"
+	dCfg.Level = DebugLevel
 	lDebug, err := New(dCfg)
 	require.NoError(t, err)
 
@@ -28,6 +30,11 @@ func TestComponentLogger(t *testing.T) {
 	require.NoError(t, err)
 
 	l.Info("Message One")
+
+	l2, err := NewComponentLogger(l, component.Type("broker"), "nats", "", "")
+	require.NoError(t, err)
+
+	l2.Info("Message Two")
 }
 
 func init() {
@@ -38,5 +45,5 @@ func init() {
 
 // NewHandlerStderr writes text to stderr.
 func NewHandlerStderr(level slog.Leveler) (slog.Handler, error) {
-	return slog.HandlerOptions{Level: level}.NewTextHandler(os.Stderr), nil
+	return slog.HandlerOptions{Level: level}.NewJSONHandler(os.Stderr), nil
 }

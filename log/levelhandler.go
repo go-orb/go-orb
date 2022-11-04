@@ -1,8 +1,16 @@
 package log
 
-import "golang.org/x/exp/slog"
+import (
+	"errors"
+
+	"golang.org/x/exp/slog"
+)
 
 var _ slog.Handler = (*LevelHandler)(nil)
+
+var (
+	ErrNoHandler = errors.New("no handler defined")
+)
 
 type LevelHandler struct {
 	level   slog.Level
@@ -13,8 +21,12 @@ type LevelHandler struct {
 // handler with a new log level. As log level cannot be modified within a hanlder
 // through the interface of slog, you can use this to wrap a handler with a new
 // log level.
-func NewLevelHandler(level slog.Level, h slog.Handler) *LevelHandler {
-	return &LevelHandler{level, h}
+func NewLevelHandler(level slog.Level, h slog.Handler) (*LevelHandler, error) {
+	if h == nil {
+		return nil, ErrNoHandler
+	}
+
+	return &LevelHandler{level, h}, nil
 }
 
 // Enabled reports whether the handler handles records at the given level.
@@ -31,6 +43,10 @@ func (h *LevelHandler) Enabled(level slog.Level) bool {
 //   - If r.Time is the zero time, ignore the time.
 //   - If an Attr's key is the empty string, ignore the Attr.
 func (h *LevelHandler) Handle(r slog.Record) error {
+	if h.handler == nil {
+		return ErrNoHandler
+	}
+
 	return h.handler.Handle(r)
 }
 
@@ -38,7 +54,7 @@ func (h *LevelHandler) Handle(r slog.Record) error {
 // both the receiver's attributes and the arguments.
 // The Handler owns the slice: it may retain, modify or discard it.
 func (h *LevelHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return NewLevelHandler(h.level, h.handler.WithAttrs(attrs))
+	return &LevelHandler{h.level, h.handler.WithAttrs(attrs)}
 }
 
 // WithGroup returns a new Handler with the given group appended to
@@ -46,5 +62,5 @@ func (h *LevelHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 // The keys of all subsequent attributes, whether added by With or in a
 // Record, should be qualified by the sequence of group names.
 func (h *LevelHandler) WithGroup(name string) slog.Handler {
-	return NewLevelHandler(h.level, h.handler.WithGroup(name))
+	return &LevelHandler{h.level, h.handler.WithGroup(name)}
 }

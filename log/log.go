@@ -2,6 +2,7 @@
 package log
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-orb/config"
@@ -20,12 +21,15 @@ const (
 	ComponentType component.Type = "logger"
 )
 
+type keyOne struct{}
+type keyTwo struct{}
+
 // Logger is a go-micro logger, it is the slog.Logger, with some added methods
 // to implement the component interface.
 type Logger struct {
 	slog.Logger
 
-	plugin string
+	config Config
 
 	// plugins is a cache of lazyloaded plugin handlers.
 	// In order to prevent creating multiple handlers, and thus potentially
@@ -55,18 +59,23 @@ func (l *Logger) Plugin(plugin string) (slog.Handler, error) {
 	return handler, nil
 }
 
+// Start no-op.
 func (l *Logger) Start() error {
 	return nil
 }
 
+// Stop no-op.
 func (l *Logger) Stop() error {
 	return nil
 }
 
+// String returns current plugin used.
 func (l *Logger) String() string {
-	return l.plugin
+	// TODO: maybe this should call smth like handler.String()
+	return l.config.Plugin
 }
 
+// Type returns the component type.
 func (l *Logger) Type() component.Type {
 	return ComponentType
 }
@@ -74,13 +83,8 @@ func (l *Logger) Type() component.Type {
 // New creates a new Logger from a Config.
 func New(cfg Config) (Logger, error) {
 	l := Logger{
-		plugin:  cfg.Plugin,
+		config:  cfg,
 		plugins: make(map[string]slog.Handler),
-	}
-
-	level, err := ParseLevel(cfg.Level)
-	if err != nil {
-		return Logger{}, err
 	}
 
 	h, err := l.Plugin(cfg.Plugin)
@@ -88,7 +92,10 @@ func New(cfg Config) (Logger, error) {
 		return Logger{}, err
 	}
 
-	h = NewLevelHandler(level, h)
+	h, err = NewLevelHandler(cfg.Level, h)
+	if err != nil {
+		return Logger{}, err
+	}
 
 	l.Logger = slog.New(h)
 
@@ -126,9 +133,14 @@ func ProvideLogger(serviceName types.ServiceName, data []source.Data, opts ...Op
 func NewComponentLogger(logger Logger, component component.Type, name, plugin, level string) (Logger, error) {
 	errMsg := "(component: %s, name: %s, plugin: %s) create component logger: %w"
 
-	lvl, err := ParseLevel(level)
-	if err != nil {
-		return Logger{}, fmt.Errorf(errMsg, component, name, plugin, err)
+	var err error
+
+	lvl := logger.config.Level
+	if len(level) > 0 {
+		lvl, err = ParseLevel(level)
+		if err != nil {
+			return Logger{}, fmt.Errorf(errMsg, component, name, plugin, err)
+		}
 	}
 
 	// Optionally avoid wrapping a handler if the level is the same as the parent
@@ -139,7 +151,7 @@ func NewComponentLogger(logger Logger, component component.Type, name, plugin, l
 
 	// If a new handler is requested, fetch one from cache or creata a new on.
 	// If no new handler is requested check if we can skip handler wrapping.
-	var handler slog.Handler
+	handler := logger.Handler()
 	if len(plugin) > 0 {
 		handler, err = logger.Plugin(plugin)
 		if err != nil {
@@ -152,13 +164,23 @@ func NewComponentLogger(logger Logger, component component.Type, name, plugin, l
 	}
 
 	if !noWrapper {
-		handler = NewLevelHandler(lvl, handler)
+		handler, err = NewLevelHandler(lvl, handler)
+		if err != nil {
+			return Logger{}, err
+		}
 	}
 
+	// FIX:this doesn't work. No way to extract fields with context
 	ctx := logger.With(
 		slog.String("component", string(component)),
 		slog.String("plugin", name),
 	).Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	ctx = context.WithValue(ctx, keyOne{}, string(component))
+	ctx = context.WithValue(ctx, keyTwo{}, name)
 
 	logger.Logger = slog.New(handler).WithContext(ctx)
 
