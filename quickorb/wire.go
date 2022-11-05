@@ -4,9 +4,9 @@
 package quickorb
 
 import (
-	"github.com/go-orb/orb/cli"
-	"github.com/go-orb/orb/log"
-	"github.com/go-orb/orb/registry"
+	"go-micro.dev/v5/cli"
+	"go-micro.dev/v5/log"
+	"go-micro.dev/v5/registry"
 	"github.com/google/wire"
 )
 

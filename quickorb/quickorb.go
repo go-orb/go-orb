@@ -4,7 +4,7 @@ package quickorb
 import (
 	"errors"
 
-	"github.com/go-orb/orb/cli"
+	"go-micro.dev/v5/cli"
 )
 
 func NewService(opts ...Option) (*Service, error) {

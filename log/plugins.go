@@ -6,6 +6,9 @@ import (
 	"golang.org/x/exp/slog"
 )
 
+// Plugins is the registry for Logger plugins.
+var Plugins = container.NewMap[func(level slog.Leveler) (slog.Handler, error)]() //nolint:gochecknoglobals
+
 func init() {
 	flag := cli.NewFlag(
 		"logger",
@@ -18,6 +21,3 @@ func init() {
 		panic(err)
 	}
 }
-
-// Plugins is the registry for Logger plugins.
-var Plugins = container.NewMap[func(level slog.Leveler) (slog.Handler, error)]() //nolint:gochecknoglobals

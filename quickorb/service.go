@@ -3,8 +3,8 @@ package quickorb
 import (
 	"errors"
 
-	"github.com/go-orb/orb/log"
-	"github.com/go-orb/orb/registry"
+	"go-micro.dev/v5/log"
+	"go-micro.dev/v5/registry"
 )
 
 // ErrRequiredOption is returned when an required option haven't been given.

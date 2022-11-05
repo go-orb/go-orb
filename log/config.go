@@ -1,8 +1,17 @@
 package log
 
+import (
+	"golang.org/x/exp/slog"
+)
+
+// TODO:  Something like this would be nice
+// type LevelT interface {
+// 	slog.Level | string | constraints.Integer
+// }
+
 // DefaultPlugin is the default plugin to use.
 const (
-	DefaultLevel  = "INFO"
+	DefaultLevel  = InfoLevel
 	DefaultPlugin = "textstderr"
 )
 
@@ -10,8 +19,8 @@ type Option func(*Config)
 
 // Config is the loggers config.
 type Config struct {
-	Plugin string `json:"plugin,omitempty" yaml:"plugin,omitempty"`
-	Level  string `json:"level,omitempty" yaml:"level,omitempty"`
+	Plugin string     `json:"plugin,omitempty" yaml:"plugin,omitempty"`
+	Level  slog.Level `json:"level,omitempty" yaml:"level,omitempty"`
 }
 
 // NewConfig creates a new config with the defaults.
@@ -20,7 +29,8 @@ func NewConfig() Config {
 }
 
 // WithLevel sets the log level to user.
-func WithLevel(level string) Option {
+// TODO: would love to take in something like (	slog.Level | string | constraints.Integer) here, but not sure how that would work
+func WithLevel(level slog.Level) Option {
 	return func(c *Config) {
 		c.Level = level
 	}
