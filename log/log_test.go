@@ -31,10 +31,11 @@ func TestComponentLogger(t *testing.T) {
 
 	l.Info("Message One")
 
-	l2, err := NewComponentLogger(l, component.Type("broker"), "nats", "", "")
+	l2, err := NewComponentLogger(l, component.Type("broker"), "nats", "", "debug")
 	require.NoError(t, err)
 
 	l2.Info("Message Two")
+	l2.Debug("Debug Two")
 }
 
 func init() {

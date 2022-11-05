@@ -21,9 +21,6 @@ const (
 	ComponentType component.Type = "logger"
 )
 
-type keyOne struct{}
-type keyTwo struct{}
-
 // Logger is a go-micro logger, it is the slog.Logger, with some added methods
 // to implement the component interface.
 type Logger struct {
@@ -143,6 +140,8 @@ func NewComponentLogger(logger Logger, component component.Type, name, plugin, l
 		}
 	}
 
+	// TODO: currently changing levels doesn't work. Follow progress on github issue
+
 	// Optionally avoid wrapping a handler if the level is the same as the parent
 	// logger, and not different handler is requested. To check the handler level
 	// it needs to implent the Leveler interface, which is not provided by default
@@ -179,10 +178,13 @@ func NewComponentLogger(logger Logger, component component.Type, name, plugin, l
 		ctx = context.Background()
 	}
 
-	ctx = context.WithValue(ctx, keyOne{}, string(component))
-	ctx = context.WithValue(ctx, keyTwo{}, name)
+	l2 := logger.With(
+		slog.String("component", string(component)),
+		slog.String("plugin", name),
+	)
 
-	logger.Logger = slog.New(handler).WithContext(ctx)
+	// logger.Logger = slog.New(handler).WithContext(ctx)
+	logger.Logger = l2.WithContext(ctx)
 
 	return logger, nil
 }

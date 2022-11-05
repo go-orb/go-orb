@@ -189,6 +189,7 @@ linters:
     - makezero
     - gofumpt
     - nlreturn
+    - gci
 
     # Can be considered to be enabled
     - gochecknoinits
