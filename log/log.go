@@ -18,6 +18,7 @@ import (
 var _ component.Component = &Logger{}
 
 const (
+	// ComponentType is the name of the component type logger.
 	ComponentType component.Type = "logger"
 )
 
