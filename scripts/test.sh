@@ -1,17 +1,15 @@
 #!/bin/bash
 
-MICRO_VERSION="v4"
+MICRO_VERSION="./"
 GO_TEST_FLAGS="-v -race -cover -bench=."
 
 RED='\033[0;31m'
 NC='\033[0m'
 GREEN='\033[0;32m'
 BAR="-------------------------------------------------------------------------------"
-HAS_DEPS=("polaris")
+HAS_DEPS=()
 
 export RICHGO_FORCE_COLOR="true"
-# export IN_TRAVIS_CI="true"
-# export TRAVIS="true"
 
 # Print a green colored message to the screen.
 function print_msg() {
@@ -231,8 +229,6 @@ function create_summary() {
 		exit 1
 	fi
 }
-
-git clone https://github.com/go-orb/orb ../orb
 
 case $1 in
 "lint")
