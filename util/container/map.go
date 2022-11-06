@@ -33,6 +33,12 @@ func (c *Map[T]) Add(name string, element T) error {
 	return nil
 }
 
+// Upsert will either insert into or update the map, without returning
+// an error if an item already exists.
+func (c *Map[T]) Upsert(name string, element T) {
+	c.elements[name] = element
+}
+
 // All returns the internal map.
 func (c *Map[T]) All() map[string]T {
 	return c.elements
