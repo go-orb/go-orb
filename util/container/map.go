@@ -1,15 +1,24 @@
 package container
 
-// NewMap creates a new container that holds factory function's.
-func NewMap[T any]() *Map[T] {
-	return &Map[T]{
-		elements: make(map[string]T),
-	}
-}
+import "errors"
+
+// Errors.
+var (
+	ErrExists  = errors.New("element exists already")
+	ErrUnknown = errors.New("unknown element given")
+)
 
 // Map is a map container for function factories.
 type Map[T any] struct {
 	elements map[string]T
+}
+
+// NewMap creates a new atomic map of any type.
+// Not concurency safe.
+func NewMap[T any]() *Map[T] {
+	return &Map[T]{
+		elements: make(map[string]T),
+	}
 }
 
 // Add adds a new factory function to this container.
