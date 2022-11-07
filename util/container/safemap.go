@@ -12,7 +12,9 @@ type SafeMap[T any] struct {
 // NewSafeMap creates a new concurrently map of any types.
 func NewSafeMap[T any]() *SafeMap[T] {
 	return &SafeMap[T]{
-		Map: Map[T]{},
+		Map: Map[T]{
+			elements: make(map[string]T),
+		},
 	}
 }
 

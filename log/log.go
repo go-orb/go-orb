@@ -27,80 +27,26 @@ const (
 type Logger struct {
 	slog.Logger
 
+	// config is the config used to create the current logger.
+	// It is not exported as it also acts as a state, and should not be modified
+	// externally. It keeps track of the current level set, and plugin used.
 	config Config
 
-	// plugins is a cache of lazyloaded plugin handlers.
-	// In order to prevent creating multiple handlers, and thus potentially
-	// multiple connections, depending on the handler, we cache the handlers, and
-	// wrap them with a LevelHandler by default. This way we only create one
-	// handler per plugin, for use in any amount of loggers.
-	plugins map[string]slog.Handler
-}
-
-// Plugin will return the plugin handler with set to TRACE level. To enable
-// a custom level wrap it with a LevelHandler.
-func (l *Logger) Plugin(plugin string) (slog.Handler, error) {
-	if h, ok := l.plugins[plugin]; ok {
-		return h, nil
-	}
-
-	p, err := Plugins.Get(plugin)
-	if err != nil {
-		return nil, fmt.Errorf("logger plugin '%s' does not exist, please register your plugin", plugin)
-	}
-
-	handler, err := p(TraceLevel)
-	if err != nil {
-		return nil, fmt.Errorf("create new plugin handler: %w", err)
-	}
-
-	return handler, nil
-}
-
-// Start no-op.
-func (l *Logger) Start() error {
-	return nil
-}
-
-// Stop no-op.
-func (l *Logger) Stop() error {
-	return nil
-}
-
-// String returns current plugin used.
-func (l *Logger) String() string {
-	// TODO: maybe this should call smth like handler.String()
-	return l.config.Plugin
-}
-
-// Type returns the component type.
-func (l *Logger) Type() component.Type {
-	return ComponentType
+	// fields are all paramters passed to Logger.With. We keep track of them
+	// in case a sublogger needs to be created with a different plugin, then we
+	// manually need to add the fields to the handler plugin.
+	fields []any
 }
 
 // New creates a new Logger from a Config.
 func New(cfg Config) (Logger, error) {
-	l := Logger{
-		config:  cfg,
-		plugins: make(map[string]slog.Handler),
-	}
-
-	h, err := l.Plugin(cfg.Plugin)
-	if err != nil {
-		return Logger{}, err
-	}
-
-	h, err = NewLevelHandler(cfg.Level, h)
-	if err != nil {
-		return Logger{}, err
-	}
-
-	l.Logger = slog.New(h)
-
-	return l, nil
+	return Logger{
+		config: cfg,
+	}.Plugin(cfg.Plugin, cfg.Level)
 }
 
-// ProvideLogger provides a new logger to wire.
+// ProvideLogger provides a new logger.
+// It will set the slog.Logger as package wide default logger.
 func ProvideLogger(serviceName types.ServiceName, data []source.Data, opts ...Option) (Logger, error) {
 	cfg := NewConfig()
 
@@ -118,74 +64,133 @@ func ProvideLogger(serviceName types.ServiceName, data []source.Data, opts ...Op
 		return Logger{}, err
 	}
 
-	slog.SetDefault(logger.Logger)
+	if cfg.SetDefault {
+		slog.SetDefault(logger.Logger)
+	}
 
 	return logger, nil
 }
 
-// NewComponentLogger will create a sub logger for a component inheriting all
+// Plugin will return the plugin handler with set to TRACE level. To enable
+// a custom level wrap it with a LevelHandler.
+func (l Logger) Plugin(plugin string, level ...slog.Leveler) (Logger, error) {
+	lvl := l.config.Level
+	if len(level) > 0 && level[0] != nil {
+		lvl = level[0].Level()
+		l.config.Level = lvl
+	}
+
+	h, err := plugins.Get(plugin)
+	handler := h.handler
+
+	// Check if already have an instance of the plugin. If not create a new one.
+	if err != nil {
+		p, err := Plugins.Get(plugin)
+		if err != nil {
+			return l, fmt.Errorf("logger plugin '%s' does not exist, please register your plugin", plugin)
+		}
+
+		handler, err = p(lvl)
+		if err != nil {
+			return l, fmt.Errorf("create new plugin handler: %w", err)
+		}
+
+		plugins.Upsert(plugin, pluginHandler{
+			handler: handler,
+			level:   lvl,
+		})
+	} else if h.level != lvl {
+		handler = &LevelHandler{level: lvl, handler: handler}
+	}
+
+	l.config.Plugin = plugin
+	l.Logger = slog.New(handler)
+
+	if len(l.fields) > 0 {
+		l.Logger = l.Logger.With(l.fields...)
+	}
+
+	return l, nil
+}
+
+// WithLevel creates a copy of the logger with a new level.
+// It will inherit all the fields and the context from the parent logger.
+func (l Logger) WithLevel(level slog.Leveler) Logger {
+	if level != nil {
+		l.config.Level = level.Level()
+		l.Logger = slog.New(&LevelHandler{level.Level(), l.Handler()}).WithContext(l.Context())
+	}
+
+	return l
+}
+
+// With returns a new Logger that includes the given arguments, converted to
+// Attrs as in [Logger.Log]. The Attrs will be added to each output from the
+// Logger.
+//
+// The new Logger's handler is the result of calling WithAttrs on the receiver's
+// handler.
+func (l *Logger) With(args ...any) Logger {
+	l.fields = append(l.fields, args...)
+	l.Logger = l.Logger.With(args...)
+
+	return *l
+}
+
+// WithContext returns a new Logger with the same handler as the receiver and the given context.
+func (l Logger) WithContext(ctx context.Context) Logger {
+	l.Logger = l.Logger.WithContext(ctx)
+	return l
+}
+
+// WithComponent will create a new logger for a component inheriting all
 // parrent logger fields, and optionally set a new level and handler.
-// If you want to use the parrent handler and log level, pass empty strings.
-// It will add two fields to the sub logger, the component (e.g. broker)
-// and the component plugin implementation (e.g. NATS).
-func NewComponentLogger(logger Logger, component component.Type, name, plugin, level string) (Logger, error) {
-	errMsg := "(component: %s, name: %s, plugin: %s) create component logger: %w"
+//
+// If you want to use the parrent handler and log level, pass an empty values.
+//
+// It will add two fields to the sub logger, the component (e.g. broker) as component
+// and the component plugin implementation (e.g. NATS) as plugin.
+func (l Logger) WithComponent(component component.Type, name, plugin string, level slog.Leveler) (Logger, error) {
+	l = l.With(
+		slog.String("component", string(component)),
+		slog.String("plugin", name),
+	)
 
 	var err error
-
-	lvl := logger.config.Level
-	if len(level) > 0 {
-		lvl, err = ParseLevel(level)
-		if err != nil {
-			return Logger{}, fmt.Errorf(errMsg, component, name, plugin, err)
-		}
-	}
-
-	// TODO: currently changing levels doesn't work. Follow progress on github issue
-
-	// Optionally avoid wrapping a handler if the level is the same as the parent
-	// logger, and not different handler is requested. To check the handler level
-	// it needs to implent the Leveler interface, which is not provided by default
-	// on slog handlers, and needs to be implemented manually on handler plugins.
-	noWrapper := false
-
-	// If a new handler is requested, fetch one from cache or creata a new on.
-	// If no new handler is requested check if we can skip handler wrapping.
-	handler := logger.Handler()
 	if len(plugin) > 0 {
-		handler, err = logger.Plugin(plugin)
-		if err != nil {
-			return Logger{}, fmt.Errorf(errMsg, component, name, plugin, err)
-		}
-	} else {
-		if level, ok := logger.Handler().(slog.Leveler); ok && level == lvl {
-			noWrapper = true
-		}
-	}
-
-	if !noWrapper {
-		handler, err = NewLevelHandler(lvl, handler)
+		l, err = l.Plugin(plugin, level)
 		if err != nil {
 			return Logger{}, err
 		}
 	}
 
-	// FIX:this doesn't work. No way to extract fields with context
-	ctx := logger.With(
-		slog.String("component", string(component)),
-		slog.String("plugin", name),
-	).Context()
-	if ctx == nil {
-		ctx = context.Background()
+	if level.Level() != l.config.Level {
+		l = l.WithLevel(level)
 	}
 
-	l2 := logger.With(
-		slog.String("component", string(component)),
-		slog.String("plugin", name),
-	)
+	return l, nil
+}
 
-	// logger.Logger = slog.New(handler).WithContext(ctx)
-	logger.Logger = l2.WithContext(ctx)
+// Start no-op.
+func (l Logger) Start() error {
+	return nil
+}
 
-	return logger, nil
+// Stop no-op.
+func (l Logger) Stop() error {
+	return nil
+}
+
+// String returns current handler plugin used.
+func (l Logger) String() string {
+	if i, ok := l.Handler().(fmt.Stringer); ok {
+		return i.String()
+	}
+
+	return l.config.Plugin
+}
+
+// Type returns the component type.
+func (l Logger) Type() component.Type {
+	return ComponentType
 }

@@ -31,7 +31,7 @@ func TestComponentLogger(t *testing.T) {
 
 	l.Info("Message One")
 
-	l2, err := NewComponentLogger(l, component.Type("broker"), "nats", "", "debug")
+	l2, err := l.WithComponent(component.Type("broker"), "nats", "", DebugLevel)
 	require.NoError(t, err)
 
 	l2.Info("Message Two")

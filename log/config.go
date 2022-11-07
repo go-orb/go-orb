@@ -11,21 +11,31 @@ import (
 
 // DefaultPlugin is the default plugin to use.
 const (
-	DefaultLevel  = InfoLevel
-	DefaultPlugin = "textstderr"
+	DefaultLevel      = InfoLevel
+	DefaultPlugin     = "textstderr"
+	DefaultSetDefault = true
 )
 
 type Option func(*Config)
 
 // Config is the loggers config.
 type Config struct {
-	Plugin string     `json:"plugin,omitempty" yaml:"plugin,omitempty"`
-	Level  slog.Level `json:"level,omitempty" yaml:"level,omitempty"`
+	// Plugin sets the log handler plugin to use.
+	// Make sure to register the plugin by importing it.
+	Plugin string `json:"plugin,omitempty" yaml:"plugin,omitempty"`
+	// Level sets the log level to use.
+	Level slog.Level `json:"level,omitempty" yaml:"level,omitempty"`
+	// SetDefault dictates whether to call slog.SetDefault on the newly created logger.
+	SetDefault bool `json:"setDefault" yaml:"setDefault"`
 }
 
 // NewConfig creates a new config with the defaults.
 func NewConfig() Config {
-	return Config{Level: DefaultLevel, Plugin: DefaultPlugin}
+	return Config{
+		Level:      DefaultLevel,
+		Plugin:     DefaultPlugin,
+		SetDefault: DefaultSetDefault,
+	}
 }
 
 // WithLevel sets the log level to user.
@@ -43,5 +53,12 @@ func WithLevel(level slog.Level) Option {
 func WithPlugin(plugin string) Option {
 	return func(c *Config) {
 		c.Plugin = plugin
+	}
+}
+
+// WithSetDefault dictates whether or not to call slog.SetDefault.
+func WithSetDefault(setDefault bool) Option {
+	return func(c *Config) {
+		c.SetDefault = setDefault
 	}
 }
