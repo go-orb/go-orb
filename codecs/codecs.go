@@ -4,6 +4,9 @@ package codecs
 
 import "io"
 
+// Map is an alias for an codec map.
+type Map map[string]Marshaler
+
 // Marshaler is able to encode/decode a content type to/from a byte sequence.
 type Marshaler interface {
 	// Marshal marshals "v" into byte sequence.
