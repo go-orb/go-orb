@@ -5,6 +5,7 @@ package codecs
 import "io"
 
 // Map is an alias for an codec map.
+// Common keys to use here are either the plugin name or mime types.
 type Map map[string]Marshaler
 
 // Marshaler is able to encode/decode a content type to/from a byte sequence.
