@@ -1,7 +1,6 @@
 package log
 
 import (
-	"github.com/go-orb/config/source/cli"
 	"golang.org/x/exp/slog"
 
 	"go-micro.dev/v5/util/container"
@@ -21,16 +20,3 @@ var Plugins = container.NewMap[func(level slog.Leveler) (slog.Handler, error)]()
 // wrap them with a LevelHandler by default. This way we only create one
 // handler per plugin, for use in any amount of loggers.
 var plugins = container.NewSafeMap[pluginHandler]()
-
-func init() {
-	flag := cli.NewFlag(
-		"logger",
-		DefaultPlugin,
-		cli.CPSlice([]string{"logger", "plugin"}),
-		cli.Usage("Default logger to use, jsonstderr, jsonstdout, textstderr, textsdout."),
-	)
-
-	if err := cli.Flags.Add(flag); err != nil {
-		panic(err)
-	}
-}

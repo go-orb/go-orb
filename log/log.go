@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-orb/config"
-	"github.com/go-orb/config/source"
+	"go-micro.dev/v5/config"
+	"go-micro.dev/v5/config/source"
 	"golang.org/x/exp/slog"
 
 	"go-micro.dev/v5/types/component"
@@ -15,7 +15,7 @@ import (
 )
 
 // This is here to make sure Logger implements the component interface.
-var _ component.Component = &Logger{}
+var _ component.Component = (*Logger)(nil)
 
 const (
 	// ComponentType is the name of the component type logger.
@@ -144,9 +144,9 @@ func (l Logger) WithContext(ctx context.Context) Logger {
 }
 
 // WithComponent will create a new logger for a component inheriting all
-// parrent logger fields, and optionally set a new level and handler.
+// parent logger fields, and optionally set a new level and handler.
 //
-// If you want to use the parrent handler and log level, pass an empty values.
+// If you want to use the parent handler and log level, pass an empty values.
 //
 // It will add two fields to the sub logger, the component (e.g. broker) as component
 // and the component plugin implementation (e.g. NATS) as plugin.
