@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"github.com/go-orb/config/source"
+	"go-micro.dev/v5/config/source"
 	"go-micro.dev/v5/log"
 	"go-micro.dev/v5/types"
 	"go-micro.dev/v5/util/container"
@@ -11,5 +11,5 @@ import (
 var Plugins = container.NewMap[func( //nolint:gochecknoglobals
 	serviceName types.ServiceName,
 	datas []source.Data,
-	logger *log.Logger,
+	logger log.Logger,
 ) (*OrbRegistry, error)]()
