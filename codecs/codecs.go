@@ -2,7 +2,15 @@
 // to and from byte sequences.
 package codecs
 
-import "io"
+import (
+	"errors"
+	"io"
+)
+
+var (
+	// ErrNoFileMarshaler happens when we haven't found a marshaler for the given file.
+	ErrNoFileMarshaler = errors.New("no marshaler for the given file found")
+)
 
 // Map is an alias for an codec map.
 // Common keys to use here are either the plugin name or mime types.
@@ -29,6 +37,9 @@ type Marshaler interface {
 
 	// String returns the codec name.
 	String() string
+
+	// Exts returns the common file extensions for this encoder.
+	Exts() []string
 }
 
 // Decoder decodes a byte sequence.
