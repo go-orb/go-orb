@@ -35,8 +35,8 @@ func ConfigPath(n string) FlagOption {
 	}
 }
 
-// CPSlice is the same as ConfigPath but it accepts a slice.
-func CPSlice(n []string) FlagOption {
+// ConfigPathSlice is the same as ConfigPath but it accepts a slice.
+func ConfigPathSlice(n []string) FlagOption {
 	return func(o *Flag) {
 		o.ConfigPath = n
 	}
@@ -80,14 +80,14 @@ func NewFlag[T any](
 	defaultValue T,
 	opts ...FlagOption,
 ) *Flag {
-	options := &Flag{
+	options := Flag{
 		Name:    name,
 		Default: defaultValue,
 	}
 
 	for _, o := range opts {
-		o(options)
+		o(&options)
 	}
 
-	return options
+	return &options
 }

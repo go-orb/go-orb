@@ -1,8 +1,9 @@
-// Package cli is the Cli component of orb.
+// Package cli provides the Cli component of orb.
 package cli
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 
@@ -12,17 +13,21 @@ import (
 	"go-micro.dev/v5/util/container"
 )
 
+var (
+	// DefaultCLIPlugin holds the default CLI plugin.
+	DefaultCLIPlugin = "urfave" //nolint:gochecknoglobals
+)
+
 // ParseFunc is the subplugin of source/cli.
 type ParseFunc func(config *Config, flags []*Flag, args []string) error
 
 func init() {
-	err := source.Plugins.Add(New())
-	if err != nil {
+	if err := source.Plugins.Add(New()); err != nil {
 		panic(err)
 	}
 }
 
-// Source is the cli source.
+// Source cli reads flags and environment variables into a config struct.
 type Source struct{}
 
 // New creates a new cli source.
@@ -55,14 +60,14 @@ func (s *Source) Read(u *url.URL) source.Data {
 
 	pName := u.Host
 	if pName == "" {
-		pName = "urfave"
+		pName = DefaultCLIPlugin
 	}
 
 	// Add the config flag.
 	err := Flags.Add(NewFlag(
 		"config",
 		[]string{},
-		CPSlice([]string{"config"}),
+		ConfigPathSlice([]string{"config"}),
 		Usage("Config file"),
 	))
 	if err != nil && !errors.Is(err, container.ErrExists) {
@@ -76,22 +81,25 @@ func (s *Source) Read(u *url.URL) source.Data {
 
 	parseFunc, err := Plugins.Get(pName)
 	if err != nil {
-		result.Error = err
+		result.Error = fmt.Errorf(
+			"failed to get the plugin '%s'. Did you register the plugin by importing it?, error was: %w",
+			pName,
+			err,
+		)
+
 		return result
 	}
 
-	err = parseFunc(config, Flags.List(), os.Args)
-	if err != nil {
+	if err = parseFunc(&config, Flags.List(), os.Args); err != nil {
 		result.Error = err
 		return result
 	}
 
 	// Parse all Flags into map[string]any.
 	for _, flag := range Flags.List() {
-		// Special case the "config" flag.
+		// Special case the "config" flag which might add additionalConfigs.
 		if flag.Name == "config" {
-			switch tmp := flag.Value.(type) {
-			case []string:
+			if tmp, ok := flag.Value.([]string); ok {
 				for _, t := range tmp {
 					u, err := url.Parse(t)
 					if err != nil {
@@ -105,7 +113,6 @@ func (s *Source) Read(u *url.URL) source.Data {
 			continue
 		}
 
-		// All the other flags.
 		sections := flag.ConfigPath[:len(flag.ConfigPath)-1]
 
 		data := result.Data
@@ -130,7 +137,7 @@ func (s *Source) Read(u *url.URL) source.Data {
 
 	mJSON, err := codecs.Plugins.Get("json")
 	if err != nil {
-		log.Error("no json encoder compiled in, will fail now", err)
+		log.Error("JSON codec was not found, did you register it by importing?", err)
 	}
 
 	result.Marshaler = mJSON

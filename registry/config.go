@@ -16,7 +16,7 @@ func init() {
 	err := cli.Flags.Add(cli.NewFlag(
 		"registry",
 		DefaultRegistry,
-		cli.CPSlice([]string{"registry", "plugin"}),
+		cli.ConfigPathSlice([]string{"registry", "plugin"}),
 		cli.Usage("Registry for discovery. etcd, mdns"),
 		cli.EnvVars("REGISTRY"),
 	))
@@ -27,7 +27,7 @@ func init() {
 	err = cli.Flags.Add(cli.NewFlag(
 		"registry_timout",
 		DefaultTimout,
-		cli.CPSlice([]string{"registry", "timeout"}),
+		cli.ConfigPathSlice([]string{"registry", "timeout"}),
 		cli.Usage("Registry timeout."),
 		cli.EnvVars("REGISTRY_TIMEOUT"),
 	))

@@ -7,6 +7,6 @@ type Config struct {
 }
 
 // NewConfig returns the cli config.
-func NewConfig() *Config {
-	return &Config{}
+func NewConfig() Config {
+	return Config{}
 }

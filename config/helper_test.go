@@ -33,8 +33,7 @@ func testData(t *testing.T) map[string]any {
 	t.Helper()
 
 	data := make(map[string]any)
-	err := json.Unmarshal([]byte(testJSON), &data)
-	if err != nil {
+	if err := json.Unmarshal([]byte(testJSON), &data); err != nil {
 		t.Fatalf("error while reading testJSON: %v", err)
 	}
 

@@ -21,34 +21,32 @@ func getSourceForURL(u *url.URL) (source.Source, error) {
 	return nil, ErrUnknownScheme
 }
 
-// Read reads urls into []Data where Data is basically map[string]any.
+// Read reads urls into []Data where Data is map[string]any.
 //
-// By default it will error out if any of these config URL's fail, but you can
+// By default it will error out if any of these config URLs fail, but you can
 // ignore errors for a single url by adding "?ignore_error=true".
 //
 // prependSections is for url's that don't support sections (cli for example),
-// theier result will be prepended, also you can add sections to a single url
+// their result will be prepended, also you can add sections to a single url
 // with "?add_section=true".
 func Read(urls []*url.URL, prependSections []string) ([]source.Data, error) {
 	result := []source.Data{}
 
 	for _, myURL := range urls {
-		// Get the config source for the given URL.
 		configSource, err := getSourceForURL(myURL)
 		if err != nil {
 			result = append(result, source.Data{URL: myURL, Error: err})
 		}
 
-		// Call the actual read.
 		dResult := configSource.Read(myURL)
 		if dResult.Error != nil {
 			result = append(result, dResult)
 
 			if myURL.Query().Get("ignore_error") == "true" {
 				continue
-			} else {
-				return result, dResult.Error
 			}
+
+			return result, dResult.Error
 		}
 
 		// Read additional Configs from the config Source if any.
@@ -77,7 +75,6 @@ func Read(urls []*url.URL, prependSections []string) ([]source.Data, error) {
 			dResult.Data = prependResult
 		}
 
-		// Finally append the subresult.
 		result = append(result, dResult)
 	}
 
@@ -110,12 +107,11 @@ func Parse(sections []string, configs []source.Data, target any) error {
 		// Create a marshaler for this section.
 		buf := bytes.Buffer{}
 
-		// Encode this section into the buf.
+		// Now we encode and decode the map[string]any to read everything into the struct.
 		if err := configData.Marshaler.NewEncoder(&buf).Encode(data); err != nil {
 			return err
 		}
 
-		// Decode this section from the buf.
 		if err := configData.Marshaler.NewDecoder(&buf).Decode(target); err != nil {
 			return err
 		}

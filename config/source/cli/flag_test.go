@@ -11,7 +11,7 @@ func TestStringFlag(t *testing.T) {
 	flag := NewFlag(
 		"string",
 		"",
-		CPSlice([]string{"registry", "string"}),
+		ConfigPathSlice([]string{"registry", "string"}),
 		Usage("demo String flag"),
 	)
 
@@ -32,7 +32,7 @@ func TestIntFlag(t *testing.T) {
 	flag := NewFlag(
 		"int",
 		300,
-		CPSlice([]string{"registry", "int"}),
+		ConfigPathSlice([]string{"registry", "int"}),
 		Usage("demo Int flag"),
 	)
 
@@ -53,7 +53,7 @@ func TestStringSliceFlag(t *testing.T) {
 	flag := NewFlag(
 		"stringslice",
 		[]string{"1", "2"},
-		CPSlice([]string{"registry", "stringslice"}),
+		ConfigPathSlice([]string{"registry", "stringslice"}),
 		Usage("demo StringSlice flag"),
 	)
 
