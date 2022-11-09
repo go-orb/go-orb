@@ -64,7 +64,6 @@ func Read(urls []*url.URL, prependSections []string) ([]source.Data, error) {
 		// Prepend the result with sections if required.
 		if len(prependSections) > 0 && (configSource.PrependSections() ||
 			myURL.Query().Get("add_section") == "true") {
-
 			data := map[string]any{}
 			prependResult := data
 

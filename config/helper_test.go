@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//nolint:gochecknoglobals
 var testJSON = `{
 	"string": "value",
 	"stringslice": [

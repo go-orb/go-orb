@@ -128,11 +128,12 @@ func (s *Source) Read(u *url.URL) source.Data {
 		data[flag.ConfigPath[len(flag.ConfigPath)-1]] = flag.Value
 	}
 
-	mJson, err := codecs.Plugins.Get("json")
+	mJSON, err := codecs.Plugins.Get("json")
 	if err != nil {
 		log.Error("no json encoder compiled in, will fail now", err)
 	}
-	result.Marshaler = mJson
+
+	result.Marshaler = mJSON
 
 	return result
 }

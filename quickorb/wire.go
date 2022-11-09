@@ -4,10 +4,10 @@
 package quickorb
 
 import (
+	"github.com/google/wire"
 	"go-micro.dev/v5/cli"
 	"go-micro.dev/v5/log"
 	"go-micro.dev/v5/registry"
-	"github.com/google/wire"
 )
 
 func newService(

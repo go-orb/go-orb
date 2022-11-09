@@ -19,4 +19,4 @@ var Plugins = container.NewMap[func(level slog.Leveler) (slog.Handler, error)]()
 // multiple connections, depending on the handler, we cache the handlers, and
 // wrap them with a LevelHandler by default. This way we only create one
 // handler per plugin, for use in any amount of loggers.
-var plugins = container.NewSafeMap[pluginHandler]()
+var plugins = container.NewSafeMap[pluginHandler]() //nolint:gochecknoglobals

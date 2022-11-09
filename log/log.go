@@ -32,7 +32,7 @@ type Logger struct {
 	// externally. It keeps track of the current level set, and plugin used.
 	config Config
 
-	// fields are all paramters passed to Logger.With. We keep track of them
+	// fields are all parameters passed to Logger.With. We keep track of them
 	// in case a sublogger needs to be created with a different plugin, then we
 	// manually need to add the fields to the handler plugin.
 	fields []any

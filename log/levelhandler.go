@@ -9,16 +9,18 @@ import (
 var _ slog.Handler = (*LevelHandler)(nil)
 
 var (
+	// ErrNoHandler happens when a the LevelHandler wrapper gets no handler.
 	ErrNoHandler = errors.New("no handler defined")
 )
 
+// LevelHandler is wrapper for slog.Handler which does Leveling.
 type LevelHandler struct {
 	level   slog.Level
 	handler slog.Handler
 }
 
 // NewLevelHandler implements slog.Handler interface. It is used to wrap a
-// handler with a new log level. As log level cannot be modified within a hanlder
+// handler with a new log level. As log level cannot be modified within a handler
 // through the interface of slog, you can use this to wrap a handler with a new
 // log level.
 func NewLevelHandler(level slog.Level, h slog.Handler) (*LevelHandler, error) {

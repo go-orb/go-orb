@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/google/wire v0.5.0
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/exp v0.0.0-20221106115401-f9659909a136
+	golang.org/x/exp v0.0.0-20221108223516-5d533826c662
 )
 
 require (

@@ -4,8 +4,7 @@ type HookFunc func(service *Service) error
 
 // Options for orb service.
 type Options struct {
-	ConfigSection    string
-	ArgPrefix        string
+	ServiceName      string
 	Address          string
 	Name             string
 	Description      string
