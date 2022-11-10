@@ -105,7 +105,6 @@ func Parse(sections []string, configs []source.Data, target any) error {
 			}
 		}
 
-		// Create a marshaler for this section.
 		buf := bytes.Buffer{}
 
 		// Now we encode and decode the map[string]any to read everything into the struct.
