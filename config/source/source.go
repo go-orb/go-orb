@@ -1,4 +1,6 @@
-// Package source is a base for all config sources.
+// Package source provides a base for all config sources.
+// It provides a source interface which can be used to create config sources,
+// and a data type, which gets used to pass around parsed config sources.
 package source
 
 import (
@@ -10,8 +12,10 @@ import (
 // Data holds a single config file marshaled to map[string]any,
 // this needs to be done to marshal data back into a components config struct.
 //
-// There's also a the source URL, the used Marshaler a maybe happened error
-// and AdditionalConfigs inside.
+// After a config source (e.g. a yaml file, or remote resource) has been parsed,
+// it will be passed around inside this data type. Each component then gets a
+// list of data sources, which layer by layer get applied to eventually construct
+// your final component config.
 type Data struct {
 	// Source URL.
 	URL *url.URL

@@ -4,22 +4,11 @@ package config
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"net/url"
 
 	"go-micro.dev/v5/config/source"
 )
-
-func getSourceForURL(u *url.URL) (source.Source, error) {
-	for _, cs := range source.Plugins.List() {
-		for _, scheme := range cs.Schemes() {
-			if u.Scheme == scheme {
-				return cs, nil
-			}
-		}
-	}
-
-	return nil, ErrUnknownScheme
-}
 
 // Read reads urls into []Data where Data is map[string]any.
 //
@@ -89,7 +78,6 @@ func Parse(sections []string, configs []source.Data, target any) error {
 			continue
 		}
 
-		// Walk the sections
 		var err error
 
 		data := configData.Data
@@ -107,15 +95,32 @@ func Parse(sections []string, configs []source.Data, target any) error {
 
 		buf := bytes.Buffer{}
 
-		// Now we encode and decode the map[string]any to read everything into the struct.
+		// Here we need to take the data from the configs, in the format of map[string]any
+		// and parse it into the struct. Because we cannot do this in one operation,
+		// we first marshal the map[string]any into a (usually json) byte slice,
+		// We then unmarshal the byte slice into the target struct.
+		// If there is a way to do this in one operation, this code should be updated.
+
 		if err := configData.Marshaler.NewEncoder(&buf).Encode(data); err != nil {
-			return err
+			return fmt.Errorf("parse config: encode: %w", err)
 		}
 
 		if err := configData.Marshaler.NewDecoder(&buf).Decode(target); err != nil {
-			return err
+			return fmt.Errorf("parse config: decode: %w", err)
 		}
 	}
 
 	return nil
+}
+
+func getSourceForURL(u *url.URL) (source.Source, error) {
+	for _, cs := range source.Plugins.List() {
+		for _, scheme := range cs.Schemes() {
+			if u.Scheme == scheme {
+				return cs, nil
+			}
+		}
+	}
+
+	return nil, ErrUnknownScheme
 }

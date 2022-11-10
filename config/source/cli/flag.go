@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+// FlagOption is an option for NewFlag.
+type FlagOption func(*Flag)
+
 // Flag is a Cli Flag and maybe environment variable.
 type Flag struct {
 	Name    string
@@ -21,12 +24,23 @@ type Flag struct {
 	Value   any
 }
 
-func (f *Flag) String() string {
-	return f.Name
-}
+// NewFlag creates a new CLI flag.
+func NewFlag[T any](
+	name string,
+	defaultValue T,
+	opts ...FlagOption,
+) *Flag {
+	options := Flag{
+		Name:    name,
+		Default: defaultValue,
+	}
 
-// FlagOption is an option for NewFlag.
-type FlagOption func(*Flag)
+	for _, o := range opts {
+		o(&options)
+	}
+
+	return &options
+}
 
 // ConfigPath sets the ConfigPath for the flag.
 func ConfigPath(n string) FlagOption {
@@ -74,20 +88,6 @@ func FlagValue[T any](f *Flag) (T, error) {
 	}
 }
 
-// NewFlag creates a new flag.
-func NewFlag[T any](
-	name string,
-	defaultValue T,
-	opts ...FlagOption,
-) *Flag {
-	options := Flag{
-		Name:    name,
-		Default: defaultValue,
-	}
-
-	for _, o := range opts {
-		o(&options)
-	}
-
-	return &options
+func (f *Flag) String() string {
+	return f.Name
 }

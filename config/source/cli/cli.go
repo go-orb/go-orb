@@ -1,4 +1,4 @@
-// Package cli provides the Cli component of orb.
+// Package cli provides the CLI config component of orb.
 package cli
 
 import (
@@ -9,7 +9,6 @@ import (
 
 	"go-micro.dev/v5/codecs"
 	"go-micro.dev/v5/config/source"
-	"go-micro.dev/v5/log"
 	"go-micro.dev/v5/util/container"
 )
 
@@ -18,14 +17,16 @@ var (
 	DefaultCLIPlugin = "urfave" //nolint:gochecknoglobals
 )
 
-// ParseFunc is the subplugin of source/cli.
-type ParseFunc func(config *Config, flags []*Flag, args []string) error
-
 func init() {
 	if err := source.Plugins.Add(New()); err != nil {
 		panic(err)
 	}
 }
+
+var _ (source.Source) = (*Source)(nil)
+
+// ParseFunc is the subplugin of source/cli.
+type ParseFunc func(config *Config, flags []*Flag, args []string) error
 
 // Source cli reads flags and environment variables into a config struct.
 type Source struct{}
@@ -96,8 +97,24 @@ func (s *Source) Read(u *url.URL) source.Data {
 	}
 
 	// Parse all Flags into map[string]any.
-	for _, flag := range Flags.List() {
-		// Special case the "config" flag which might add additionalConfigs.
+	parseFlags(&result, Flags.List())
+
+	mJSON, err := codecs.Plugins.Get("json")
+	if err != nil {
+		result.Error = fmt.Errorf("JSON codec was not found, did you register it by importing?: %w", err)
+	}
+
+	result.Marshaler = mJSON
+
+	return result
+}
+
+// parseFlags takes the list of flags and parses them into a map[string]any
+// contained inside the result.
+func parseFlags(result *source.Data, flags []*Flag) {
+	for _, flag := range flags {
+		// The config flag is a special case, as you can add additional config files.
+		// E.g. `--config cfg-a.yaml --config cfg-b.yaml`, here we keep track of them.
 		if flag.Name == "config" {
 			if tmp, ok := flag.Value.([]string); ok {
 				for _, t := range tmp {
@@ -134,13 +151,4 @@ func (s *Source) Read(u *url.URL) source.Data {
 
 		data[flag.ConfigPath[len(flag.ConfigPath)-1]] = flag.Value
 	}
-
-	mJSON, err := codecs.Plugins.Get("json")
-	if err != nil {
-		log.Error("JSON codec was not found, did you register it by importing?", err)
-	}
-
-	result.Marshaler = mJSON
-
-	return result
 }
