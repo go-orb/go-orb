@@ -11,7 +11,7 @@ import (
 type Option func(*Config)
 
 // Provider is provider function type used by plugins to create a new registry.
-type Provider func(name types.ServiceName, data []source.Data, logger log.Logger, opts ...Option)
+type Provider func(name types.ServiceName, data []source.Data, logger log.Logger, opts ...Option) (*MicroRegistry, error)
 
 // Plugins is the plugins container for registry.
 //
