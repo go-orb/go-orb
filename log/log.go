@@ -5,9 +5,10 @@ import (
 	"context"
 	"fmt"
 
+	"golang.org/x/exp/slog"
+
 	"go-micro.dev/v5/config"
 	"go-micro.dev/v5/config/source"
-	"golang.org/x/exp/slog"
 
 	"go-micro.dev/v5/types/component"
 
@@ -25,7 +26,7 @@ const (
 // Logger is a go-micro logger, it is the slog.Logger, with some added methods
 // to implement the component interface.
 type Logger struct {
-	slog.Logger
+	*slog.Logger
 
 	// config is the config used to create the current logger.
 	// It is not exported as it also acts as a state, and should not be modified
