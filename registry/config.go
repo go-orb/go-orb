@@ -7,10 +7,11 @@ import (
 	"go-micro.dev/v5/log"
 )
 
-const ComponentType = "registry"
-
-var DefaultRegistry = "mdns"
-var DefaultTimout = 600
+//nolint:gochecknoglobals
+var (
+	DefaultRegistry = "mdns"
+	DefaultTimeout  = 600
+)
 
 func init() {
 	err := cli.Flags.Add(cli.NewFlag(
@@ -26,7 +27,7 @@ func init() {
 
 	err = cli.Flags.Add(cli.NewFlag(
 		"registry_timout",
-		DefaultTimout,
+		DefaultTimeout,
 		cli.ConfigPathSlice([]string{"registry", "timeout"}),
 		cli.Usage("Registry timeout."),
 		cli.EnvVars("REGISTRY_TIMEOUT"),
@@ -36,12 +37,19 @@ func init() {
 	}
 }
 
+// TODO: this config misses stuff compared to v4, should that stuff be added here?
+
+// Config is the configuration that can be used in a registry.
 type Config struct {
-	Plugin  string      `json:"plugin,omitempty" yaml:"plugin,omitempty"`
-	Timeout int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`
-	Logger  *log.Config `json:"logger,omitempty" yaml:"logger,omitempty"`
+	Plugin  string     `json:"plugin,omitempty" yaml:"plugin,omitempty"`
+	Timeout int        `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+	Logger  log.Logger `json:"logger,omitempty" yaml:"logger,omitempty"`
 }
 
-func NewConfig() *Config {
-	return &Config{}
+// NewConfig creates a new default config to use with a registry.
+func NewConfig() Config {
+	return Config{
+		Plugin:  DefaultRegistry,
+		Timeout: DefaultTimeout,
+	}
 }

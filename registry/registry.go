@@ -7,6 +7,9 @@ import (
 	"go-micro.dev/v5/types/component"
 )
 
+// ComponentType is the registry component type name.
+const ComponentType = "registry"
+
 var (
 	// ErrNotFound is a not found error when GetService is called.
 	ErrNotFound = errors.New("service not found")
@@ -14,7 +17,7 @@ var (
 	ErrWatcherStopped = errors.New("watcher stopped")
 )
 
-// The registry provides an interface for service discovery
+// Registry provides an interface for service discovery
 // and an abstraction over varying implementations
 // {consul, etcd, zookeeper, ...}.
 type Registry interface {
@@ -27,10 +30,13 @@ type Registry interface {
 	Watch(...WatchOption) (Watcher, error)
 }
 
-type OrbRegistry struct {
+// MicroRegistry is the registry type is returned when you use the dynamic registry
+// provider that selects a registry to use based on the plugin configuration.
+type MicroRegistry struct {
 	Registry
 }
 
+// Service represents a service in a registry.
 type Service struct {
 	Name      string            `json:"name"`
 	Version   string            `json:"version"`
@@ -39,12 +45,15 @@ type Service struct {
 	Nodes     []*Node           `json:"nodes"`
 }
 
+// Node represents a service node in a registry.
+// One service can be comprised of multiple nodes.
 type Node struct {
-	Id       string            `json:"id"`
+	ID       string            `json:"id"`
 	Address  string            `json:"address"`
 	Metadata map[string]string `json:"metadata"`
 }
 
+// Endpoint represents a service endpoint in a registry.
 type Endpoint struct {
 	Name     string            `json:"name"`
 	Request  *Value            `json:"request"`
@@ -52,6 +61,7 @@ type Endpoint struct {
 	Metadata map[string]string `json:"metadata"`
 }
 
+// Value is a value container used in the registry.
 type Value struct {
 	Name   string   `json:"name"`
 	Type   string   `json:"type"`

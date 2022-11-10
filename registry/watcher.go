@@ -45,8 +45,8 @@ func (t EventType) String() string {
 
 // Event is registry event.
 type Event struct {
-	// Id is registry id
-	Id string
+	// ID is registry id
+	ID string
 	// Type defines type of event
 	Type EventType
 	// Timestamp is event timestamp
