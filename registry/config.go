@@ -79,6 +79,13 @@ func (c *Config) config() *Config {
 	return c
 }
 
+// ApplyOptions applies a set of options to the config.
+func (c *Config) ApplyOptions(opts ...Option) {
+	for _, o := range opts {
+		o(c)
+	}
+}
+
 // WithTimeout sets the default registry timeout used.
 func WithTimeout(timeout int) Option {
 	return func(cfg ConfigType) {
