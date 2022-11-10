@@ -1,13 +1,5 @@
 package container
 
-import "errors"
-
-// Errors.
-var (
-	ErrExists  = errors.New("element exists already")
-	ErrUnknown = errors.New("unknown element given")
-)
-
 // Map is a map container for function factories.
 type Map[T any] struct {
 	elements map[string]T

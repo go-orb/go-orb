@@ -1,7 +1,9 @@
 package registry
 
 import (
-	"github.com/go-orb/config/source/cli"
+	"errors"
+
+	"go-micro.dev/v5/config/source/cli"
 	"go-micro.dev/v5/log"
 )
 
@@ -14,20 +16,22 @@ func init() {
 	err := cli.Flags.Add(cli.NewFlag(
 		"registry",
 		DefaultRegistry,
-		cli.CPSlice([]string{"registry", "plugin"}),
+		cli.ConfigPathSlice([]string{"registry", "plugin"}),
 		cli.Usage("Registry for discovery. etcd, mdns"),
+		cli.EnvVars("REGISTRY"),
 	))
-	if err != nil {
+	if err != nil && !errors.Is(err, cli.ErrFlagExists) {
 		panic(err)
 	}
 
 	err = cli.Flags.Add(cli.NewFlag(
 		"registry_timout",
 		DefaultTimout,
-		cli.CPSlice([]string{"registry", "timeout"}),
+		cli.ConfigPathSlice([]string{"registry", "timeout"}),
 		cli.Usage("Registry timeout."),
+		cli.EnvVars("REGISTRY_TIMEOUT"),
 	))
-	if err != nil {
+	if err != nil && !errors.Is(err, cli.ErrFlagExists) {
 		panic(err)
 	}
 }
