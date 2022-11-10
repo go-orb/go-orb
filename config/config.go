@@ -82,6 +82,7 @@ func Read(urls []*url.URL, prependSections []string) ([]source.Data, error) {
 }
 
 // Parse parses the config from config.Read into the given struct.
+// Param target should be a pointer to the config to parse into.
 func Parse(sections []string, configs []source.Data, target any) error {
 	for _, configData := range configs {
 		if configData.Error != nil {
