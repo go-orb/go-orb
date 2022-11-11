@@ -7,10 +7,15 @@ import (
 	"go-micro.dev/v5/util/container"
 )
 
-// Provider is provider function type used by plugins to create a new registry.
-type Provider func(name types.ServiceName, data []source.Data, logger log.Logger, opts ...Option) (*MicroRegistry, error)
+// ProviderFunc is provider function type used by plugins to create a new registry.
+type ProviderFunc func(
+	name types.ServiceName,
+	data []source.Data,
+	logger log.Logger,
+	opts ...Option,
+) (*MicroRegistry, error)
 
 // Plugins is the plugins container for registry.
 //
 //nolint:gochecknoglobals
-var Plugins = container.NewMap[Provider]()
+var Plugins = container.NewMap[ProviderFunc]()
