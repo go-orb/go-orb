@@ -1,11 +1,11 @@
 name: Release
-on: 
+on:
   workflow_dispatch:
     inputs:
       releasePackages:
-        description: 'Release Packages'     
+        description: "Release Packages"
         required: true
-        default: 'all'
+        default: "all"
 
 jobs:
   release:

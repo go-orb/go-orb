@@ -55,7 +55,7 @@ function install_deps() {
 			script="scripts/deps/${dep}.sh"
 
 			# Check if script exists
-			if [[ -f "${script}" ]]; then
+			if [[ -f ${script} ]]; then
 				echo "Installing depencies for $dep"
 				bash "${script}"
 				echo "$dep"
@@ -71,7 +71,7 @@ function kill_deps() {
 		if grep -q "${dep}" <<<"${1}"; then
 			# Itterate over all PIDs and kill them.
 			pids=($(pgrep "$dep"))
-			if [[ "${#pids[@]}" -ne 0 ]]; then
+			if [[ ${#pids[@]} -ne 0 ]]; then
 				echo "Killing:"
 			fi
 
@@ -233,14 +233,14 @@ function create_summary() {
 case $1 in
 "lint")
 	dirs=($(get_dirs "${2}"))
-	[[ "${#dirs[@]}" -eq 0 ]] && print_red "No changed Go files detected" && exit 0
+	[[ ${#dirs[@]} -eq 0 ]] && print_red "No changed Go files detected" && exit 0
 
 	print_list "${dirs[@]}"
 	run_linter "${dirs[@]}"
 	;;
 "test")
 	dirs=($(get_dirs "${2}"))
-	[[ "${#dirs[@]}" -eq 0 ]] && print_red "No changed Go files detected" && exit 0
+	[[ ${#dirs[@]} -eq 0 ]] && print_red "No changed Go files detected" && exit 0
 
 	print_list "${dirs[@]}"
 
@@ -248,7 +248,7 @@ case $1 in
 	;;
 "summary")
 	dirs=($(get_dirs "${2}"))
-	[[ "${#dirs[@]}" -eq 0 ]] && print_red "No changed Go files detected" && exit 0
+	[[ ${#dirs[@]} -eq 0 ]] && print_red "No changed Go files detected" && exit 0
 
 	print_list "${dirs[@]}"
 	create_summary "${dirs[@]}"

@@ -1,6 +1,6 @@
-# Orb
+# go-micro.dev/v5
 
-Orb is a framework for distributed systems development, it can be seen as the successor of go-micro and maybe will be `go-micro.dev/v5`.
+Micro is a framework for distributed systems development, it can be seen as the successor of `go-micro.dev/v4`.
 
 ## WIP
 
@@ -13,4 +13,4 @@ This project is a work in progress, please do not use yet!
 
 ## License
 
-Orb is Apache 2.0 licensed.
+go-micro is Apache 2.0 licensed.

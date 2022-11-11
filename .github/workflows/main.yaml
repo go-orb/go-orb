@@ -2,7 +2,7 @@ name: Unit Tests
 on:
   push:
     branches:
-      - 'main'
+      - "main"
 jobs:
   golangci:
     name: Lint

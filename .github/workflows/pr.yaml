@@ -2,8 +2,8 @@ name: PR Tests
 on:
   push:
     branches:
-      - '**'
-      - '!main'
+      - "**"
+      - "!main"
   pull_request:
 jobs:
   golangci:

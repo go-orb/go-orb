@@ -35,6 +35,6 @@ func Log(level slog.Level, msg string, args ...any) {
 }
 
 // LogAttrs calls Logger.LogAttrs on the default logger.
-func LogAttrs(level slog.Level, msg string, attrs ...slog.Attr) {
+func LogAttrs(level slog.Level, msg string, attrs ...slog.Attr) { //nolint:revive
 	slog.Default().LogAttrsDepth(0, level, msg, attrs...)
 }
