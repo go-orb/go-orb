@@ -178,7 +178,7 @@ linters:
     - ifshort
     - structcheck
     - deadcode
-    # - nosnakecase
+    - nosnakecase # Deprecated by the owner.
     - interfacer
     - maligned
     - scopelint
