@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"go-micro.dev/v5/config/source"
+	"go-micro.dev/v5/types"
 )
 
 // Read reads urls into []Data where Data is map[string]any.
@@ -18,8 +19,8 @@ import (
 // prependSections is for url's that don't support sections (cli for example),
 // their result will be prepended, also you can add sections to a single url
 // with "?add_section=true".
-func Read(urls []*url.URL, prependSections []string) ([]source.Data, error) {
-	result := []source.Data{}
+func Read(urls []*url.URL, prependSections []string) (types.ConfigData, error) {
+	result := types.ConfigData{}
 
 	for _, myURL := range urls {
 		configSource, err := getSourceForURL(myURL)
@@ -72,8 +73,8 @@ func Read(urls []*url.URL, prependSections []string) ([]source.Data, error) {
 
 // Parse parses the config from config.Read into the given struct.
 // Param target should be a pointer to the config to parse into.
-func Parse(sections []string, configs []source.Data, target any) error {
-	for _, configData := range configs {
+func Parse(sections []string, configs types.ConfigData, target any) error {
+	for _, configData := range []source.Data(configs) {
 		if configData.Error != nil {
 			continue
 		}

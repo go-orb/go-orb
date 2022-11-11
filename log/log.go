@@ -8,7 +8,6 @@ import (
 	"golang.org/x/exp/slog"
 
 	"go-micro.dev/v5/config"
-	"go-micro.dev/v5/config/source"
 
 	"go-micro.dev/v5/types/component"
 
@@ -48,7 +47,11 @@ func New(cfg Config) (Logger, error) {
 
 // ProvideLogger provides a new logger.
 // It will set the slog.Logger as package wide default logger.
-func ProvideLogger(serviceName types.ServiceName, data []source.Data, opts ...Option) (Logger, error) {
+func ProvideLogger(
+	serviceName types.ServiceName,
+	data types.ConfigData,
+	opts ...Option,
+) (Logger, error) {
 	cfg := NewConfig()
 
 	for _, o := range opts {

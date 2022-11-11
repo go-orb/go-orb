@@ -16,6 +16,7 @@ const (
 	DefaultSetDefault = true
 )
 
+// Option is a logger WithXXX Option.
 type Option func(*Config)
 
 // Config is the loggers config.
@@ -39,7 +40,8 @@ func NewConfig() Config {
 }
 
 // WithLevel sets the log level to user.
-// TODO: would love to take in something like (	slog.Level | string | constraints.Integer) here, but not sure how that would work
+// TODO: would love to take in something like (	slog.Level | string | constraints.Integer) here,
+// but not sure how that would work.
 func WithLevel(level slog.Level) Option {
 	return func(c *Config) {
 		c.Level = level
