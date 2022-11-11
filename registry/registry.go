@@ -7,6 +7,8 @@ import (
 	"go-micro.dev/v5/types/component"
 )
 
+// TODO: create testing suite, based on MDNS tests
+
 // ComponentType is the registry component type name.
 const ComponentType = "registry"
 
