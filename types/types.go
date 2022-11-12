@@ -7,12 +7,30 @@ import (
 	"go-micro.dev/v5/config/source"
 )
 
+//nolint:gochecknoglobals
+var (
+	// DefaultSeperator is used to split a service name into config section keys.
+	DefaultSeperator = "."
+)
+
 // ServiceName is the name of the Service.
 type ServiceName string
 
-// SplitServiceName splits the serviceName into a string slice.
+// SplitServiceName splits the serviceName into a string slice, separated by
+// the global DefaultSeperator. Each item will be used as a key in the config.
+//
+// Example:
+//
+//	ServiceName: "com.example.service"
+//	Config:
+//	```yaml
+//	com:
+//	  example:
+//	    service:
+//	      ...
+//	```
 func SplitServiceName(serviceName ServiceName) []string {
-	return strings.Split(string(serviceName), ".")
+	return strings.Split(string(serviceName), DefaultSeperator)
 }
 
 // ConfigData holds a single config file marshaled to map[string]any,
