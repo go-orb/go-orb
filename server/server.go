@@ -40,6 +40,8 @@
 // type, such as the go-micro HTTP server, or the go-micro gRPC server.
 package server
 
+// TODO: unit tests through mocking.
+
 import (
 	"context"
 	"fmt"
@@ -183,7 +185,7 @@ func (s *MicroServer) createEntrypoints() error {
 			return err
 		}
 
-		entrypoint, err := provider(name, s.service, s.configData, s.Logger, cfg, template.Options...)
+		entrypoint, err := provider(name, s.service, s.configData, s.Logger, cfg)
 		if err != nil {
 			return fmt.Errorf("create entrypoint %s (%s): %w", name, template.Type, err)
 		}

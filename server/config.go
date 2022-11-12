@@ -25,8 +25,6 @@ type Config struct {
 
 	// Templates contains a set of entrypoint templates to create, indexed by name.
 	Templates EntrypointTemplates
-
-	// TODO: think about how we map the yaml config the internal config
 }
 
 // NewConfig creates a new server config with default values as starting point,
