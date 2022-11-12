@@ -19,7 +19,7 @@ type RegistrationFunc func(srv any)
 // EntrypointOption are functional options for entrypoints.
 type EntrypointOption func(v any)
 
-// NewDefault is a factory function type for entrypoint defaults, registerd by the plugins.
+// NewDefault is a factory function type for entrypoint defaults, registered by the plugins.
 type NewDefault func(service types.ServiceName, data ...types.ConfigData) (any, error)
 
 // Entrypoint is a server, and represents an entrypoint into the web.

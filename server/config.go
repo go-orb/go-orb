@@ -6,6 +6,7 @@ import (
 	"go-micro.dev/v5/types"
 )
 
+//nolint:gochecknoglobals
 var (
 	// DefaultConfigSection is the section key used in config files used to
 	// configure the server options.
@@ -19,7 +20,7 @@ type Option func(*Config)
 // entrypoints will be created, and the default config used for each entrypoint.
 type Config struct {
 	// Defaults is the list of defaults for a server.
-	// Provisioned with the factory methods registerd by the entrypoint plugins.
+	// Provisioned with the factory methods registered by the entrypoint plugins.
 	Defaults map[string]any
 
 	// Templates contains a set of entrypoint templates to create, indexed by name.

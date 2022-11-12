@@ -4,8 +4,10 @@ import (
 	"go-micro.dev/v5/util/container"
 )
 
-// Plugins is the plugins container for registry.
-//
 //nolint:gochecknoglobals
-var Plugins = container.NewMap[ProviderFunc]()
-var NewDefaults = container.NewMap[NewDefault]()
+var (
+	// Plugins is the plugins container for registry.
+	Plugins = container.NewMap[ProviderFunc]()
+	// NewDefaults is the factory container for defaults.
+	NewDefaults = container.NewMap[NewDefault]()
+)

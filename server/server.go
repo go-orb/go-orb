@@ -1,8 +1,51 @@
+// Package server provides the go-micro server. It is responsible for managing
+// entrypoints.
+//
+// # Entrypoints
+//
+// Entrypoints are the actual servers used that listen for incoming requests.
+// Various entrypoint plugins are provided by default, but it is straight forward
+// to create your own entrypoint implementation. Entrypoints are configured
+// through functional options, and your config file. Entrypionts can be
+// dynamically added, modified, or disabled through your config files.
+//
+// # Handler registrations
+//
+// Entrypoints can be used in any number of combinations. The handlers are
+// registred by providing registration functions to the entrypoint config.
+// A handler registration function takes care of registering the handler in
+// the server specific way. While internal project handlers are designed such
+// that they can be used with any type of server out of the box, the way
+// they are regisered usually differs per server type. Registration functions
+// take care of this by switching on the server type. This also allows you to
+// create server specific handlers if necessary.
+//
+// # Internal handlers
+//
+// The server has been architected with protobuf service definitions as primary
+// handler types. Thus registration of these has been made as easy as possible.
+// For proto services defined within your go-micro project, registration
+// functions will be automatically generated for you, and you only need to
+// provide the handler implementation, everything beyond is taken care of.
+//
+// # External handlers
+//
+// You may wish to register either external proto service handlers, or server
+// specific handlers such as any existing HTTP handlers. THis is also possible.
+// External proto services can be registered with the help of the
+// NewRegistrationFunc type, which utliizes the power of generics to allow you
+// to convert any gRPC registration into an entrypoint registration function.
+// It is also possible to manually define your own registration functions. These
+// must take one parameter of type any and convert it into the required server
+// type, such as the go-micro HTTP server, or the go-micro gRPC server.
 package server
 
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/hashicorp/go-multierror"
 
 	"go-micro.dev/v5/config"
 	"go-micro.dev/v5/log"
@@ -12,9 +55,10 @@ import (
 
 var _ component.Component = (*MicroServer)(nil)
 
+// ComponentType is the server component type name.
 const ComponentType component.Type = "server"
 
-// MicroServer is repsonsible for managing entrypoints. Entrypoints are the actual
+// MicroServer is repsponsible for managing entrypoints. Entrypoints are the actual
 // servers that bind to a port and accept connections. Entrypoints can be dynamically configured.
 //
 // For more info look at the entrypoint types.
@@ -36,7 +80,7 @@ type MicroServer struct {
 }
 
 // ProvideServer creates a new server.
-func ProviderServer(name types.ServiceName, data types.ConfigData, logger log.Logger, opts ...Option) (*MicroServer, error) {
+func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Logger, opts ...Option) (*MicroServer, error) {
 	cfg, err := NewConfig(name, data, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("create http server config: %w", err)
@@ -70,9 +114,15 @@ func ProviderServer(name types.ServiceName, data types.ConfigData, logger log.Lo
 
 // Start will start the HTTP servers on all entrypoints.
 func (s *MicroServer) Start() error {
-	// TODO: somehow incorporate the yaml entrypoints here; if yaml entry not in map, take "use" key into account, error when not found
 	for addr, entrypoint := range s.entrypoints {
 		if err := entrypoint.Start(); err != nil {
+			// Stop any started entrypoints before returning error to give them a chance
+			// to free up resources.
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+
+			_ = s.Stop(ctx) //nolint:errcheck
+
 			return fmt.Errorf("start entrypoint (%s): %w", addr, err)
 		}
 	}
@@ -96,7 +146,7 @@ func (s *MicroServer) Stop(ctx context.Context) error {
 
 	for i := 0; i < len(s.entrypoints); i++ {
 		if nerr := <-errChan; nerr != nil {
-			err = fmt.Errorf("stop entrypoint: %w", nerr)
+			err = multierror.Append(err, fmt.Errorf("stop entrypoint: %w", nerr))
 		}
 	}
 
@@ -123,24 +173,17 @@ func (s *MicroServer) createEntrypoints() error {
 			continue
 		}
 
-		newEntrypoint, err := Plugins.Get(template.Type)
+		provider, err := s.getEntrypointProvider(template.Type)
 		if err != nil {
-			return fmt.Errorf("entrypoint provider for %s not found, did you register it by importing the package?", template.Type)
+			return err
 		}
 
-		cfg := s.Config.Defaults[template.Type]
-
-		inherit := c.Inherit(name)
-		if len(inherit) > 0 {
-			var ok bool
-
-			cfg, ok = s.Config.Templates[inherit]
-			if !ok {
-				return fmt.Errorf("%s failed to inherit config from %s, entrypoint not found", name, inherit)
-			}
+		cfg, err := s.getEntrypointConfig(name, template.Type, c)
+		if err != nil {
+			return err
 		}
 
-		entrypoint, err := newEntrypoint(name, s.service, s.configData, s.Logger, cfg, template.Options...)
+		entrypoint, err := provider(name, s.service, s.configData, s.Logger, cfg, template.Options...)
 		if err != nil {
 			return fmt.Errorf("create entrypoint %s (%s): %w", name, template.Type, err)
 		}
@@ -149,4 +192,31 @@ func (s *MicroServer) createEntrypoints() error {
 	}
 
 	return nil
+}
+
+func (s *MicroServer) getEntrypointProvider(plugin string) (ProviderFunc, error) {
+	provider, err := Plugins.Get(plugin)
+	if err != nil {
+		return nil, fmt.Errorf("entrypoint provider for %s not found, did you register it by importing the package?", plugin)
+	}
+
+	return provider, nil
+}
+
+// getEntrypointConfig checks if a config needs to be inherited from a different
+// entrypiont, and otherwise returns the default config.
+func (s *MicroServer) getEntrypointConfig(name string, plugin string, c fileConfigServer) (any, error) {
+	cfg := s.Config.Defaults[plugin]
+
+	inherit := c.Inherit(name)
+	if len(inherit) > 0 {
+		var ok bool
+
+		cfg, ok = s.Config.Templates[inherit]
+		if !ok {
+			return nil, fmt.Errorf("%s failed to inherit config from %s, entrypoint not found", name, inherit)
+		}
+	}
+
+	return cfg, nil
 }
