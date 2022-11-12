@@ -17,6 +17,8 @@ import (
 // This is here to make sure Logger implements the component interface.
 var _ component.Component = (*Logger)(nil)
 
+var DefaultConfigSection = "logger"
+
 const (
 	// ComponentType is the name of the component type logger.
 	ComponentType component.Type = "logger"
@@ -59,7 +61,7 @@ func ProvideLogger(
 	}
 
 	sections := types.SplitServiceName(serviceName)
-	if err := config.Parse(append(sections, "logger"), data, cfg); err != nil {
+	if err := config.Parse(append(sections, DefaultConfigSection), data, cfg); err != nil {
 		return Logger{}, err
 	}
 
@@ -181,7 +183,7 @@ func (l Logger) Start() error {
 }
 
 // Stop no-op.
-func (l Logger) Stop() error {
+func (l Logger) Stop(_ context.Context) error {
 	return nil
 }
 
