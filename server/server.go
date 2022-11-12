@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"go-micro.dev/v5/config"
 	"go-micro.dev/v5/log"
 	"go-micro.dev/v5/types"
 	"go-micro.dev/v5/types/component"
@@ -28,6 +29,10 @@ type MicroServer struct {
 	// entrypoints are all created entrypoints. All of the entrypoints in this
 	// map will be started upon the call of Start method.
 	entrypoints map[string]Entrypoint
+
+	// fileConfig is used to parse the fileConfig into, it is used to extract
+	// the list of entrypoints defined in the fileConfig.
+	fileConfig map[string]fileConfigServer
 }
 
 // ProvideServer creates a new server.
@@ -43,6 +48,17 @@ func ProviderServer(name types.ServiceName, data types.ConfigData, logger log.Lo
 		Config:      cfg,
 		Logger:      logger,
 		entrypoints: make(map[string]Entrypoint),
+		fileConfig:  make(map[string]fileConfigServer),
+	}
+
+	// Set enabled to true by default for all registered plugins.
+	for plugin := range Plugins.All() {
+		s.fileConfig[plugin] = fileConfigServer{Enabled: true}
+	}
+
+	sections := types.SplitServiceName(name)
+	if err := config.Parse(append(sections, DefaultConfigSection), data, &s.fileConfig); err != nil {
+		return &s, err
 	}
 
 	if err := s.createEntrypoints(); err != nil {
@@ -54,6 +70,7 @@ func ProviderServer(name types.ServiceName, data types.ConfigData, logger log.Lo
 
 // Start will start the HTTP servers on all entrypoints.
 func (s *MicroServer) Start() error {
+	// TODO: somehow incorporate the yaml entrypoints here; if yaml entry not in map, take "use" key into account, error when not found
 	for addr, entrypoint := range s.entrypoints {
 		if err := entrypoint.Start(); err != nil {
 			return fmt.Errorf("start entrypoint (%s): %w", addr, err)
@@ -100,12 +117,30 @@ func (s *MicroServer) String() string {
 
 func (s *MicroServer) createEntrypoints() error {
 	for name, template := range s.Config.Templates {
+		// If a plugin or specific entrypoint has been globally disabled in config, skip.
+		c := s.fileConfig[template.Type]
+		if !c.Enabled || !c.IsEnabled(name) {
+			continue
+		}
+
 		newEntrypoint, err := Plugins.Get(template.Type)
 		if err != nil {
 			return fmt.Errorf("entrypoint provider for %s not found, did you register it by importing the package?", template.Type)
 		}
 
-		entrypoint, err := newEntrypoint(name, s.service, s.configData, s.Logger, template.Options...)
+		cfg := s.Config.Defaults[template.Type]
+
+		inherit := c.Inherit(name)
+		if len(inherit) > 0 {
+			var ok bool
+
+			cfg, ok = s.Config.Templates[inherit]
+			if !ok {
+				return fmt.Errorf("%s failed to inherit config from %s, entrypoint not found", name, inherit)
+			}
+		}
+
+		entrypoint, err := newEntrypoint(name, s.service, s.configData, s.Logger, cfg, template.Options...)
 		if err != nil {
 			return fmt.Errorf("create entrypoint %s (%s): %w", name, template.Type, err)
 		}

@@ -20,7 +20,7 @@ type RegistrationFunc func(srv any)
 type EntrypointOption func(v any)
 
 // NewDefault is a factory function type for entrypoint defaults, registerd by the plugins.
-type NewDefault func() any
+type NewDefault func(service types.ServiceName, data ...types.ConfigData) (any, error)
 
 // Entrypoint is a server, and represents an entrypoint into the web.
 type Entrypoint interface {
@@ -43,10 +43,14 @@ type Entrypoint interface {
 // ProviderFuncs are registered in the plugins container, and can be called
 // at runtime depending on the configuration.
 type ProviderFunc func(
+	// name needs to be explicitly provided and set, eventhough the config also
+	// contains the name, as the config may be inherited and contain a different
+	// name.
 	name string,
 	service types.ServiceName,
 	data types.ConfigData,
 	logger log.Logger,
+	cfg any,
 	opts ...EntrypointOption,
 ) (Entrypoint, error)
 
@@ -56,9 +60,11 @@ type ProviderFunc func(
 // for you through the provided server options.
 type EntrypointTemplate struct {
 	// Type is the entrypoint type to use. To use a specific server type as entrypiont
-	// the provider function needs to be registerd as an entrypoint plugin. This
+	// the provider function needs to be registered as an entrypoint plugin. This
 	// is done by importing the package, typically done with a named import as _.
 	Type string
+
+	Config any
 
 	// Options are the options used to create the config. The default options
 	// are used as starting point, to which this list of options will be applied.

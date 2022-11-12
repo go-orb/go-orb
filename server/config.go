@@ -1,7 +1,8 @@
 package server
 
 import (
-	"go-micro.dev/v5/config"
+	"fmt"
+
 	"go-micro.dev/v5/types"
 )
 
@@ -23,29 +24,31 @@ type Config struct {
 
 	// Templates contains a set of entrypoint templates to create, indexed by name.
 	Templates EntrypointTemplates
+
+	// TODO: think about how we map the yaml config the internal config
 }
 
 // NewConfig creates a new server config with default values as starting point,
 // after which all the functional options are applied. The config data passed
 // in, as parsed from the optional config files and CLI, has the highest priority.
-func NewConfig(serviceName types.ServiceName, data types.ConfigData, options ...Option) (Config, error) {
+func NewConfig(service types.ServiceName, data types.ConfigData, options ...Option) (Config, error) {
 	cfg := Config{
 		Defaults:  make(map[string]any),
 		Templates: make(EntrypointTemplates),
 	}
 
-	// Provision defaults from all entrypoints.
+	var err error
+
+	// Provision defaults for all entrypoints. Factories are provided by the plugins.
 	factories := NewDefaults.All()
 	for name, factory := range factories {
-		cfg.Defaults[name] = factory()
+		cfg.Defaults[name], err = factory(service, data)
+		if err != nil {
+			return cfg, fmt.Errorf("create %s default config: %w", name, err)
+		}
 	}
 
 	cfg.ApplyOptions(options...)
-
-	sections := types.SplitServiceName(serviceName)
-	if err := config.Parse(append(sections, DefaultConfigSection), data, &cfg); err != nil {
-		return cfg, err
-	}
 
 	return cfg, nil
 }
