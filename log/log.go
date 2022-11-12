@@ -17,12 +17,12 @@ import (
 // This is here to make sure Logger implements the component interface.
 var _ component.Component = (*Logger)(nil)
 
-var DefaultConfigSection = "logger"
+// DefaultConfigSection is the section key used in config files used to
+// configure the logger options.
+var DefaultConfigSection = "logger" //nolint:gochecknoglobals
 
-const (
-	// ComponentType is the name of the component type logger.
-	ComponentType component.Type = "logger"
-)
+// ComponentType is the name of the component type logger.
+const ComponentType component.Type = "logger"
 
 // Logger is a go-micro logger, it is the slog.Logger, with some added methods
 // to implement the component interface.
