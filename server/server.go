@@ -80,10 +80,10 @@ type MicroServer struct {
 }
 
 // ProvideServer creates a new server.
-func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Logger, opts ...Option) (*MicroServer, error) {
+func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Logger, opts ...Option) (MicroServer, error) {
 	cfg, err := NewConfig(name, data, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("create http server config: %w", err)
+		return MicroServer{}, fmt.Errorf("create http server config: %w", err)
 	}
 
 	s := MicroServer{
@@ -102,14 +102,14 @@ func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Log
 
 	sections := types.SplitServiceName(name)
 	if err := config.Parse(append(sections, DefaultConfigSection), data, &s.fileConfig); err != nil {
-		return &s, err
+		return s, err
 	}
 
 	if err := s.createEntrypoints(); err != nil {
-		return nil, err
+		return MicroServer{}, err
 	}
 
-	return &s, nil
+	return s, nil
 }
 
 // Start will start the HTTP servers on all entrypoints.
@@ -168,7 +168,11 @@ func (s *MicroServer) String() string {
 func (s *MicroServer) createEntrypoints() error {
 	for name, template := range s.Config.Templates {
 		// If a plugin or specific entrypoint has been globally disabled in config, skip.
-		c := s.fileConfig[template.Type]
+		c, ok := s.fileConfig[template.Type]
+		if !ok {
+			return fmt.Errorf("invalid entrypoint plugin: %s", template.Type)
+		}
+
 		if !c.Enabled || !c.IsEnabled(name) {
 			continue
 		}
@@ -178,7 +182,7 @@ func (s *MicroServer) createEntrypoints() error {
 			return err
 		}
 
-		cfg, err := s.getEntrypointConfig(name, template.Type, c)
+		cfg, err := s.getEntrypointConfig(name, c)
 		if err != nil {
 			return err
 		}
@@ -205,8 +209,13 @@ func (s *MicroServer) getEntrypointProvider(plugin string) (ProviderFunc, error)
 
 // getEntrypointConfig checks if a config needs to be inherited from a different
 // entrypiont, and otherwise returns the default config.
-func (s *MicroServer) getEntrypointConfig(name string, plugin string, c fileConfigServer) (any, error) {
-	cfg := s.Config.Defaults[plugin]
+func (s *MicroServer) getEntrypointConfig(name string, c fileConfigServer) (any, error) {
+	t, ok := s.Config.Templates[name]
+	if !ok {
+		return nil, fmt.Errorf("no template found for name: %s", name)
+	}
+
+	cfg := t.Config
 
 	inherit := c.Inherit(name)
 	if len(inherit) > 0 {
