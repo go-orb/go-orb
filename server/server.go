@@ -69,13 +69,11 @@ type MicroServer struct {
 	configData types.ConfigData
 
 	Logger log.Logger
-
 	Config Config
 
 	// entrypoints are all created entrypoints. All of the entrypoints in this
 	// map will be started upon the call of Start method.
 	entrypoints map[string]Entrypoint
-
 	// fileConfig is used to parse the fileConfig into, it is used to extract
 	// the list of entrypoints defined in the fileConfig.
 	fileConfig map[string]fileConfigServer
