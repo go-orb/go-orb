@@ -30,20 +30,20 @@ import (
     "net/url"
 
     "go-micro.dev/v5/config"
-    _ "go-micro.dev/v5/config-plugins/marshaler/json"
-    _ "go-micro.dev/v5/config-plugins/marshaler/yaml"
-    _ "go-micro.dev/v5/config-plugins/source/file"
-    _ "go-micro.dev/v5/config-plugins/source/http"
+    _ "github.com/go-micro/plugins/codecs/json/v5"
+    _ "github.com/go-micro/plugins/codecs/yaml/v5"
+    _ "github.com/go-micro/plugins/config/source/file/v5"
+    _ "github.com/go-micro/plugins/config/source/http/v5"
 )
 
 func main() {
-    // https://raw.githubusercontent.com/go-orb/config-plugins/main/test/data/set1/registry1.yaml
-    u1, err := url.Parse("./data/set1/registry1")
+    // https://raw.githubusercontent.com/go-micro/plugins/main/config/tests/data/set1/registry1.yaml
+    u1, err := url.Parse("./data/set1/registry1.yaml")
     if err != nil {
         log.Fatal(err)
     }
 
-    u2, err := url.Parse("https://raw.githubusercontent.com/go-orb/config-plugins/main/test/data/set1/registry2.json")
+    u2, err := url.Parse("https://raw.githubusercontent.com/go-micro/plugins/main/config/tests/data/set1/registry2.json")
     if err != nil {
         log.Fatal(err)
     }
