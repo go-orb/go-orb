@@ -17,8 +17,6 @@ import (
 	"go-micro.dev/v5/util/container"
 )
 
-// TODO: implement
-
 func init() {
 	if err := Plugins.Add("mock", NewEntrypointMock); err != nil {
 		panic(err)
@@ -55,6 +53,7 @@ func TestMock(t *testing.T) {
 	)
 	require.NoError(t, err, "failed to create server")
 
+	// Validate entrypoints.
 	require.Equal(t, len(srv.entrypoints), 2, "expected 2 entrypoints")
 	require.NotNil(t, srv.entrypoints[ep1], "entrypoint 1 not found")
 	require.NotNil(t, srv.entrypoints[ep2], "entrypoint 2 not found")
@@ -268,7 +267,7 @@ func WithMockName(name string) MockOption {
 	}
 }
 
-func WithTest(t *testing.T) MockOption {
+func WithTest(t *testing.T) MockOption { //nolint:thelper
 	return func(c *ConfigMock) {
 		c.t = t
 	}
