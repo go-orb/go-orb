@@ -12,11 +12,11 @@
 // # Handler registrations
 //
 // Entrypoints can be used in any number of combinations. The handlers are
-// registred by providing registration functions to the entrypoint config.
+// registered by providing registration functions to the entrypoint config.
 // A handler registration function takes care of registering the handler in
 // the server specific way. While internal project handlers are designed such
 // that they can be used with any type of server out of the box, the way
-// they are regisered usually differs per server type. Registration functions
+// they are registered usually differs per server type. Registration functions
 // take care of this by switching on the server type. This also allows you to
 // create server specific handlers if necessary.
 //
@@ -39,8 +39,6 @@
 // must take one parameter of type any and convert it into the required server
 // type, such as the go-micro HTTP server, or the go-micro gRPC server.
 package server
-
-// TODO: unit tests through mocking.
 
 import (
 	"context"

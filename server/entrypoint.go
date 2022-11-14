@@ -45,7 +45,7 @@ type ProviderFunc func(
 	service types.ServiceName,
 	data types.ConfigData,
 	logger log.Logger,
-	cfg any,
+	config any,
 ) (Entrypoint, error)
 
 // EntrypointTemplate is the configuation used to create a single entrypoint.
