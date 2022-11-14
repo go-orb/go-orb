@@ -15,7 +15,7 @@ type Component interface {
 	// The context will contain a timeout, and cancelation should be respected.
 	Stop(context.Context) error
 
-	// Type returns the component type, e.g. broker
+	// Type returns the component type, e.g. broker.
 	Type() Type
 
 	// String returns the component plugin name.
