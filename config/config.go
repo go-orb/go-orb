@@ -26,6 +26,7 @@ func Read(urls []*url.URL, prependSections []string) (types.ConfigData, error) {
 		configSource, err := getSourceForURL(myURL)
 		if err != nil {
 			result = append(result, source.Data{URL: myURL, Error: err})
+			return result, err
 		}
 
 		dResult := configSource.Read(myURL)
