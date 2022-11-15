@@ -7,7 +7,7 @@ import "time"
 type Watcher interface {
 	// Next is a blocking call
 	Next() (*Result, error)
-	Stop()
+	Stop() error
 }
 
 // Result is returned by a call to Next on

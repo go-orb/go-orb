@@ -10,7 +10,7 @@ import (
 //nolint:gochecknoglobals
 var (
 	DefaultRegistry = "mdns"
-	DefaultTimeout  = 600
+	DefaultTimeout  = 100
 )
 
 var _ (ConfigType) = (*Config)(nil)
@@ -55,10 +55,10 @@ func init() {
 	}
 
 	err = cli.Flags.Add(cli.NewFlag(
-		"registry_timout",
+		"registry_timeout",
 		DefaultTimeout,
 		cli.ConfigPathSlice([]string{"registry", "timeout"}),
-		cli.Usage("Registry timeout."),
+		cli.Usage("Registry timeout in milliseconds."),
 		cli.EnvVars("REGISTRY_TIMEOUT"),
 	))
 	if err != nil && !errors.Is(err, cli.ErrFlagExists) {

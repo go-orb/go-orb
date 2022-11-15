@@ -25,10 +25,19 @@ var (
 type Registry interface {
 	component.Component
 
+	// Register registers a service within the registry.
 	Register(*Service, ...RegisterOption) error
+
+	// Deregister deregisters a service within the registry.
 	Deregister(*Service, ...DeregisterOption) error
+
+	// GetService returns a service from the registry.
 	GetService(string, ...GetOption) ([]*Service, error)
+
+	// ListServices lists services within the registry.
 	ListServices(...ListOption) ([]*Service, error)
+
+	// Watch returns a Watcher which you can watch on.
 	Watch(...WatchOption) (Watcher, error)
 }
 
