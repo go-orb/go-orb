@@ -42,6 +42,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -57,6 +58,8 @@ var _ component.Component = (*MicroServer)(nil)
 
 // ComponentType is the server component type name.
 const ComponentType component.Type = "server"
+
+var ErrEntrypointNotFound = errors.New("requested entrypoint not found")
 
 // MicroServer is repsponsible for managing entrypoints. Entrypoints are the actual
 // servers that bind to a port and accept connections. Entrypoints can be dynamically configured.
@@ -151,6 +154,16 @@ func (s *MicroServer) Stop(ctx context.Context) error {
 	close(errChan)
 
 	return err
+}
+
+// GetEntrypoint returns the requested entrypoint, if present.
+func (s *MicroServer) GetEntrypoint(name string) (Entrypoint, error) {
+	e, ok := s.entrypoints[name]
+	if !ok {
+		return nil, ErrEntrypointNotFound
+	}
+
+	return e, nil
 }
 
 // Type returns the micro component type.

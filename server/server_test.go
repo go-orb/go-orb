@@ -75,6 +75,17 @@ func TestMock(t *testing.T) {
 	count, err = stopCounter.Get(ep2)
 	require.NoError(t, err, "startedfailed to fetch stop count, ep has not been stopped")
 	require.Equal(t, count, 1, "sever should have been stopped")
+
+	e, err := srv.GetEntrypoint(ep1)
+	require.NoError(t, err, "failed to fetch entrypoint 1")
+	require.Equal(t, e.Name(), ep1)
+
+	e, err = srv.GetEntrypoint(ep2)
+	require.NoError(t, err, "failed to fetch entrypoint 2")
+	require.Equal(t, e.Name(), ep2)
+
+	_, err = srv.GetEntrypoint("fake")
+	require.Error(t, err, "fetching invalid entrypoint should return error")
 }
 
 func TestInvalidEntrypoint(t *testing.T) {
