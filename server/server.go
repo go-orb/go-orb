@@ -59,6 +59,7 @@ var _ component.Component = (*MicroServer)(nil)
 // ComponentType is the server component type name.
 const ComponentType component.Type = "server"
 
+// ErrEntrypointNotFound indicates that an entrypoint hasn't been found.
 var ErrEntrypointNotFound = errors.New("requested entrypoint not found")
 
 // MicroServer is repsponsible for managing entrypoints. Entrypoints are the actual
