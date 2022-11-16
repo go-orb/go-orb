@@ -1,9 +1,15 @@
 package server
 
 import (
+	"errors"
+	"fmt"
+
+	"go-micro.dev/v5/codecs"
+	"go-micro.dev/v5/config/source"
 	"go-micro.dev/v5/log"
 	"go-micro.dev/v5/types"
 	"go-micro.dev/v5/types/component"
+	"go-micro.dev/v5/util/slicemap"
 )
 
 // RegistrationFunc is executed to register a handler to a server (entrypoint)
@@ -73,14 +79,6 @@ type EntrypointTemplate struct {
 	Config any
 }
 
-// EntrypointTemplates is a collection of entrypoint templates.
-// The map index is the entrypoint name.
-//
-// Each entrypoint needs a unique name, as each entrypoint can be dynamically
-// configured by referencing the name. The default name used in an entrypoint
-// is the format of "http-<uuid>", used if no custom name is provided.
-type EntrypointTemplates map[string]EntrypointTemplate
-
 // NewRegistrationFunc takes a registration function and handler and returns
 // a registration func that can be used with one specific server type.
 //
@@ -98,4 +96,91 @@ func NewRegistrationFunc[Tsrv any, Thandler any](register func(Tsrv, Thandler), 
 
 		register(sr, handler)
 	})
+}
+
+// EntrypointConfig provides a primitive way to constrain entrypoint config
+// types. It should be implemented by every server plugin.
+//
+// This interface is a hack around the fact that you cannot create custom type
+// constraints on common struct fields, as described in golang/go/issues/48522.
+// Once this issue is solved, this interface should be replaced in favor of
+// which ever new semantics get introduced.
+type EntrypointConfig interface {
+	// TODO: as long as https://github.com/golang/go/issues/48522 is open, we need
+	// this interface. But should be removed after.
+	GetName() string
+}
+
+// ParseEntrypointConfig applies config options to a specific entrypoint if they are set.
+// If for example you change the entrypoints options in the config, this function
+// will make sure they are applied to the config.
+func ParseEntrypointConfig[T EntrypointConfig](service types.ServiceName, data types.ConfigData, plugin string, cfg T) error {
+	codec, err := codecs.GetCodec([]string{"yaml", "json"})
+	if err != nil {
+		return fmt.Errorf("parse entrypoint config: %w", err)
+	}
+
+	sections := types.SplitServiceName(service)
+	sections = append(sections, DefaultConfigSection, plugin, "entrypoints")
+
+	// Itterate over all provided data maps, and apply the config for the
+	// specified entrypoint if a config is present for each data map.
+	for _, item := range data {
+		if err := applyConfig(cfg, item, sections, codec, cfg.GetName()); err != nil {
+			return fmt.Errorf("parse entrypoint config (%s, %s): %w", plugin, cfg.GetName(), err)
+		}
+	}
+
+	return nil
+}
+
+// Errors.
+var (
+	ErrInvalidEpSecType  = errors.New("config section entrypoints should be a list")
+	ErrInvalidEpItemType = errors.New("config section entrypoints item should be a map")
+)
+
+// applyConfig takes an entrypoint name and applies the file config from that
+// entrypoint name to the provided config.
+func applyConfig(cfg any, item source.Data, sections []string, codec codecs.Marshaler, name string) error {
+	r, err := slicemap.Lookup(item.Data, sections)
+	if err != nil {
+		return nil //nolint:nilerr
+	}
+
+	epList, ok := r.([]any)
+	if !ok {
+		return ErrInvalidEpSecType
+	}
+
+	for _, epAny := range epList {
+		ep, ok := epAny.(map[string]any)
+		if !ok {
+			return ErrInvalidEpItemType
+		}
+
+		if ep["name"] != name {
+			continue
+		}
+
+		if i, ok := ep["inherit"]; ok {
+			inherit, ok := i.(string)
+			if !ok {
+				return fmt.Errorf("field inherit should be of type string, not %T", i)
+			}
+
+			return applyConfig(cfg, item, sections, codec, inherit)
+		}
+
+		b, err := codec.Marshal(epAny)
+		if err != nil {
+			return fmt.Errorf("parse entrypoint config: marshal: %w", err)
+		}
+
+		if err := codec.Unmarshal(b, cfg); err != nil {
+			return fmt.Errorf("parse entrypoint config: unmarshal: %w", err)
+		}
+	}
+
+	return nil
 }

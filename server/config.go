@@ -19,12 +19,16 @@ type Option func(*Config)
 // Config is the server config. It contains the list of addresses on which
 // entrypoints will be created, and the default config used for each entrypoint.
 type Config struct {
-	// Defaults is the list of defaults for a server.
+	// Defaults is the list of defaults the each server plugin.
 	// Provisioned with the factory methods registered by the entrypoint plugins.
 	Defaults map[string]any
 
 	// Templates contains a set of entrypoint templates to create, indexed by name.
-	Templates EntrypointTemplates
+	//
+	// Each entrypoint needs a unique name, as each entrypoint can be dynamically
+	// configured by referencing the name. The default name used in an entrypoint
+	// is the format of "http-<uuid>", used if no custom name is provided.
+	Templates map[string]EntrypointTemplate
 }
 
 // NewConfig creates a new server config with default values as starting point,
@@ -33,7 +37,7 @@ type Config struct {
 func NewConfig(service types.ServiceName, data types.ConfigData, options ...Option) (Config, error) {
 	cfg := Config{
 		Defaults:  make(map[string]any),
-		Templates: make(EntrypointTemplates),
+		Templates: make(map[string]EntrypointTemplate),
 	}
 
 	var err error

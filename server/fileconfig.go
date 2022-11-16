@@ -7,8 +7,8 @@ package server
 // entrypoint plugins, and list of entrypoints with their names.
 type fileConfigServer struct {
 	// Enabled allows you to easily disable all entrypionts of one plugin type.
-	Enabled     bool `json:"enabled" yaml:"enabled"`
-	Entrypoints []struct {
+	Enabled     *bool `json:"enabled" yaml:"enabled"`
+	Entrypoints []*struct {
 		Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 		// Enabled allows you to disable specific entrypoints at runtime.

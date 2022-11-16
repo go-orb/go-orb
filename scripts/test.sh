@@ -230,6 +230,8 @@ function create_summary() {
 	fi
 }
 
+git clone http://github.com/go-orb/plugins ../plugins
+
 case $1 in
 "lint")
 	dirs=($(get_dirs "${2}"))

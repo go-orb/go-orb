@@ -59,8 +59,10 @@ var _ component.Component = (*MicroServer)(nil)
 // ComponentType is the server component type name.
 const ComponentType component.Type = "server"
 
-// ErrEntrypointNotFound indicates that an entrypoint hasn't been found.
-var ErrEntrypointNotFound = errors.New("requested entrypoint not found")
+// Errors.
+var (
+	ErrEntrypointNotFound = errors.New("requested entrypoint not found")
+)
 
 // MicroServer is repsponsible for managing entrypoints. Entrypoints are the actual
 // servers that bind to a port and accept connections. Entrypoints can be dynamically configured.
@@ -99,7 +101,8 @@ func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Log
 
 	// Set enabled to true by default for all registered plugins.
 	for plugin := range Plugins.All() {
-		s.fileConfig[plugin] = fileConfigServer{Enabled: true}
+		t := true
+		s.fileConfig[plugin] = fileConfigServer{Enabled: &t}
 	}
 
 	sections := types.SplitServiceName(name)
@@ -178,14 +181,18 @@ func (s *MicroServer) String() string {
 }
 
 func (s *MicroServer) createEntrypoints() error {
+	if err := s.addFileConfigTemplates(); err != nil {
+		return err
+	}
+
 	for name, template := range s.Config.Templates {
-		// If a plugin or specific entrypoint has been globally disabled in config, skip.
 		c, ok := s.fileConfig[template.Type]
 		if !ok {
 			return fmt.Errorf("invalid entrypoint plugin: %s", template.Type)
 		}
 
-		if !c.Enabled || !c.IsEnabled(name) {
+		// If a plugin or specific entrypoint has been globally disabled in config, skip.
+		if (c.Enabled != nil && !*c.Enabled) || !c.IsEnabled(name) {
 			continue
 		}
 
@@ -219,8 +226,40 @@ func (s *MicroServer) getEntrypointProvider(plugin string) (ProviderFunc, error)
 	return provider, nil
 }
 
+// addFileConfigTemplates add entrypoint templates for entrypoints that are only
+// dynamcially defined in the file config, and not statically defined through
+// options.
+func (s *MicroServer) addFileConfigTemplates() error {
+	for plugin := range s.fileConfig {
+		for _, ep := range s.fileConfig[plugin].Entrypoints {
+			if _, ok := s.Config.Templates[ep.Name]; ok {
+				continue
+			}
+
+			if ep.Enabled != nil && !*ep.Enabled {
+				continue
+			}
+
+			t := true
+			ep.Enabled = &t
+
+			cfg, ok := s.Config.Defaults[plugin]
+			if !ok {
+				return fmt.Errorf("no default config found for server plugin %s", plugin)
+			}
+
+			s.Config.Templates[ep.Name] = EntrypointTemplate{
+				Type:   plugin,
+				Config: cfg,
+			}
+		}
+	}
+
+	return nil
+}
+
 // getEntrypointConfig checks if a config needs to be inherited from a different
-// entrypiont, and otherwise returns the default config.
+// entrypiont, and otherwise returns the template config.
 func (s *MicroServer) getEntrypointConfig(name string, c fileConfigServer) (any, error) {
 	t, ok := s.Config.Templates[name]
 	if !ok {
@@ -233,10 +272,12 @@ func (s *MicroServer) getEntrypointConfig(name string, c fileConfigServer) (any,
 	if len(inherit) > 0 {
 		var ok bool
 
-		cfg, ok = s.Config.Templates[inherit]
+		t, ok = s.Config.Templates[inherit]
 		if !ok {
 			return nil, fmt.Errorf("%s failed to inherit config from %s, entrypoint not found", name, inherit)
 		}
+
+		cfg = t.Config
 	}
 
 	return cfg, nil
