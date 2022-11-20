@@ -5,7 +5,7 @@ type Map[T any] struct {
 	elements map[string]T
 }
 
-// NewMap creates a new atomic map of any type.
+// NewMap creates a new map of any type.
 // Not concurency safe.
 func NewMap[T any]() *Map[T] {
 	return &Map[T]{
@@ -25,9 +25,8 @@ func (c *Map[T]) Add(name string, element T) error {
 	return nil
 }
 
-// Upsert will either insert into or update the map, without returning
-// an error if an item already exists.
-func (c *Map[T]) Upsert(name string, element T) {
+// Set will set a value regardless of whether it already exists in the map.
+func (c *Map[T]) Set(name string, element T) {
 	c.elements[name] = element
 }
 

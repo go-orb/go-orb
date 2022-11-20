@@ -27,13 +27,13 @@ func (c *SafeMap[T]) Add(name string, element T) error {
 	return c.Map.Add(name, element)
 }
 
-// Upsert will either insert into or update the map, without returning
+// Set will either insert into or update the map, without returning
 // an error if an item already exists.
-func (c *SafeMap[T]) Upsert(name string, element T) {
+func (c *SafeMap[T]) Set(name string, element T) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.Map.Upsert(name, element)
+	c.Map.Set(name, element)
 }
 
 // All returns the internal map.

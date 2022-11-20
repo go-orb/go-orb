@@ -12,7 +12,7 @@ type pluginHandler struct {
 }
 
 // Plugins is the registry for Logger plugins.
-var Plugins = container.NewMap[func(level slog.Leveler) (slog.Handler, error)]() //nolint:gochecknoglobals
+var Plugins = container.NewPlugins[func(level slog.Leveler) (slog.Handler, error)]() //nolint:gochecknoglobals
 
 // plugins is a cache of lazyloaded plugin handlers.
 // In order to prevent creating multiple handlers, and thus potentially

@@ -69,52 +69,34 @@ var (
 //
 // For more info look at the entrypoint types.
 type MicroServer struct {
-	service    types.ServiceName
-	configData types.ConfigData
-
 	Logger log.Logger
 	Config Config
 
 	// entrypoints are all created entrypoints. All of the entrypoints in this
 	// map will be started upon the call of Start method.
 	entrypoints map[string]Entrypoint
-	// fileConfig is used to parse the fileConfig into, it is used to extract
-	// the list of entrypoints defined in the fileConfig.
-	fileConfig map[string]fileConfigServer
 }
 
 // ProvideServer creates a new server.
 func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Logger, opts ...Option) (MicroServer, error) {
-	cfg, err := NewConfig(name, data, opts...)
-	if err != nil {
-		return MicroServer{}, fmt.Errorf("create http server config: %w", err)
-	}
+	cfg := NewConfig(opts...)
 
-	s := MicroServer{
-		service:     name,
-		configData:  data,
+	srv := MicroServer{
 		Config:      cfg,
 		Logger:      logger,
 		entrypoints: make(map[string]Entrypoint),
-		fileConfig:  make(map[string]fileConfigServer),
 	}
 
-	// Set enabled to true by default for all registered plugins.
-	for plugin := range Plugins.All() {
-		t := true
-		s.fileConfig[plugin] = fileConfigServer{Enabled: &t}
+	sections := append(types.SplitServiceName(name), DefaultConfigSection)
+	if err := config.Parse(sections, data, &srv.Config); err != nil {
+		return srv, err
 	}
 
-	sections := types.SplitServiceName(name)
-	if err := config.Parse(append(sections, DefaultConfigSection), data, &s.fileConfig); err != nil {
-		return s, err
+	if err := srv.createEntrypoints(name); err != nil {
+		return srv, err
 	}
 
-	if err := s.createEntrypoints(); err != nil {
-		return MicroServer{}, err
-	}
-
-	return s, nil
+	return srv, nil
 }
 
 // Start will start the HTTP servers on all entrypoints.
@@ -180,33 +162,27 @@ func (s *MicroServer) String() string {
 	return ""
 }
 
-func (s *MicroServer) createEntrypoints() error {
-	if err := s.addFileConfigTemplates(); err != nil {
-		return err
-	}
-
+func (s *MicroServer) createEntrypoints(service types.ServiceName) error {
 	for name, template := range s.Config.Templates {
-		c, ok := s.fileConfig[template.Type]
-		if !ok {
-			return fmt.Errorf("invalid entrypoint plugin: %s", template.Type)
-		}
-
 		// If a plugin or specific entrypoint has been globally disabled in config, skip.
-		if (c.Enabled != nil && !*c.Enabled) || !c.IsEnabled(name) {
+		if enabled, ok := s.Config.Enabled[template.Type]; (ok && !enabled) || !template.Enabled {
 			continue
 		}
 
-		provider, err := s.getEntrypointProvider(template.Type)
-		if err != nil {
-			return err
+		if _, ok := Plugins.All()[template.Type]; !ok {
+			return fmt.Errorf("server plugin %s does not exist, did you regiser it?", template.Type)
 		}
 
-		cfg, err := s.getEntrypointConfig(name, c)
+		provider, err := Plugins.Get(template.Type)
 		if err != nil {
-			return err
+			return fmt.Errorf("entrypoint provider for %s not found, did you register it by importing the package?", template.Type)
 		}
 
-		entrypoint, err := provider(name, s.service, s.configData, s.Logger, cfg)
+		if template.Config == nil {
+			return fmt.Errorf("template config for %s is nil", name)
+		}
+
+		entrypoint, err := provider(service, s.Logger, template.Config)
 		if err != nil {
 			return fmt.Errorf("create entrypoint %s (%s): %w", name, template.Type, err)
 		}
@@ -215,70 +191,4 @@ func (s *MicroServer) createEntrypoints() error {
 	}
 
 	return nil
-}
-
-func (s *MicroServer) getEntrypointProvider(plugin string) (ProviderFunc, error) {
-	provider, err := Plugins.Get(plugin)
-	if err != nil {
-		return nil, fmt.Errorf("entrypoint provider for %s not found, did you register it by importing the package?", plugin)
-	}
-
-	return provider, nil
-}
-
-// addFileConfigTemplates add entrypoint templates for entrypoints that are only
-// dynamcially defined in the file config, and not statically defined through
-// options.
-func (s *MicroServer) addFileConfigTemplates() error {
-	for plugin := range s.fileConfig {
-		for _, ep := range s.fileConfig[plugin].Entrypoints {
-			if _, ok := s.Config.Templates[ep.Name]; ok {
-				continue
-			}
-
-			if ep.Enabled != nil && !*ep.Enabled {
-				continue
-			}
-
-			t := true
-			ep.Enabled = &t
-
-			cfg, ok := s.Config.Defaults[plugin]
-			if !ok {
-				return fmt.Errorf("no default config found for server plugin %s", plugin)
-			}
-
-			s.Config.Templates[ep.Name] = EntrypointTemplate{
-				Type:   plugin,
-				Config: cfg,
-			}
-		}
-	}
-
-	return nil
-}
-
-// getEntrypointConfig checks if a config needs to be inherited from a different
-// entrypiont, and otherwise returns the template config.
-func (s *MicroServer) getEntrypointConfig(name string, c fileConfigServer) (any, error) {
-	t, ok := s.Config.Templates[name]
-	if !ok {
-		return nil, fmt.Errorf("no template found for name: %s", name)
-	}
-
-	cfg := t.Config
-
-	inherit := c.Inherit(name)
-	if len(inherit) > 0 {
-		var ok bool
-
-		t, ok = s.Config.Templates[inherit]
-		if !ok {
-			return nil, fmt.Errorf("%s failed to inherit config from %s, entrypoint not found", name, inherit)
-		}
-
-		cfg = t.Config
-	}
-
-	return cfg, nil
 }

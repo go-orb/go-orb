@@ -23,21 +23,10 @@ import (
 )
 
 func init() {
-	if err := Plugins.Add("mock", NewEntrypointMock); err != nil {
-		panic(err)
-	}
-
-	if err := Plugins.Add("mock-two", NewEntrypointMock); err != nil {
-		panic(err)
-	}
-
-	if err := NewDefaults.Add("mock", NewDefaultMockConfig); err != nil {
-		panic(err)
-	}
-
-	if err := log.Plugins.Add("textstderr", NewHandlerStderr); err != nil {
-		panic(err)
-	}
+	Plugins.Register("mock", NewEntrypointMock)
+	Plugins.Register("mock-two", NewEntrypointMock)
+	NewDefaults.Register("mock", NewDefaultMockConfig)
+	log.Plugins.Register("textstderr", NewHandlerStderr)
 }
 
 var configFile = `---
@@ -78,6 +67,10 @@ com:
       server:
         mock:
           entrypoints:
+            - 5
+    another-test-six:
+      server:
+        mock:
             - 5
 `
 
@@ -122,13 +115,11 @@ func TestMock(t *testing.T) {
 	require.NoError(t, err, "startedfailed to fetch stop count, ep has not been stopped")
 	require.Equal(t, count, 1, "sever should have been stopped")
 
-	e, err := srv.GetEntrypoint(ep1)
-	require.NoError(t, err, "failed to fetch entrypoint 1")
-	require.Equal(t, e.Name(), ep1)
+	_, err = srv.GetEntrypoint(ep1)
+	require.NoError(t, err, "entrypoint 1 not found")
 
-	e, err = srv.GetEntrypoint(ep2)
-	require.NoError(t, err, "failed to fetch entrypoint 2")
-	require.Equal(t, e.Name(), ep2)
+	_, err = srv.GetEntrypoint(ep2)
+	require.NoError(t, err, "entrypoint 2 not found")
 
 	_, err = srv.GetEntrypoint("fake")
 	require.Error(t, err, "fetching invalid entrypoint should return error")
@@ -143,26 +134,39 @@ func TestMockConfigFile(t *testing.T) {
 	logger, err := log.ProvideLogger(service, nil)
 	require.NoError(t, err, "failed to setup logger")
 
-	srv, err := ProvideServer(service, data, logger, WithMockDefaults(WithTest(t)))
+	srv, err := ProvideServer(service, data, logger,
+		WithMockDefaults(WithTest(t)),
+		WithMockEntrypoint(
+			WithMockName("static-ep-1"),
+			WithTest(t),
+			WithDebugLog(false),
+			WithFieldOne("static-field"),
+		),
+	)
 	require.NoError(t, err, "failed to setup server")
 	require.NoError(t, srv.Start(), "failed to start server")
 
 	// Validate entrypoints.
-	ep, err := srv.GetEntrypoint("mock-ep-1")
-	require.NoError(t, err, "failed to retrieve mock-ep-1 entrypoint")
+	ep, err := srv.GetEntrypoint("static-ep-1")
+	require.NoError(t, err, "failed to retrieve static-ep-1 entrypoint")
 	epCfg := ep.(*EntrypointMock).config
-	require.Equal(t, "abc-field-one", epCfg.FieldOne)
-	require.Equal(t, 9, epCfg.FieldTwo)
-	require.Equal(t, false, epCfg.FieldThree)
-	require.Equal(t, 5, epCfg.FieldFour)
+	require.Equal(t, "abc-field-one", epCfg.FieldOne, "static ep 1, FieldOne")
+
+	ep, err = srv.GetEntrypoint("mock-ep-1")
+	require.NoError(t, err, "failed to retrieve mock-ep-1 entrypoint")
+	epCfg = ep.(*EntrypointMock).config
+	require.Equal(t, "abc-field-one", epCfg.FieldOne, "ep 1, FieldOne")
+	require.Equal(t, 9, epCfg.FieldTwo, "ep 1, FieldTwo")
+	require.Equal(t, false, epCfg.FieldThree, "ep 1, FieldThree")
+	require.Equal(t, 5, epCfg.FieldFour, "ep 1, FieldFour")
 
 	ep, err = srv.GetEntrypoint("mock-ep-2")
 	require.NoError(t, err, "failed to retrieve mock-ep-2 entrypoint")
 	epCfg = ep.(*EntrypointMock).config
-	require.Equal(t, "def-field-one", epCfg.FieldOne)
-	require.Equal(t, 0, epCfg.FieldTwo)
-	require.Equal(t, true, epCfg.FieldThree)
-	require.Equal(t, 5, epCfg.FieldFour)
+	require.Equal(t, "def-field-one", epCfg.FieldOne, "ep 2, FieldOne")
+	require.Equal(t, 0, epCfg.FieldTwo, "ep 2, FieldTwo")
+	require.Equal(t, true, epCfg.FieldThree, "ep 2, FieldThree")
+	require.Equal(t, 5, epCfg.FieldFour, "ep 2, FieldFour")
 
 	_, err = srv.GetEntrypoint("mock-ep-3")
 	require.Error(t, err, "should not be able to retrieve mock-ep-3 entrypoint")
@@ -171,10 +175,10 @@ func TestMockConfigFile(t *testing.T) {
 	ep, err = srv.GetEntrypoint("mock-ep-4")
 	require.NoError(t, err, "failed to retrieve mock-ep-4 entrypoint")
 	epCfg = ep.(*EntrypointMock).config
-	require.Equal(t, "abc-field-one", epCfg.FieldOne)
-	require.Equal(t, 9, epCfg.FieldTwo)
-	require.Equal(t, false, epCfg.FieldThree)
-	require.Equal(t, 5, epCfg.FieldFour)
+	require.Equal(t, "abc-field-one", epCfg.FieldOne, "ep 4, FieldOne")
+	require.Equal(t, 9, epCfg.FieldTwo, "ep 4, FieldTwo")
+	require.Equal(t, false, epCfg.FieldThree, "ep 4, FieldThree")
+	require.Equal(t, 5, epCfg.FieldFour, "ep 4, FieldFour")
 
 	_, err = srv.GetEntrypoint("mock-ep-5")
 	require.Error(t, err, "should fail to retrieve mock-ep-5 entrypoint")
@@ -198,6 +202,7 @@ func TestMockConfigFile(t *testing.T) {
 		"com.example.another-test-three",
 		"com.example.another-test-four",
 		"com.example.another-test-five",
+		"com.example.another-test-six",
 	}
 
 	for _, service := range shouldError {
@@ -206,7 +211,7 @@ func TestMockConfigFile(t *testing.T) {
 
 		srv, err = ProvideServer(service, data, logger, WithMockDefaults(WithTest(t)))
 		t.Logf("expected error: %v", err)
-		require.Error(t, err, "should fail to setup server")
+		require.Error(t, err, "should fail to setup server for "+service)
 	}
 }
 
@@ -216,7 +221,7 @@ func TestInvalidEntrypoint(t *testing.T) {
 	)
 	t.Logf("expected error: %v", err)
 	t.Logf("expected error: %v", srv.Start())
-	require.Error(t, err, "invalid entrypoint, should error")
+	require.Error(t, err, "invalid entrypoint, should error (type = fake, config = nil)")
 
 	srv, err = setupServer(
 		WithInvalidConfigEntrypoint(),
@@ -298,53 +303,44 @@ type EntrypointMock struct {
 	started bool
 }
 
-func NewDefaultMockConfig(service types.ServiceName, data types.ConfigData) (any, error) {
+func NewDefaultMockConfig() EntrypointConfig {
 	cfg := ConfigMock{
 		Name:      "mock-" + uuid.NewString(),
 		debugLog:  false,
 		FieldFour: 5,
 	}
 
-	sections := types.SplitServiceName(service)
-	if err := config.Parse(append(sections, DefaultConfigSection, "mock"), data, &cfg); err != nil {
-		return cfg, err
-	}
-
-	return cfg, nil
+	return &cfg
 }
 
-func (c *ConfigMock) GetName() string {
-	return c.Name
+func (c ConfigMock) GetAddress() string {
+	return ""
+}
+
+func (c ConfigMock) Copy() EntrypointConfig {
+	return &c
 }
 
 func NewEntrypointMock(
-	name string,
 	service types.ServiceName,
-	data types.ConfigData,
 	logger log.Logger,
 	c any,
 ) (Entrypoint, error) {
-	cfg, ok := c.(ConfigMock)
+	cfg, ok := c.(*ConfigMock)
 	if !ok {
 		return nil, fmt.Errorf("create mock entrypoint: invalid config, not of type ConfigMock, but '%T'", c)
 	}
 
-	cfg.Name = name
-
-	if err := ParseEntrypointConfig(service, data, "mock", &cfg); err != nil {
-		return nil, err
-	}
-
 	if cfg.t == nil {
-		return nil, fmt.Errorf("test not set for entrypoint %s", name)
+		return nil, fmt.Errorf("test not set for entrypoint %s", cfg.Name)
 	}
 
 	if cfg.debugLog {
-		cfg.t.Logf("creating entrypoint %s", name)
+		cfg.t.Logf("creating entrypoint %s", cfg.Name)
 	}
 
 	return &EntrypointMock{
-		config:  cfg,
+		config:  *cfg,
 		started: false,
 	}, nil
 }
@@ -366,7 +362,7 @@ func (m *EntrypointMock) Start() error {
 		count = 0
 	}
 
-	startCounter.Upsert(m.config.Name, count+1)
+	startCounter.Set(m.config.Name, count+1)
 
 	return nil
 }
@@ -389,7 +385,7 @@ func (m *EntrypointMock) Stop(_ context.Context) error {
 		count = 0
 	}
 
-	stopCounter.Upsert(m.config.Name, count+1)
+	stopCounter.Set(m.config.Name, count+1)
 
 	return nil
 }
@@ -426,6 +422,12 @@ func WithTest(t *testing.T) MockOption { //nolint:thelper
 	}
 }
 
+func WithFieldOne(field string) MockOption {
+	return func(c *ConfigMock) {
+		c.FieldOne = field
+	}
+}
+
 func WithDebugLog(debug bool) MockOption {
 	return func(c *ConfigMock) {
 		c.debugLog = debug
@@ -447,8 +449,9 @@ func WithStopError() MockOption {
 func WithInvalidEntrypoint() Option {
 	return func(c *Config) {
 		c.Templates["invalid-"+uuid.NewString()] = EntrypointTemplate{
-			Type:   "fake",
-			Config: struct{}{},
+			Enabled: true,
+			Type:    "fake",
+			Config:  nil,
 		}
 	}
 }
@@ -456,8 +459,9 @@ func WithInvalidEntrypoint() Option {
 func WithInvalidConfigEntrypoint() Option {
 	return func(c *Config) {
 		c.Templates["invalid-"+uuid.NewString()] = EntrypointTemplate{
-			Type:   "mock-two",
-			Config: struct{}{},
+			Enabled: true,
+			Type:    "mock-two",
+			Config:  nil,
 		}
 	}
 }
@@ -470,24 +474,21 @@ func WithMockEntrypoint(options ...MockOption) Option {
 			panic("no defaults for mock entrypoint found")
 		}
 
-		cfg, ok := cfgAny.(ConfigMock)
-		if !ok {
-			// Should never happen, but just in case.
-			panic("default config for mock entrypoint is not of type mock.Config")
-		}
+		cfg := cfgAny.Copy().(*ConfigMock) //nolint:errcheck
 
 		cfg.ApplyOptions(options...)
 
 		c.Templates[cfg.Name] = EntrypointTemplate{
-			Type:   "mock",
-			Config: cfg,
+			Config:  cfg,
+			Enabled: true,
+			Type:    "mock",
 		}
 	}
 }
 
 func WithMockDefaults(opts ...MockOption) Option {
 	return func(c *Config) {
-		cfg, ok := c.Defaults["mock"].(ConfigMock)
+		cfg, ok := c.Defaults["mock"].(*ConfigMock)
 		if !ok {
 			// Should never happen.
 			panic(fmt.Errorf("mock.WithDefaults received invalid type, not ConfigMock, but '%T'", cfg))

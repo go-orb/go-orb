@@ -20,7 +20,50 @@ type lookupTest struct {
 	Expected []any
 }
 
+type setValueTest struct {
+	Input    map[string]any
+	Path     []string
+	Value    any
+	Expected map[string]any
+}
+
 var (
+	setValueTests = []setValueTest{
+		{
+			Input: map[string]any{},
+			Path:  []string{"my", "custom", "value"},
+			Value: 69,
+			Expected: map[string]any{"my": map[string]any{
+				"custom": map[string]any{
+					"value": 69,
+				},
+			},
+			},
+		},
+		{
+			Input: map[string]any{
+				"com": map[string]any{
+					"example": map[string]any{
+						"service": map[string]any{
+							"address": ":5050",
+						},
+					},
+				},
+			},
+			Path:  []string{"com", "example", "service", "address"},
+			Value: ":8080",
+			Expected: map[string]any{
+				"com": map[string]any{
+					"example": map[string]any{
+						"service": map[string]any{
+							"address": ":8080",
+						},
+					},
+				},
+			},
+		},
+	}
+
 	sliceTests = []sliceTest[string]{
 		{
 			Array:    []string{"one", "two", "three", "1", "2", "3"},
@@ -86,4 +129,30 @@ func TestLookup(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSetValue(t *testing.T) {
+	for i, test := range setValueTests {
+		t.Run("SetValueTest"+strconv.Itoa(i), func(t *testing.T) {
+			SetValue(test.Input, test.Path, test.Value)
+			assert.Equal(t, test.Expected, test.Input)
+		})
+	}
+}
+
+func TestGet(t *testing.T) {
+	a := map[string]any{
+		"one": 5,
+		"two": 5,
+	}
+
+	val, ok := Get[int](a, "one")
+	assert.Equal(t, true, ok)
+	assert.Equal(t, 5, val)
+
+	_, ok = Get[string](a, "two")
+	assert.Equal(t, false, ok)
+
+	_, ok = Get[string](a, "three")
+	assert.Equal(t, false, ok)
 }

@@ -101,7 +101,7 @@ func (l Logger) Plugin(plugin string, level ...slog.Leveler) (Logger, error) {
 			return l, fmt.Errorf("create new plugin handler: %w", err)
 		}
 
-		plugins.Upsert(plugin, pluginHandler{
+		plugins.Set(plugin, pluginHandler{
 			handler: handler,
 			level:   lvl,
 		})
