@@ -21,35 +21,47 @@ type selectorKey struct {
 	re       *regexp.Regexp
 }
 
+type itemContainer[T any] struct {
+	Name string
+	Item T
+}
+
 // Matcher is a map with regular expressions as keys. It is used to add
 // middleware on a path based level.
+//
+// In addition to setting regex selectors for each item, they are also
+// de-duplocated with a name key, to make sure each item is only added once.
 type Matcher[T any] struct {
-	globals   []T
+	globals   []itemContainer[T]
 	plugins   *container.Plugins[T]
-	selectors map[selectorKey][]T
+	selectors map[selectorKey][]itemContainer[T]
 }
 
 // NewMatcher creates a new matcher object.
 func NewMatcher[T any](plugins *container.Plugins[T]) Matcher[T] {
 	return Matcher[T]{
 		plugins:   plugins,
-		selectors: make(map[selectorKey][]T),
+		selectors: make(map[selectorKey][]itemContainer[T]),
 	}
 }
 
 // Use will use the elements provided on all paths.
-func (m *Matcher[T]) Use(ms ...T) {
-	m.globals = append(m.globals, ms...)
+func (m *Matcher[T]) Use(name string, item T) {
+	if itemPresent(m.globals, name) {
+		return
+	}
+
+	m.globals = append(m.globals, itemContainer[T]{Name: name, Item: item})
 }
 
 // AddPlugin will add plugin item, with a selector.
-func (m *Matcher[T]) AddPlugin(selector, item string) error {
-	i, err := m.plugins.Get(item)
+func (m *Matcher[T]) AddPlugin(selector, plugin string) error {
+	item, err := m.plugins.Get(plugin)
 	if err != nil {
-		return fmt.Errorf("plugin not found '%s'", item)
+		return fmt.Errorf("plugin not found '%s'", plugin)
 	}
 
-	m.Add(selector, i)
+	m.Add(selector, plugin, item)
 
 	return nil
 }
@@ -63,7 +75,7 @@ func (m *Matcher[T]) AddPlugin(selector, item string) error {
 //   - /echo/*
 //   - /echo[1-9]
 //   - suffix$
-func (m *Matcher[T]) Add(selector string, items ...T) {
+func (m *Matcher[T]) Add(selector, name string, item T) {
 	switch selector {
 	case "/*":
 		fallthrough
@@ -72,7 +84,7 @@ func (m *Matcher[T]) Add(selector string, items ...T) {
 	case ".*":
 		fallthrough
 	case "^.*":
-		m.Use(items...)
+		m.Use(name, item)
 		return
 	}
 
@@ -81,10 +93,12 @@ func (m *Matcher[T]) Add(selector string, items ...T) {
 		selector += "/.*"
 	}
 
-	// Check if we already have a similar selector
+	ic := itemContainer[T]{Name: name, Item: item}
+
+	// Check if we already have a similar selector. Only add if not present
 	for key := range m.selectors {
-		if key.selector == selector {
-			m.selectors[key] = append(m.selectors[key], items...)
+		if key.selector == selector && !itemPresent(m.selectors[key], name) {
+			m.selectors[key] = append(m.selectors[key], ic)
 			return
 		}
 	}
@@ -101,14 +115,12 @@ func (m *Matcher[T]) Add(selector string, items ...T) {
 		re:       re,
 	}
 
-	m.selectors[s] = items
+	m.selectors[s] = []itemContainer[T]{ic}
 }
 
 // Match will fetch the list of items that match against a path.
 func (m *Matcher[T]) Match(operation string) []T {
-	ms := make([]T, 0, len(m.globals))
-
-	ms = append(ms, m.globals...)
+	ms := extractItems(m.globals)
 
 	if m.selectors == nil {
 		return ms
@@ -116,11 +128,37 @@ func (m *Matcher[T]) Match(operation string) []T {
 
 	for selector, val := range m.selectors {
 		if selector.re.MatchString(operation) {
-			ms = append(ms, val...)
+			ms = append(ms, extractItems(val)...)
 		}
 	}
 
 	return ms
+}
+
+// Len returns the total number of items defined.
+func (m Matcher[T]) Len() int {
+	return len(m.globals) + len(m.selectors)
+}
+
+func extractItems[T any](items []itemContainer[T]) []T {
+	output := make([]T, 0, len(items))
+
+	for _, item := range items {
+		output = append(output, item.Item)
+	}
+
+	return output
+}
+
+func itemPresent[T any](items []itemContainer[T], query string) bool {
+	for _, item := range items {
+		if item.Name == query {
+			return true
+		}
+	}
+
+	return false
+
 }
 
 // UnmarshalJSON will unmarshal a JSON file into the matcher.

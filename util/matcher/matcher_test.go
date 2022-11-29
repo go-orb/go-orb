@@ -2,6 +2,7 @@ package matcher
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,12 +41,52 @@ func TestMatcher(t *testing.T) {
 	m := NewMatcher[int](nil)
 
 	for _, test := range tests {
-		m.Add(test.selector, test.add...)
+		// Add test cases.
+		for _, item := range test.add {
+			name := strconv.Itoa(item)
+			m.Add(test.selector, name, item)
+		}
+
+		// Verify test cases.
 		res := m.Match(test.selector)
 		for _, i := range test.expected {
 			assert.EqualValues(t, true, slicemap.In(res, i), test.selector)
 		}
 	}
+}
+
+func TestMatcherDuplication(t *testing.T) {
+	plugins := container.NewPlugins[string]()
+	plugins.Register("one", "itemOne")
+	plugins.Register("two", "itemTwo")
+
+	m := NewMatcher(plugins)
+
+	m.Use("customOne", "itemOneC")
+	m.Use("customOne", "itemOneC")
+	m.Use("customOne", "itemOneC")
+
+	assert.Equal(t, 1, len(m.globals), "customOne")
+
+	assert.NoError(t, m.AddPlugin("/helloworld", "one"))
+	assert.NoError(t, m.AddPlugin("/helloworld", "one"))
+
+	var seen bool
+	for _, i := range m.selectors {
+		assert.Equal(t, 1, len(i))
+		seen = true
+	}
+	assert.Equal(t, true, seen)
+
+	assert.NoError(t, m.AddPlugin("/helloworld", "two"))
+	assert.NoError(t, m.AddPlugin("/helloworld", "two"))
+
+	seen = false
+	for _, i := range m.selectors {
+		assert.Equal(t, 2, len(i))
+		seen = true
+	}
+	assert.Equal(t, true, seen)
 }
 
 func TestMatcherJson(t *testing.T) {
@@ -63,11 +104,9 @@ func TestMatcherJson(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, []string{"abc"}, a.Middlware.globals)
+	assert.Equal(t, 1, len(a.Middlware.globals))
 	assert.Equal(t, 1, len(a.Middlware.selectors))
-	for _, val := range a.Middlware.selectors {
-		assert.Equal(t, []string{"def"}, val)
-	}
+	assert.Equal(t, []string{"abc"}, a.Middlware.Match("/bar"))
 	assert.Equal(t, []string{"abc", "def"}, a.Middlware.Match("/foo"))
 }
 
@@ -86,10 +125,8 @@ func TestMatcherYaml(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, []string{"abc"}, a.Middlware.globals)
+	assert.Equal(t, 1, len(a.Middlware.globals))
 	assert.Equal(t, 1, len(a.Middlware.selectors))
-	for _, val := range a.Middlware.selectors {
-		assert.Equal(t, []string{"def"}, val)
-	}
+	assert.Equal(t, []string{"abc"}, a.Middlware.Match("/bar"))
 	assert.Equal(t, []string{"abc", "def"}, a.Middlware.Match("/foo9"))
 }
