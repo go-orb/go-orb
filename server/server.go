@@ -101,6 +101,7 @@ func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Log
 
 // Start will start the HTTP servers on all entrypoints.
 func (s *MicroServer) Start() error {
+	// TODO: catch startup errors better from blocking go-routines
 	for addr, entrypoint := range s.entrypoints {
 		if err := entrypoint.Start(); err != nil {
 			// Stop any started entrypoints before returning error to give them a chance
