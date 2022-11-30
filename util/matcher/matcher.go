@@ -158,7 +158,6 @@ func itemPresent[T any](items []itemContainer[T], query string) bool {
 	}
 
 	return false
-
 }
 
 // UnmarshalJSON will unmarshal a JSON file into the matcher.
