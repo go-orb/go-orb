@@ -402,6 +402,8 @@ func (m *EntrypointMock) String() string {
 
 func (m *EntrypointMock) Name() string { return m.config.Name }
 
+func (m *EntrypointMock) Address() string { return "" }
+
 func (m *EntrypointMock) Register(r RegistrationFunc) {}
 
 func (c *ConfigMock) ApplyOptions(options ...MockOption) {

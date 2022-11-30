@@ -35,6 +35,9 @@ type Entrypoint interface {
 	// A registration function takes a pointer to the server, which can then
 	// be used to register handlers in the server specific way.
 	Register(RegistrationFunc)
+
+	// Address returns the address the entrypoint is listening on.
+	Address() string
 }
 
 // EntrypointConfig provides a primitive way to constrain entrypoint config
