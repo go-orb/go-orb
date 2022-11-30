@@ -23,12 +23,13 @@ var (
 var ipRe = regexp.MustCompile(`^(?:[0-9]{1,3}\.){3}[0-9]{1,3}`)
 
 // GetAddress will validate the address if one is provided, otherwise it will
-// return a random address.
+// return an interface and port to listen on.
 //
 // If you want to listen on all interfaces, you have to explicityly set
-// '0.0.0.0:<port>'. If only a port is provided, as ':8080' the first private
-// interface will be selected to listen on. If none are available, a public IP
-// is selected.
+// '0.0.0.0:<port>'.
+//
+// If no IP address is provides, as ':8080' the first private interface will
+// be selected to listen on. If none are available, a public IP is selected.
 func GetAddress(addr string) (string, error) {
 	var host string
 
