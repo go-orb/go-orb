@@ -4,7 +4,7 @@ package registry
 import (
 	"errors"
 
-	"go-micro.dev/v5/types/component"
+	"go-micro.dev/v5/types"
 )
 
 // TODO: create testing suite, based on MDNS tests
@@ -23,7 +23,7 @@ var (
 // and an abstraction over varying implementations
 // {consul, etcd, zookeeper, ...}.
 type Registry interface {
-	component.Component
+	types.Component
 
 	// Register registers a service within the registry.
 	Register(*Service, ...RegisterOption) error

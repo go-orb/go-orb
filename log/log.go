@@ -9,20 +9,18 @@ import (
 
 	"go-micro.dev/v5/config"
 
-	"go-micro.dev/v5/types/component"
-
 	"go-micro.dev/v5/types"
 )
 
 // This is here to make sure Logger implements the component interface.
-var _ component.Component = (*Logger)(nil)
+var _ types.Component = (*Logger)(nil)
 
 // DefaultConfigSection is the section key used in config files used to
 // configure the logger options.
 var DefaultConfigSection = "logger" //nolint:gochecknoglobals
 
 // ComponentType is the name of the component type logger.
-const ComponentType component.Type = "logger"
+const ComponentType = "logger"
 
 // Logger is a go-micro logger, it is the slog.Logger, with some added methods
 // to implement the component interface.
@@ -156,9 +154,9 @@ func (l Logger) WithContext(ctx context.Context) Logger {
 //
 // It will add two fields to the sub logger, the component (e.g. broker) as component
 // and the component plugin implementation (e.g. NATS) as plugin.
-func (l Logger) WithComponent(component component.Type, name, plugin string, level slog.Leveler) (Logger, error) {
+func (l Logger) WithComponent(component, name, plugin string, level slog.Leveler) (Logger, error) {
 	l = l.With(
-		slog.String("component", string(component)),
+		slog.String("component", component),
 		slog.String("plugin", name),
 	)
 
@@ -197,6 +195,6 @@ func (l Logger) String() string {
 }
 
 // Type returns the component type.
-func (l Logger) Type() component.Type {
+func (l Logger) Type() string {
 	return ComponentType
 }

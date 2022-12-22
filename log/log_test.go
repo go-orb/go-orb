@@ -6,8 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slog"
-
-	"go-micro.dev/v5/types/component"
 )
 
 func TestChangeLevel(t *testing.T) {
@@ -31,7 +29,7 @@ func TestComponentLogger(t *testing.T) {
 
 	l.Info("Message One")
 
-	l2, err := l.WithComponent(component.Type("broker"), "nats", "", DebugLevel)
+	l2, err := l.WithComponent("broker", "nats", "", DebugLevel)
 	require.NoError(t, err)
 
 	l2.Info("Message Two")

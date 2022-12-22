@@ -3,7 +3,6 @@ package server
 import (
 	"go-micro.dev/v5/log"
 	"go-micro.dev/v5/types"
-	"go-micro.dev/v5/types/component"
 )
 
 // RegistrationFunc is executed to register a handler to a server (entrypoint)
@@ -28,7 +27,7 @@ type NewDefault func() EntrypointConfig
 
 // Entrypoint is a server, and represents an entrypoint into the web.
 type Entrypoint interface {
-	component.Component
+	types.Component
 
 	// Register is used to register handlers.
 	//

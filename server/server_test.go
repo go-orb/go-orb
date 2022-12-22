@@ -18,7 +18,6 @@ import (
 	"go-micro.dev/v5/config"
 	"go-micro.dev/v5/log"
 	"go-micro.dev/v5/types"
-	"go-micro.dev/v5/types/component"
 	"go-micro.dev/v5/util/container"
 )
 
@@ -391,7 +390,7 @@ func (m *EntrypointMock) Stop(_ context.Context) error {
 }
 
 // Type returns the component type, e.g. broker.
-func (m *EntrypointMock) Type() component.Type {
+func (m *EntrypointMock) Type() string {
 	return ComponentType
 }
 

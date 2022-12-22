@@ -51,13 +51,12 @@ import (
 	"go-micro.dev/v5/config"
 	"go-micro.dev/v5/log"
 	"go-micro.dev/v5/types"
-	"go-micro.dev/v5/types/component"
 )
 
-var _ component.Component = (*MicroServer)(nil)
+var _ types.Component = (*MicroServer)(nil)
 
 // ComponentType is the server component type name.
-const ComponentType component.Type = "server"
+const ComponentType = "server"
 
 // Errors.
 var (
@@ -154,7 +153,7 @@ func (s *MicroServer) GetEntrypoint(name string) (Entrypoint, error) {
 }
 
 // Type returns the micro component type.
-func (s *MicroServer) Type() component.Type {
+func (s *MicroServer) Type() string {
 	return ComponentType
 }
 

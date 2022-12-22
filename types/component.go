@@ -1,10 +1,6 @@
-// Package component implements the types used by components.
-package component
+package types
 
 import "context"
-
-// Type is the type of a component.
-type Type string
 
 // Component needs to be implemented by every component.
 type Component interface {
@@ -16,7 +12,7 @@ type Component interface {
 	Stop(context.Context) error
 
 	// Type returns the component type, e.g. broker.
-	Type() Type
+	Type() string
 
 	// String returns the component plugin name.
 	String() string
