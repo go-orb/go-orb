@@ -1,4 +1,4 @@
-// Package config provides config handling for orb.
+// Package config provides config handling for go-micro.
 package config
 
 import (

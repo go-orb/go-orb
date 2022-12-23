@@ -1,4 +1,4 @@
-// Package cli provides the CLI config component of orb.
+// Package cli provides the CLI config component of go-micro.
 package cli
 
 import (
