@@ -1,6 +1,6 @@
-# go-orb/config
+# go-micro/config
 
-Package go-orb/config is a pluggable config provider for loosely coupled components.
+Package go-micro/config is a pluggable config provider for loosely coupled components.
 
 It provides 2 main functions
 
@@ -82,4 +82,4 @@ Example:
 
 ## License
 
-Orb is Apache 2.0 licensed.
+go-micro is Apache 2.0 licensed.
