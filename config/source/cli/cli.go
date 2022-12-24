@@ -80,6 +80,7 @@ func (s *Source) Read(u *url.URL) source.Data {
 	config.Name = u.Query().Get("name")
 	config.Version = u.Query().Get("version")
 
+	// parseFunc is the subplugin of source/cli.
 	parseFunc, err := Plugins.Get(pName)
 	if err != nil {
 		result.Error = fmt.Errorf(

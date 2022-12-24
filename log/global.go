@@ -4,6 +4,11 @@ package log
 
 import "golang.org/x/exp/slog"
 
+// Trace calls Logger.Trace on the default logger.
+func Trace(msg string, args ...any) {
+	slog.Default().LogDepth(0, TraceLevel, msg, args...)
+}
+
 // Debug calls Logger.Debug on the default logger.
 func Debug(msg string, args ...any) {
 	slog.Default().LogDepth(0, DebugLevel, msg, args...)

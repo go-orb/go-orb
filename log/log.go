@@ -198,3 +198,8 @@ func (l Logger) String() string {
 func (l Logger) Type() string {
 	return ComponentType
 }
+
+// Trace logs at TraceLevel.
+func (l *Logger) Trace(msg string, args ...any) {
+	l.LogDepth(0, TraceLevel, msg, args...)
+}
