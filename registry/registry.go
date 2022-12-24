@@ -59,8 +59,11 @@ type Service struct {
 // Node represents a service node in a registry.
 // One service can be comprised of multiple nodes.
 type Node struct {
-	ID       string            `json:"id"`
-	Address  string            `json:"address"`
+	ID string `json:"id"`
+	// ip:port
+	Address string `json:"address"`
+	// frpc/grpc/http uvm., since v5!
+	Scheme   string            `json:"scheme"`
 	Metadata map[string]string `json:"metadata"`
 }
 
