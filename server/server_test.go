@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slog"
 
-	_ "github.com/go-micro/plugins/codecs/yaml"
-	"github.com/go-micro/plugins/config/source/file"
+	_ "github.com/go-orb/plugins/codecs/yaml"
+	"github.com/go-orb/plugins/config/source/file"
 
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"

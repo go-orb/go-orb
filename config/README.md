@@ -30,10 +30,10 @@ import (
     "net/url"
 
     "github.com/go-orb/go-orb/config"
-    _ "github.com/go-micro/plugins/codecs/json/v5"
-    _ "github.com/go-micro/plugins/codecs/yaml/v5"
-    _ "github.com/go-micro/plugins/config/source/file/v5"
-    _ "github.com/go-micro/plugins/config/source/http/v5"
+    _ "github.com/go-orb/plugins/codecs/json/v5"
+    _ "github.com/go-orb/plugins/codecs/yaml/v5"
+    _ "github.com/go-orb/plugins/config/source/file/v5"
+    _ "github.com/go-orb/plugins/config/source/http/v5"
 )
 
 func main() {

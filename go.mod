@@ -3,8 +3,8 @@ module github.com/go-orb/go-orb
 go 1.20
 
 require (
-	github.com/go-micro/plugins/codecs/yaml v0.0.0-00010101000000-000000000000
-	github.com/go-micro/plugins/config/source/file v0.0.1-00010101000000-000000000000
+	github.com/go-orb/plugins/codecs/yaml v0.0.0-00010101000000-000000000000
+	github.com/go-orb/plugins/config/source/file v0.0.1-00010101000000-000000000000
 	github.com/google/wire v0.5.0
 	github.com/sanity-io/litter v1.5.5
 	github.com/stretchr/testify v1.8.3
@@ -28,6 +28,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/go-micro/plugins/config/source/file => ../plugins/config/source/file
+replace github.com/go-orb/plugins/config/source/file => ../plugins/config/source/file
 
-replace github.com/go-micro/plugins/codecs/yaml => ../plugins/codecs/yaml
+replace github.com/go-orb/plugins/codecs/yaml => ../plugins/codecs/yaml
