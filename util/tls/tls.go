@@ -118,12 +118,12 @@ func (auth *ClientAuth) UnmarshalYAML(u func(interface{}) error) error {
 // or YAML config. Values parsed from the config are translated and loaded
 // into corresponding fields in tls.Config.
 type ConfigFiles struct {
-	RootCAFiles   []string   `json:"rootCAFiles,omitempty" yaml:"rootCAFiles,omitempty"`     //nolint:tagliatelle
+	RootCAFiles   []string   `json:"rootCAFiles,omitempty"   yaml:"rootCAFiles,omitempty"`   //nolint:tagliatelle
 	ClientCAFiles []string   `json:"clientCAFiles,omitempty" yaml:"clientCAFiles,omitempty"` //nolint:tagliatelle
-	ClientAuth    ClientAuth `json:"clientAuth,omitempty" yaml:"clientAuth,omitempty"`
+	ClientAuth    ClientAuth `json:"clientAuth,omitempty"    yaml:"clientAuth,omitempty"`
 	Certificates  []struct {
 		CertFile string `json:"certFile" yaml:"certFile"`
-		KeyFile  string `json:"keyFile" yaml:"keyFile"`
+		KeyFile  string `json:"keyFile"  yaml:"keyFile"`
 	} `json:"certificates,omitempty" yaml:"certificates,omitempty"`
 }
 

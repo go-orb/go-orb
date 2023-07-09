@@ -36,7 +36,7 @@ func NewLevelHandler(level slog.Level, h slog.Handler) (*LevelHandler, error) {
 // The handler ignores records whose level is lower.
 // Enabled is called early, before any arguments are processed,
 // to save effort if the log event should be discarded.
-func (h *LevelHandler) Enabled(context context.Context, level slog.Level) bool {
+func (h *LevelHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return level >= h.level
 }
 

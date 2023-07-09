@@ -3,9 +3,11 @@ on:
   workflow_dispatch:
     inputs:
       releasePackages:
-        description: "Release Packages"
+        description: Release Packages
         required: true
-        default: "all"
+        default: all
+
+permissions: read-all
 
 jobs:
   release:

@@ -81,7 +81,7 @@ func ValidateAddress(address string) error {
 		return nil
 	}
 
-	if ipRe.Match([]byte(host)) && net.ParseIP(host) == nil {
+	if ipRe.MatchString(host) && net.ParseIP(host) == nil {
 		return ErrInvalidIP
 	}
 

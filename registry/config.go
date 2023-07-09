@@ -70,9 +70,9 @@ func init() {
 
 // Config is the configuration that can be used in a registry.
 type Config struct {
-	Plugin  string     `json:"plugin,omitempty" yaml:"plugin,omitempty"`
+	Plugin  string     `json:"plugin,omitempty"  yaml:"plugin,omitempty"`
 	Timeout int        `json:"timeout,omitempty" yaml:"timeout,omitempty"`
-	Logger  log.Logger `json:"logger,omitempty" yaml:"logger,omitempty"`
+	Logger  log.Logger `json:"logger,omitempty"  yaml:"logger,omitempty"`
 }
 
 func (c *Config) config() *Config {

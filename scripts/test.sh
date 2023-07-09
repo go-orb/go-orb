@@ -40,7 +40,7 @@ function print_list() {
 
 # Add a job summary to GitHub Actions.
 function add_summary() {
-	printf "${1}\n" >>$GITHUB_STEP_SUMMARY
+	printf "${1}\n" >>"${GITHUB_STEP_SUMMARY}"
 }
 
 # Install dependencies, usually servers.
@@ -56,9 +56,9 @@ function install_deps() {
 
 			# Check if script exists
 			if [[ -f ${script} ]]; then
-				echo "Installing depencies for $dep"
+				echo "Installing depencies for ${dep}"
 				bash "${script}"
-				echo "$dep"
+				echo "${dep}"
 				return 0
 			fi
 		fi
@@ -70,7 +70,7 @@ function kill_deps() {
 	for dep in "${HAS_DEPS[@]}"; do
 		if grep -q "${dep}" <<<"${1}"; then
 			# Itterate over all PIDs and kill them.
-			pids=($(pgrep "$dep"))
+			pids=($(pgrep "${dep}"))
 			if [[ ${#pids[@]} -ne 0 ]]; then
 				echo "Killing:"
 			fi
@@ -98,7 +98,7 @@ function find_changes() {
 
 # Find all go directories.
 function find_all() {
-	find $MICRO_VERSION -name 'go.mod' -printf '%h\n'
+	find "${MICRO_VERSION}" -name 'go.mod' -printf '%h\n'
 }
 
 # Get the dir list based on command type.
@@ -121,7 +121,7 @@ function run_linter() {
 	dirs=$1
 	failed="false"
 	for dir in "${dirs[@]}"; do
-		pushd "${dir}" >/dev/null
+		pushd "${dir}" >/dev/null || exit
 		print_msg "Running linter on ${dir}"
 
 		golangci-lint run --out-format github-actions -c "${cwd}/.golangci.yaml"
@@ -131,10 +131,10 @@ function run_linter() {
 			failed="true"
 		fi
 
-		popd >/dev/null
+		popd >/dev/null || exit
 	done
 
-	if [[ $failed == "true" ]]; then
+	if [[ ${failed} == "true" ]]; then
 		add_summary "## Autofix Linting Issues"
 		add_summary "The linter can sometimes autofix some of the issues, if it is supported."
 		add_summary "\`\`\`bash\ncd <your plugin>\ngolangci-lint run -c <go-micro/plugins dir>/.golangci.yaml --fix\n\`\`\`"
@@ -160,31 +160,31 @@ function run_test() {
 	done
 
 	for dir in "${dirs[@]}"; do
-		print_msg "Running unit tests for $dir"
+		print_msg "Running unit tests for ${dir}"
 
 		# Install dependencies if required.
 		install_deps "${dir}"
 
-		pushd "${dir}" >/dev/null
+		pushd "${dir}" >/dev/null || exit
 
 		# Download all modules.
 		go get -v -t -d ./...
 
 		# Run tests.
-		richgo test $GO_TEST_FLAGS ./...
+		richgo test "${GO_TEST_FLAGS}" ./...
 
 		# Keep track of exit code.
 		if [[ $? -ne 0 ]]; then
 			failed="true"
 		fi
 
-		popd >/dev/null
+		popd >/dev/null || exit
 
 		# Kill all depdency processes.
 		kill_deps "${dir}"
 	done
 
-	if [[ $failed == "true" ]]; then
+	if [[ ${failed} == "true" ]]; then
 		print_red "Tests failed"
 		exit 1
 	fi
@@ -203,28 +203,28 @@ function create_summary() {
 		# Install dependencies if required.
 		install_deps "${dir}"
 
-		pushd "${dir}" >/dev/null
-		print_msg "Creating summary for $dir"
+		pushd "${dir}" >/dev/null || exit
+		print_msg "Creating summary for ${dir}"
 
 		add_summary "\n### ${dir}\n"
 
 		# Download all modules.
 		go get -v -t -d ./...
 
-		go test $GO_TEST_FLAGS -json ./... |
-			tparse -notests -format=markdown >>$GITHUB_STEP_SUMMARY
+		go test "${GO_TEST_FLAGS}" -json ./... |
+			tparse -notests -format=markdown >>"${GITHUB_STEP_SUMMARY}"
 
 		if [[ $? -ne 0 ]]; then
 			failed="true"
 		fi
 
-		popd >/dev/null
+		popd >/dev/null || exit
 
 		# Kill all depdency processes.
 		kill_deps "${dir}"
 	done
 
-	if [[ $failed == "true" ]]; then
+	if [[ ${failed} == "true" ]]; then
 		print_red "Tests failed"
 		exit 1
 	fi

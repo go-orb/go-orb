@@ -291,10 +291,10 @@ type ConfigMock struct {
 	debugLog   bool
 	startError bool
 	stopError  bool
-	FieldOne   string `json:"fieldOne,omitempty" yaml:"fieldOne,omitempty"`
-	FieldTwo   int    `json:"fieldTwo,omitempty" yaml:"fieldTwo,omitempty"`
+	FieldOne   string `json:"fieldOne,omitempty"   yaml:"fieldOne,omitempty"`
+	FieldTwo   int    `json:"fieldTwo,omitempty"   yaml:"fieldTwo,omitempty"`
 	FieldThree bool   `json:"fieldThree,omitempty" yaml:"fieldThree,omitempty"`
-	FieldFour  int    `json:"fieldFour,omitempty" yaml:"fieldFour,omitempty"`
+	FieldFour  int    `json:"fieldFour,omitempty"  yaml:"fieldFour,omitempty"`
 }
 
 type EntrypointMock struct {
@@ -321,8 +321,8 @@ func (c ConfigMock) Copy() EntrypointConfig {
 }
 
 func NewEntrypointMock(
-	service types.ServiceName,
-	logger log.Logger,
+	_ types.ServiceName,
+	_ log.Logger,
 	c any,
 ) (Entrypoint, error) {
 	cfg, ok := c.(*ConfigMock)
@@ -403,7 +403,7 @@ func (m *EntrypointMock) Name() string { return m.config.Name }
 
 func (m *EntrypointMock) Address() string { return "" }
 
-func (m *EntrypointMock) Register(r RegistrationFunc) {}
+func (m *EntrypointMock) Register(_ RegistrationFunc) {}
 
 func (c *ConfigMock) ApplyOptions(options ...MockOption) {
 	for _, option := range options {

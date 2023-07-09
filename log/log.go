@@ -194,6 +194,6 @@ func (l Logger) Type() string {
 }
 
 // Trace logs at TraceLevel.
-func (l *Logger) Trace(context context.Context, msg string, args ...any) {
-	l.Log(context, LevelTrace, msg, args...)
+func (l *Logger) Trace(msg string, args ...any) {
+	l.Log(context.Background(), LevelTrace, msg, args...)
 }
