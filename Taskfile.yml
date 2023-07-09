@@ -8,6 +8,6 @@ tasks:
     cmds:
       - trunk check --ci
   tidy:
-    desc: Run "go mod tidy -go=1.8"
+    desc: Run "go mod tidy -go=1.20"
     cmds:
-      - go mod tidy -go=1.18
+      - go mod tidy -go=1.20

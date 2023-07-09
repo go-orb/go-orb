@@ -7,9 +7,9 @@ import (
 
 	"golang.org/x/exp/slog"
 
-	"go-micro.dev/v5/config"
+	"github.com/go-orb/go-orb/config"
 
-	"go-micro.dev/v5/types"
+	"github.com/go-orb/go-orb/types"
 )
 
 // This is here to make sure Logger implements the component interface.

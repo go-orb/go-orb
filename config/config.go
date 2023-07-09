@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"go-micro.dev/v5/config/source"
-	"go-micro.dev/v5/types"
+	"github.com/go-orb/go-orb/config/source"
+	"github.com/go-orb/go-orb/types"
 )
 
 // Read reads urls into []Data where Data is map[string]any.

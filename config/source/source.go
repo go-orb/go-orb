@@ -6,7 +6,7 @@ package source
 import (
 	"net/url"
 
-	"go-micro.dev/v5/codecs"
+	"github.com/go-orb/go-orb/codecs"
 )
 
 // Data holds a single config file marshaled to map[string]any,

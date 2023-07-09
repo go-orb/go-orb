@@ -4,8 +4,8 @@ package cli
 import (
 	"errors"
 
-	"go-micro.dev/v5/log"
-	"go-micro.dev/v5/util/container"
+	"github.com/go-orb/go-orb/log"
+	"github.com/go-orb/go-orb/util/container"
 )
 
 var (

@@ -4,7 +4,7 @@ package types
 import (
 	"strings"
 
-	"go-micro.dev/v5/config/source"
+	"github.com/go-orb/go-orb/config/source"
 )
 
 //nolint:gochecknoglobals

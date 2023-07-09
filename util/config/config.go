@@ -4,7 +4,7 @@ package config
 import (
 	"fmt"
 
-	"go-micro.dev/v5/codecs"
+	"github.com/go-orb/go-orb/codecs"
 )
 
 var codec codecs.Marshaler //nolint:gochecknoglobals

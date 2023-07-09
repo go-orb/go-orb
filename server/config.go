@@ -7,8 +7,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	uconfig "go-micro.dev/v5/util/config"
-	"go-micro.dev/v5/util/slicemap"
+	uconfig "github.com/go-orb/go-orb/util/config"
+	"github.com/go-orb/go-orb/util/slicemap"
 )
 
 // DefaultConfigSection is the section key used in config files used to

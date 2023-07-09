@@ -1,7 +1,7 @@
 package source
 
 import (
-	"go-micro.dev/v5/util/container"
+	"github.com/go-orb/go-orb/util/container"
 )
 
 // Plugins is the configsource plugin container.

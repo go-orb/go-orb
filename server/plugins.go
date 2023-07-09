@@ -1,7 +1,7 @@
 package server
 
 import (
-	"go-micro.dev/v5/util/container"
+	"github.com/go-orb/go-orb/util/container"
 )
 
 //nolint:gochecknoglobals

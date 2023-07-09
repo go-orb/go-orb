@@ -1,8 +1,8 @@
 package server
 
 import (
-	"go-micro.dev/v5/log"
-	"go-micro.dev/v5/types"
+	"github.com/go-orb/go-orb/log"
+	"github.com/go-orb/go-orb/types"
 )
 
 // RegistrationFunc is executed to register a handler to a server (entrypoint)

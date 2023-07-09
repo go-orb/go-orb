@@ -29,7 +29,7 @@ import (
     "log"
     "net/url"
 
-    "go-micro.dev/v5/config"
+    "github.com/go-orb/go-orb/config"
     _ "github.com/go-micro/plugins/codecs/json/v5"
     _ "github.com/go-micro/plugins/codecs/yaml/v5"
     _ "github.com/go-micro/plugins/config/source/file/v5"

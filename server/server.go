@@ -48,9 +48,9 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
-	"go-micro.dev/v5/config"
-	"go-micro.dev/v5/log"
-	"go-micro.dev/v5/types"
+	"github.com/go-orb/go-orb/config"
+	"github.com/go-orb/go-orb/log"
+	"github.com/go-orb/go-orb/types"
 )
 
 var _ types.Component = (*MicroServer)(nil)

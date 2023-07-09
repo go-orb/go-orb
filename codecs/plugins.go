@@ -3,8 +3,8 @@ package codecs
 import (
 	"fmt"
 
-	"go-micro.dev/v5/util/container"
-	"go-micro.dev/v5/util/slicemap"
+	"github.com/go-orb/go-orb/util/container"
+	"github.com/go-orb/go-orb/util/slicemap"
 )
 
 // Plugins is the registry for codec plugins.

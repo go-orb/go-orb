@@ -7,9 +7,9 @@ import (
 	"net/url"
 	"os"
 
-	"go-micro.dev/v5/codecs"
-	"go-micro.dev/v5/config/source"
-	"go-micro.dev/v5/util/container"
+	"github.com/go-orb/go-orb/codecs"
+	"github.com/go-orb/go-orb/config/source"
+	"github.com/go-orb/go-orb/util/container"
 )
 
 var (

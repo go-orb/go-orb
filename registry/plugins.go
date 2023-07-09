@@ -1,9 +1,9 @@
 package registry
 
 import (
-	"go-micro.dev/v5/log"
-	"go-micro.dev/v5/types"
-	"go-micro.dev/v5/util/container"
+	"github.com/go-orb/go-orb/log"
+	"github.com/go-orb/go-orb/types"
+	"github.com/go-orb/go-orb/util/container"
 )
 
 // ProviderFunc is provider function type used by plugins to create a new registry.

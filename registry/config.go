@@ -3,8 +3,8 @@ package registry
 import (
 	"errors"
 
-	"go-micro.dev/v5/config/source/cli"
-	"go-micro.dev/v5/log"
+	"github.com/go-orb/go-orb/config/source/cli"
+	"github.com/go-orb/go-orb/log"
 )
 
 //nolint:gochecknoglobals

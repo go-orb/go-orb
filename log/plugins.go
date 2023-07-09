@@ -3,7 +3,7 @@ package log
 import (
 	"golang.org/x/exp/slog"
 
-	"go-micro.dev/v5/util/container"
+	"github.com/go-orb/go-orb/util/container"
 )
 
 type pluginHandler struct {

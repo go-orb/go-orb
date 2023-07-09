@@ -15,10 +15,10 @@ import (
 	_ "github.com/go-micro/plugins/codecs/yaml"
 	"github.com/go-micro/plugins/config/source/file"
 
-	"go-micro.dev/v5/config"
-	"go-micro.dev/v5/log"
-	"go-micro.dev/v5/types"
-	"go-micro.dev/v5/util/container"
+	"github.com/go-orb/go-orb/config"
+	"github.com/go-orb/go-orb/log"
+	"github.com/go-orb/go-orb/types"
+	"github.com/go-orb/go-orb/util/container"
 )
 
 func init() {

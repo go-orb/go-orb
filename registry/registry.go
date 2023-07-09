@@ -4,7 +4,7 @@ package registry
 import (
 	"errors"
 
-	"go-micro.dev/v5/types"
+	"github.com/go-orb/go-orb/types"
 )
 
 // TODO: create testing suite, based on MDNS tests

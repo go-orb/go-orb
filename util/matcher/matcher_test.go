@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
-	"go-micro.dev/v5/util/container"
-	"go-micro.dev/v5/util/slicemap"
+	"github.com/go-orb/go-orb/util/container"
+	"github.com/go-orb/go-orb/util/slicemap"
 )
 
 var (
