@@ -502,5 +502,5 @@ func WithMockDefaults(opts ...MockOption) Option {
 
 // NewHandlerStderr writes text to stderr.
 func NewHandlerStderr(level slog.Leveler) (slog.Handler, error) {
-	return slog.HandlerOptions{Level: level}.NewJSONHandler(os.Stderr), nil
+	return slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level}), nil
 }

@@ -122,7 +122,7 @@ func (l Logger) Plugin(plugin string, level ...slog.Leveler) (Logger, error) {
 func (l Logger) WithLevel(level slog.Leveler) Logger {
 	if level != nil {
 		l.config.Level = level.Level()
-		l.Logger = slog.New(&LevelHandler{level.Level(), l.Handler()}).WithContext(l.Context())
+		l.Logger = slog.New(&LevelHandler{level.Level(), l.Handler()})
 	}
 
 	return l
@@ -139,12 +139,6 @@ func (l *Logger) With(args ...any) Logger {
 	l.Logger = l.Logger.With(args...)
 
 	return *l
-}
-
-// WithContext returns a new Logger with the same handler as the receiver and the given context.
-func (l Logger) WithContext(ctx context.Context) Logger {
-	l.Logger = l.Logger.WithContext(ctx)
-	return l
 }
 
 // WithComponent will create a new logger for a component inheriting all
@@ -200,6 +194,6 @@ func (l Logger) Type() string {
 }
 
 // Trace logs at TraceLevel.
-func (l *Logger) Trace(msg string, args ...any) {
-	l.LogDepth(0, TraceLevel, msg, args...)
+func (l *Logger) Trace(context context.Context, msg string, args ...any) {
+	l.Log(context, LevelTrace, msg, args...)
 }

@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -13,14 +14,14 @@ func TestChangeLevel(t *testing.T) {
 	require.NoError(t, err)
 
 	dCfg := NewConfig()
-	dCfg.Level = DebugLevel
+	dCfg.Level = LevelDebug
 	lDebug, err := New(dCfg)
 	require.NoError(t, err)
 
 	l.Info("Default logger Test")
 	l.Debug("Not shown")
 	lDebug.Debug("Debug: logger test")
-	lDebug.Log(TraceLevel, "Debug: Trace test")
+	lDebug.Log(context.TODO(), LevelTrace, "Debug: Trace test")
 }
 
 func TestComponentLogger(t *testing.T) {
@@ -29,7 +30,7 @@ func TestComponentLogger(t *testing.T) {
 
 	l.Info("Message One")
 
-	l2, err := l.WithComponent("broker", "nats", "", DebugLevel)
+	l2, err := l.WithComponent("broker", "nats", "", LevelDebug)
 	require.NoError(t, err)
 
 	l2.Info("Message Two")
@@ -44,5 +45,5 @@ func init() {
 
 // NewHandlerStderr writes text to stderr.
 func NewHandlerStderr(level slog.Leveler) (slog.Handler, error) {
-	return slog.HandlerOptions{Level: level}.NewJSONHandler(os.Stderr), nil
+	return slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level}), nil
 }

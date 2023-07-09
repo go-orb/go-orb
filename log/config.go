@@ -11,7 +11,7 @@ import (
 
 // DefaultPlugin is the default plugin to use.
 const (
-	DefaultLevel      = InfoLevel
+	DefaultLevel      = LevelInfo
 	DefaultPlugin     = "textstderr"
 	DefaultSetDefault = true
 )

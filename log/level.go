@@ -9,27 +9,27 @@ import (
 
 // Names for common Levels.
 const (
-	TraceLevel slog.Level = slog.DebugLevel - 1
-	DebugLevel slog.Level = slog.DebugLevel
-	InfoLevel  slog.Level = slog.InfoLevel
-	WarnLevel  slog.Level = slog.WarnLevel
-	ErrorLevel slog.Level = slog.ErrorLevel
+	LevelTrace slog.Level = slog.LevelDebug - 1
+	LevelDebug slog.Level = slog.LevelDebug
+	LevelInfo  slog.Level = slog.LevelInfo
+	LevelWarn  slog.Level = slog.LevelWarn
+	LevelError slog.Level = slog.LevelError
 )
 
 // ParseLevel parses a string level to an Level.
 func ParseLevel(l string) (slog.Level, error) {
 	switch strings.ToUpper(l) {
 	case "TRACE":
-		return TraceLevel, nil
+		return LevelTrace, nil
 	case "DEBUG":
-		return DebugLevel, nil
+		return LevelDebug, nil
 	case "INFO":
-		return InfoLevel, nil
+		return LevelInfo, nil
 	case "WARN":
-		return WarnLevel, nil
+		return LevelWarn, nil
 	case "ERROR":
-		return ErrorLevel, nil
+		return LevelError, nil
 	default:
-		return InfoLevel, fmt.Errorf("parselevel: unknown level %s", l)
+		return LevelInfo, fmt.Errorf("parselevel: unknown level %s", l)
 	}
 }

@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"errors"
 
 	"golang.org/x/exp/slog"
@@ -35,7 +36,7 @@ func NewLevelHandler(level slog.Level, h slog.Handler) (*LevelHandler, error) {
 // The handler ignores records whose level is lower.
 // Enabled is called early, before any arguments are processed,
 // to save effort if the log event should be discarded.
-func (h *LevelHandler) Enabled(level slog.Level) bool {
+func (h *LevelHandler) Enabled(context context.Context, level slog.Level) bool {
 	return level >= h.level
 }
 
@@ -44,12 +45,12 @@ func (h *LevelHandler) Enabled(level slog.Level) bool {
 // Handle methods that produce output should observe the following rules:
 //   - If r.Time is the zero time, ignore the time.
 //   - If an Attr's key is the empty string, ignore the Attr.
-func (h *LevelHandler) Handle(r slog.Record) error {
+func (h *LevelHandler) Handle(context context.Context, r slog.Record) error {
 	if h.handler == nil {
 		return ErrNoHandler
 	}
 
-	return h.handler.Handle(r)
+	return h.handler.Handle(context, r)
 }
 
 // WithAttrs returns a new Handler whose attributes consist of
