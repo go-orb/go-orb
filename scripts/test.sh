@@ -171,7 +171,7 @@ function run_test() {
 		go get -v -t -d ./...
 
 		# Run tests.
-		richgo test "${GO_TEST_FLAGS}" ./...
+		richgo test ./... "${GO_TEST_FLAGS}"
 
 		# Keep track of exit code.
 		if [[ $? -ne 0 ]]; then

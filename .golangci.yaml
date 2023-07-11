@@ -209,7 +209,7 @@ linters:
     - sqlclosecheck # generics
     - wastedassign # generics
 
-    # Not working so great
+    # Not configured yet
     - depguard
 
 issues:

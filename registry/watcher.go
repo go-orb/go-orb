@@ -13,8 +13,8 @@ type Watcher interface {
 // Result is returned by a call to Next on
 // the watcher. Actions can be create, update, delete.
 type Result struct {
-	Action  string
-	Service *Service
+	Action  string   `json:"action"`
+	Service *Service `json:"service"`
 }
 
 // EventType defines registry event type.
