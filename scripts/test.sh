@@ -171,10 +171,7 @@ function run_test() {
 		go get -v -t -d ./...
 
 		# Run tests.
-		richgo test ./... "${GO_TEST_FLAGS}"
-
-		# Keep track of exit code.
-		if [[ $? -ne 0 ]]; then
+		if ! $(go env GOPATH)/bin/richgo test ./... ${GO_TEST_FLAGS}; then
 			failed="true"
 		fi
 
@@ -211,7 +208,7 @@ function create_summary() {
 		# Download all modules.
 		go get -v -t -d ./...
 
-		go test "${GO_TEST_FLAGS}" -json ./... |
+		go test ./... -json ${GO_TEST_FLAGS} |
 			tparse -notests -format=markdown >>"${GITHUB_STEP_SUMMARY}"
 
 		if [[ $? -ne 0 ]]; then
