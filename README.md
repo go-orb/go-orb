@@ -1,10 +1,18 @@
 # go-orb
 
-Orb is a framework for distributed systems development, it can be seen as the successor of `go-micro.dev/v4`.
+Orb is a framework for distributed systems development, it can be seen as the successor of [go-micro.dev/v4](https://github.com/go-micro/go-micro).
 
 ## WIP
 
 This project is a work in progress, please do not use yet!
+
+## Development
+
+### Quirks
+
+#### No go-orb/plugins imports here
+
+To prevent import cycles it's not allowed to import github.com/go-orb/plugins here.
 
 ## Authors
 
