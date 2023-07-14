@@ -6,6 +6,10 @@ Orb is a framework for distributed systems development, it can be seen as the su
 
 This project is a work in progress, please do not use yet!
 
+## Community
+
+- Chat with us on [Discord](https://discord.gg/sggGS389qb)
+
 ## Development
 
 ### Quirks
