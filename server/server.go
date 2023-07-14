@@ -53,7 +53,7 @@ import (
 	"github.com/go-orb/go-orb/types"
 )
 
-var _ types.Component = (*MicroServer)(nil)
+var _ types.Component = (*Server)(nil)
 
 // ComponentType is the server component type name.
 const ComponentType = "server"
@@ -63,11 +63,11 @@ var (
 	ErrEntrypointNotFound = errors.New("requested entrypoint not found")
 )
 
-// MicroServer is repsponsible for managing entrypoints. Entrypoints are the actual
+// Server is repsponsible for managing entrypoints. Entrypoints are the actual
 // servers that bind to a port and accept connections. Entrypoints can be dynamically configured.
 //
 // For more info look at the entrypoint types.
-type MicroServer struct {
+type Server struct {
 	Logger log.Logger
 	Config Config
 
@@ -77,10 +77,10 @@ type MicroServer struct {
 }
 
 // ProvideServer creates a new server.
-func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Logger, opts ...Option) (MicroServer, error) {
+func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Logger, opts ...Option) (Server, error) {
 	cfg := NewConfig(opts...)
 
-	srv := MicroServer{
+	srv := Server{
 		Config:      cfg,
 		Logger:      logger,
 		entrypoints: make(map[string]Entrypoint),
@@ -99,7 +99,7 @@ func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Log
 }
 
 // Start will start the HTTP servers on all entrypoints.
-func (s *MicroServer) Start() error {
+func (s *Server) Start() error {
 	// TODO: catch startup errors better from blocking go-routines
 	for addr, entrypoint := range s.entrypoints {
 		if err := entrypoint.Start(); err != nil {
@@ -118,7 +118,7 @@ func (s *MicroServer) Start() error {
 }
 
 // Stop will stop the HTTP servers on all entrypoints and close the listeners.
-func (s *MicroServer) Stop(ctx context.Context) error {
+func (s *Server) Stop(ctx context.Context) error {
 	errChan := make(chan error)
 
 	// Stop all servers in parallel to make sure they get equal amount of time
@@ -143,7 +143,7 @@ func (s *MicroServer) Stop(ctx context.Context) error {
 }
 
 // GetEntrypoint returns the requested entrypoint, if present.
-func (s *MicroServer) GetEntrypoint(name string) (Entrypoint, error) {
+func (s *Server) GetEntrypoint(name string) (Entrypoint, error) {
 	e, ok := s.entrypoints[name]
 	if !ok {
 		return nil, ErrEntrypointNotFound
@@ -153,16 +153,16 @@ func (s *MicroServer) GetEntrypoint(name string) (Entrypoint, error) {
 }
 
 // Type returns the micro component type.
-func (s *MicroServer) Type() string {
+func (s *Server) Type() string {
 	return ComponentType
 }
 
 // String is no-op.
-func (s *MicroServer) String() string {
+func (s *Server) String() string {
 	return ""
 }
 
-func (s *MicroServer) createEntrypoints(service types.ServiceName) error {
+func (s *Server) createEntrypoints(service types.ServiceName) error {
 	for name, template := range s.Config.Templates {
 		// If a plugin or specific entrypoint has been globally disabled in config, skip.
 		if enabled, ok := s.Config.Enabled[template.Type]; (ok && !enabled) || !template.Enabled {
