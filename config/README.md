@@ -1,6 +1,6 @@
-# go-micro/config
+# go-orb/config
 
-Package go-micro/config is a pluggable config provider for loosely coupled components.
+Package go-orb/config is a pluggable config provider for loosely coupled components.
 
 It provides 2 main functions
 
@@ -37,13 +37,13 @@ import (
 )
 
 func main() {
-    // https://raw.githubusercontent.com/go-micro/plugins/main/config/tests/data/set1/registry1.yaml
+    // https://raw.githubusercontent.com/go-orb/plugins/main/config/tests/data/set1/registry1.yaml
     u1, err := url.Parse("./data/set1/registry1.yaml")
     if err != nil {
         log.Fatal(err)
     }
 
-    u2, err := url.Parse("https://raw.githubusercontent.com/go-micro/plugins/main/config/tests/data/set1/registry2.json")
+    u2, err := url.Parse("https://raw.githubusercontent.com/go-orb/plugins/main/config/tests/data/set1/registry2.json")
     if err != nil {
         log.Fatal(err)
     }
