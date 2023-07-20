@@ -66,7 +66,7 @@ func init() {
 	}
 }
 
-// TODO: this config misses stuff compared to v4, should that stuff be added here?
+// TODO: this config misses things compared to v4, should they be added here?
 
 // Config is the configuration that can be used in a registry.
 type Config struct {
