@@ -2,6 +2,10 @@
 
 Orb is a framework for distributed systems development, it can be seen as the successor of [go-micro.dev/v4](https://github.com/go-micro/go-micro).
 
+## :warning: WIP
+
+This project is a work in progress, please do not use yet!
+
 ## What's new since v4
 
 ### Use of [wire](https://github.com/google/wire)
@@ -73,10 +77,6 @@ service1:
 These 2 config's with different options will both work, we first parse the config, get the "plugin" from it and pass a `map[any]any` with all config data to the plugin.
 
 Both work with a single binary. :)
-
-## WIP
-
-This project is a work in progress, please do not use yet!
 
 ## Community
 
