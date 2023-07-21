@@ -2,7 +2,7 @@
 
 Orb is a framework for distributed systems development, it can be seen as the successor of [go-micro.dev/v4](https://github.com/go-micro/go-micro).
 
-## What's new since go-micro.dev/v4
+## What's new since v4
 
 ### Use of [wire](https://github.com/google/wire)
 
@@ -17,7 +17,7 @@ we have been working hard on removing all usage of reflect.
 Orb allows you to listen on multiple port's with different protocols: gRPC, HTTP, HTTP2, H2C, HTTP3.
 See the config system entry on howto configure it.
 
-### More advanced config system
+### Advanced [config system](config)
 
 With orb you can configure your plugins with a config file or environment options.
 
@@ -28,8 +28,8 @@ service1:
       gzip: true
       handlers:
         - Streams
-      #      middleware:
-      #        - middleware-1
+      # middleware:
+      #   - middleware-1
       entrypoints:
         - name: ep1
           address: :4512
@@ -49,10 +49,10 @@ service1:
       insecure: true
       handlers:
         - Streams
-      #      middleware:
-      #        - middleware-1
-      #      streamMiddleware:
-      #        - middleware-S1
+      # middleware:
+      #   - middleware-1
+      # streamMiddleware:
+      #   - middleware-S1
       entrypoints:
         - name: ep1
           address: :4512
@@ -70,7 +70,7 @@ service1:
     quorum: false
 ```
 
-These 2 config's with different options will both work, we first parse that config, get the "plugin" from it and pass a `map[any]any` with all config data to the plugin.
+These 2 config's with different options will both work, we first parse the config, get the "plugin" from it and pass a `map[any]any` with all config data to the plugin.
 
 Both work with a single binary. :)
 
