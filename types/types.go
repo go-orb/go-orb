@@ -1,4 +1,7 @@
 // Package types provides marker's, these are here against dependency cycles.
+//
+// If this marker's would live in config for example, everything would import from config
+// which means config isn't allowed to import a logger from log for example.
 package types
 
 import (

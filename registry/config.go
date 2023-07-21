@@ -9,6 +9,8 @@ import (
 
 //nolint:gochecknoglobals
 var (
+	DefaultConfigSection = "registry"
+
 	DefaultRegistry = "mdns"
 	DefaultTimeout  = 100
 )
@@ -102,10 +104,13 @@ func WithLogger(logger log.Logger) Option {
 	}
 }
 
-// NewConfig creates a new default config to use with a registry.
-func NewConfig() Config {
-	return Config{
+// NewConfig creates a config to use with a registry.
+func NewConfig(opts ...Option) Config {
+	cfg := Config{
 		Plugin:  DefaultRegistry,
 		Timeout: DefaultTimeout,
 	}
+	cfg.ApplyOptions(opts...)
+
+	return cfg
 }

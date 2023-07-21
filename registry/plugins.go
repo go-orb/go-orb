@@ -12,9 +12,9 @@ type ProviderFunc func(
 	data types.ConfigData,
 	logger log.Logger,
 	opts ...Option,
-) (*MicroRegistry, error)
+) (RegistryInstance, error)
 
 // Plugins is the plugins container for registry.
 //
 //nolint:gochecknoglobals
-var Plugins = container.NewMap[ProviderFunc]()
+var Plugins = container.NewPlugins[ProviderFunc]()

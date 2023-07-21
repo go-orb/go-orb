@@ -4,10 +4,10 @@ package registry
 import (
 	"errors"
 
+	"github.com/go-orb/go-orb/config"
+	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/types"
 )
-
-// TODO: create testing suite, based on MDNS tests
 
 // ComponentType is the registry component type name.
 const ComponentType = "registry"
@@ -41,9 +41,9 @@ type Registry interface {
 	Watch(...WatchOption) (Watcher, error)
 }
 
-// MicroRegistry is the registry type is returned when you use the dynamic registry
-// provider that selects a registry to use based on the plugin configuration.
-type MicroRegistry struct {
+// RegistryInstance is the registry type it is returned when you use ProvideRegistry
+// which selects a registry to use based on the plugin configuration.
+type RegistryInstance struct {
 	Registry
 }
 
@@ -80,4 +80,33 @@ type Value struct {
 	Name   string   `json:"name"`
 	Type   string   `json:"type"`
 	Values []*Value `json:"values"`
+}
+
+// ProvideRegistry is the registry provider for wire.
+// It parses the config from "data", fetches the "Plugin" from the config and
+// then forwards all it's arguments to the provider which it get's from "Plugins".
+func ProvideRegistry(
+	name types.ServiceName,
+	data types.ConfigData,
+	logger log.Logger,
+	opts ...Option) (RegistryInstance, error) {
+
+	cfg := NewConfig(opts...)
+
+	sections := types.SplitServiceName(name)
+	if err := config.Parse(append(sections, DefaultConfigSection), data, cfg); err != nil {
+		return RegistryInstance{}, err
+	}
+
+	if cfg.Plugin == "" {
+		logger.Warn("empty registry plugin, using the default", "default", DefaultRegistry)
+		cfg.Plugin = DefaultRegistry
+	}
+
+	provider, err := Plugins.Get(cfg.Plugin)
+	if err != nil {
+		return RegistryInstance{}, err
+	}
+
+	return provider(name, data, logger, opts...)
 }
