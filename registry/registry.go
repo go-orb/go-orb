@@ -41,9 +41,9 @@ type Registry interface {
 	Watch(...WatchOption) (Watcher, error)
 }
 
-// RegistryInstance is the registry type it is returned when you use ProvideRegistry
+// Instance is the registry type it is returned when you use ProvideRegistry
 // which selects a registry to use based on the plugin configuration.
-type RegistryInstance struct {
+type Instance struct {
 	Registry
 }
 
@@ -89,13 +89,12 @@ func ProvideRegistry(
 	name types.ServiceName,
 	data types.ConfigData,
 	logger log.Logger,
-	opts ...Option) (RegistryInstance, error) {
-
+	opts ...Option) (Instance, error) {
 	cfg := NewConfig(opts...)
 
 	sections := types.SplitServiceName(name)
 	if err := config.Parse(append(sections, DefaultConfigSection), data, cfg); err != nil {
-		return RegistryInstance{}, err
+		return Instance{}, err
 	}
 
 	if cfg.Plugin == "" {
@@ -105,7 +104,7 @@ func ProvideRegistry(
 
 	provider, err := Plugins.Get(cfg.Plugin)
 	if err != nil {
-		return RegistryInstance{}, err
+		return Instance{}, err
 	}
 
 	return provider(name, data, logger, opts...)
