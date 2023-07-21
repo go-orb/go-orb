@@ -6,9 +6,9 @@ It provides 2 main functions
 
 ## config.Read
 
-Read reads urls into []source.Data where Data is basicaly map[string]any.
+Read reads urls into []source.Data where source.Data is basicaly a map[string]any.
 
-This is done over config/source.Plugins and currently there are 3 Plugins for config.source:
+This is done over config/source.Plugins, currently there are 3 Plugins for config.source:
 
 - `cli` provides config from cli/env sources.
 - `file` provides config from file sources.
@@ -30,10 +30,10 @@ import (
     "net/url"
 
     "github.com/go-orb/go-orb/config"
-    _ "github.com/go-orb/plugins/codecs/json/v5"
-    _ "github.com/go-orb/plugins/codecs/yaml/v5"
-    _ "github.com/go-orb/plugins/config/source/file/v5"
-    _ "github.com/go-orb/plugins/config/source/http/v5"
+    _ "github.com/go-orb/plugins/codecs/json"
+    _ "github.com/go-orb/plugins/codecs/yaml"
+    _ "github.com/go-orb/plugins/config/source/file"
+    _ "github.com/go-orb/plugins/config/source/http"
 )
 
 func main() {
@@ -82,4 +82,4 @@ Example:
 
 ## License
 
-go-micro is Apache 2.0 licensed.
+go-orb is Apache 2.0 licensed.
