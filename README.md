@@ -6,9 +6,14 @@ Orb is a framework for distributed systems development, it can be seen as the su
 
 This project is a work in progress, please do not use yet!
 
-## What's new since v4
+## :rocket: What's new since v4
 
 ### Use of [wire](https://github.com/google/wire)
+
+With wire we gain:
+
+- compile-time safety
+- no more globals
 
 It was the main reason for starting orb, wire allows us to decouple the components and plugins.
 
@@ -78,6 +83,39 @@ These 2 config's with different options will both work, we first parse the confi
 
 Both work with a single binary. :)
 
+### Proto conform handlers
+
+Return types instead of HTTP req format.
+
+New:
+
+```go
+req := HelloRequest{Name: "test"}
+
+// Look at resp, it's now a return.
+resp , err := client.Call[HelloResponse](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", &req)
+```
+
+Old:
+
+```go
+req := c.c.NewRequest(c.serviceName, "Greeter.Hello", in)
+out := new(HelloResponse)
+err := c.c.Call(ctx, req, out, opts...)
+if err != nil {
+  return nil, err
+}
+return out, nil
+```
+
+#### Structured logging
+
+We like structured logging, this is why we replaced all logging with one based on slog, slog is replaceable with whatever logger you want.
+
+#### go-orb/go-orb is just interfaces
+
+We made sure that go-orb/go-orb (the core) is just a bunch of interfaces, the most real code lives in go-orb/plugins.
+
 ## Community
 
 - Chat with us on [Discord](https://discord.gg/sggGS389qb)
@@ -92,8 +130,18 @@ To prevent import cycles it's not allowed to import github.com/go-orb/plugins he
 
 ## Authors
 
-- [David Brouwer](https://github.com/Davincible/)
+- [David Brouwer](https://github.com/Davincible)
 - [René Jochum](https://github.com/jochumdev)
+
+### go-micro
+
+A lot of this is copy&pasted from [go-micro](https://github.com/go-micro/go-micro/graphs/contributors), top contributors have been:
+
+- [Asim Aslam](https://github.com/asim) the founder/creator of go-micro.
+- [Milos Gajdos](https://github.com/milosgajdos)
+- [ben-toogood](https://github.com/ben-toogood)
+- [Vasiliy Tolstov](https://github.com/vtolstov)
+- [Johnson C](https://github.com/xpunch)
 
 ## License
 
