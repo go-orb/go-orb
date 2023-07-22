@@ -110,11 +110,11 @@ return out, nil
 
 #### Structured logging
 
-We like structured logging, this is why we replaced all logging with one based on slog, slog is replaceable with whatever logger you want.
+We like structured logging, this is why we replaced all logging with one based on [slog](https://pkg.go.dev/golang.org/x/exp/slog), slog is replaceable with whatever logger you want.
 
 #### go-orb/go-orb is just interfaces
 
-We made sure that go-orb/go-orb (the core) is just a bunch of interfaces, the most real code lives in go-orb/plugins.
+We made sure that go-orb/go-orb (the core) is just a bunch of interfaces, the most real code lives in [go-orb/plugins](https://github.com/go-orb/plugins).
 
 ## Community
 
