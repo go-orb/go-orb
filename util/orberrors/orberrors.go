@@ -11,15 +11,31 @@ import (
 type Error struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+	Wrapped error  `json:"wrapped"`
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("%d %s", e.Code, e.Message)
+	return fmt.Sprintf("%d %s: %s", e.Code, e.Message, e.Wrapped)
 }
 
-// ToError converts the "Error" to "error".
-func (e *Error) ToError() error {
+// Toerror converts the "Error" to "error",
+// same as doing <variableWithTypeError>.(error).
+func (e *Error) Toerror() error {
 	return e
+}
+
+// Wrap wraps another error into a copy.
+func (e *Error) Wrap(err error) *Error {
+	return &Error{
+		Code:    e.Code,
+		Message: e.Message,
+		Wrapped: err,
+	}
+}
+
+// Unwrap returns the wrapped error.
+func (e *Error) Unwrap() error {
+	return e.Wrapped
 }
 
 // New creates a new orb error with the given parameters.
