@@ -41,9 +41,9 @@ type Registry interface {
 	Watch(...WatchOption) (Watcher, error)
 }
 
-// Instance is the registry type it is returned when you use ProvideRegistry
+// Wire is the registry type it is returned when you use ProvideRegistry
 // which selects a registry to use based on the plugin configuration.
-type Instance struct {
+type Wire struct {
 	Registry
 }
 
@@ -63,8 +63,8 @@ type Node struct {
 	// ip:port
 	Address string `json:"address"`
 	// frpc/grpc/http uvm., since v5!
-	Scheme   string            `json:"scheme"`
-	Metadata map[string]string `json:"metadata"`
+	Transport string            `json:"transport"`
+	Metadata  map[string]string `json:"metadata"`
 }
 
 // Endpoint represents a service endpoint in a registry.
@@ -89,12 +89,12 @@ func ProvideRegistry(
 	name types.ServiceName,
 	data types.ConfigData,
 	logger log.Logger,
-	opts ...Option) (Instance, error) {
+	opts ...Option) (Wire, error) {
 	cfg := NewConfig(opts...)
 
 	sections := types.SplitServiceName(name)
 	if err := config.Parse(append(sections, DefaultConfigSection), data, cfg); err != nil {
-		return Instance{}, err
+		return Wire{}, err
 	}
 
 	if cfg.Plugin == "" {
@@ -104,7 +104,7 @@ func ProvideRegistry(
 
 	provider, err := Plugins.Get(cfg.Plugin)
 	if err != nil {
-		return Instance{}, err
+		return Wire{}, err
 	}
 
 	return provider(name, data, logger, opts...)

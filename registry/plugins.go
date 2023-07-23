@@ -12,7 +12,7 @@ type ProviderFunc func(
 	data types.ConfigData,
 	logger log.Logger,
 	opts ...Option,
-) (Instance, error)
+) (Wire, error)
 
 // Plugins is the plugins container for registry.
 //
