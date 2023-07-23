@@ -85,14 +85,14 @@ Both work with a single binary. :)
 
 ### Proto conform handlers
 
-Return types instead of HTTP req format.
+Return types as a result instead of HTTP req format.
 
 New:
 
 ```go
 req := HelloRequest{Name: "test"}
 
-// Look at resp, it's now a return.
+// Look at resp, it's now returned as a result.
 resp , err := client.Call[HelloResponse](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", &req)
 ```
 
@@ -114,11 +114,15 @@ We like structured logging, this is why we replaced all logging with one based o
 
 #### go-orb/go-orb is just interfaces
 
-We made sure that go-orb/go-orb (the core) is just a bunch of interfaces, the most real code lives in [go-orb/plugins](https://github.com/go-orb/plugins).
+We made sure that go-orb/go-orb (the core) is just a bunch of interfaces as well as some glue code, the most real code lives in [go-orb/plugins](https://github.com/go-orb/plugins).
+
+#### Linted and analyzed
+
+We make sure everything is linted and staticaly analyzed by golangcli-lint. This is enforced by CI/CD pipelines here on github.
 
 ## Community
 
-- Chat with us on [Discord](https://discord.gg/sggGS389qb)
+Chat with us on [Discord](https://discord.gg/sggGS389qb).
 
 ## Development
 
@@ -127,6 +131,10 @@ We made sure that go-orb/go-orb (the core) is just a bunch of interfaces, the mo
 #### No go-orb/plugins imports here
 
 To prevent import cycles it's not allowed to import github.com/go-orb/plugins here.
+
+#### Lint
+
+We do not accept commits that fail to lint, either use `./scripts/test.sh lint` or install [Trunk](https://trunk.io/) and it's extension for your editor.
 
 ## Authors
 
