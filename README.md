@@ -134,7 +134,7 @@ To prevent import cycles it's not allowed to import github.com/go-orb/plugins he
 
 #### Lint
 
-We do not accept commits that fail to lint, either use `./scripts/test.sh lint` or install [Trunk](https://trunk.io/) and it's extension for your editor.
+We do not accept commits that fail to lint, either use `./scripts/test.sh lint all` or install [Trunk](https://trunk.io/) and it's extension for your editor.
 
 ## Authors
 

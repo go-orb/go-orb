@@ -40,7 +40,7 @@ function print_list() {
 
 # Add a job summary to GitHub Actions.
 function add_summary() {
-	printf "${1}\n" >>"${GITHUB_STEP_SUMMARY}"
+	printf "%s\n" "${1}" >>"${GITHUB_STEP_SUMMARY}" || true
 }
 
 # Install dependencies, usually servers.
@@ -226,8 +226,6 @@ function create_summary() {
 		exit 1
 	fi
 }
-
-git clone http://github.com/go-orb/plugins ../plugins
 
 case $1 in
 "lint")
