@@ -36,6 +36,9 @@ type Entrypoint interface {
 	// be used to register handlers in the server specific way.
 	Register(RegistrationFunc)
 
+	// Transport returns the client transport that is required to talk to this entrypoint.
+	Transport() string
+
 	// Address returns the address the entrypoint is listening on.
 	Address() string
 }
