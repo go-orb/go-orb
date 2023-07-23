@@ -105,8 +105,8 @@ func WithLogger(logger log.Logger) Option {
 }
 
 // NewConfig creates a config to use with a registry.
-func NewConfig(opts ...Option) *Config {
-	cfg := &Config{
+func NewConfig(opts ...Option) Config {
+	cfg := Config{
 		Plugin:  DefaultRegistry,
 		Timeout: DefaultTimeout,
 	}
