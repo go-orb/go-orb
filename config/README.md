@@ -2,9 +2,11 @@
 
 Package go-orb/config is a pluggable config provider for loosely coupled components.
 
-It provides 2 main functions
+It provides 2 main functions and 2 helper
 
-## config.Read
+## Functions
+
+### config.Read
 
 Read reads urls into []source.Data where source.Data is basicaly a map[string]any.
 
@@ -55,31 +57,62 @@ func main() {
 }
 ```
 
-## config.Parse
+### config.Parse
 
 Parse parses the config from config.Read into the given struct.
 
 Example:
 
 ```go
-    // extend the config.Read example here
+// extend the config.Read example here
 
-    //
-    // All from here is in the plugin itself.
-    //
-    cfg := newRegistryMdnsConfig()
-    err := config.Parse([]string{"app", "registry"}, datas, cfg)
+//
+// All from here is in the plugin itself.
+//
+cfg := newRegistryMdnsConfig()
+err := config.Parse([]string{"app", "registry"}, datas, cfg)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+### config.ParseStruct
+
+ParseStruct is a helper to make any struct with `json` tags a source.Data (map[string]any{} with some more fields) with sections.
+
+Example:
+
+```go
+func main() {
+    cfg := log.NewConfig(log.WithLevel(log.LevelTrace), log.WithPlugin("slog"))
+
+    data, err := config.ParseStruct([]string{"com", "example", "app", "registry", "logger"}, &cfg)
     if err != nil {
-        log.Fatal(err)
+        return l, nil //nolint:nilerr
     }
+
+    datas := []source.Data{data}
+}
+```
+
+### config.HasKey
+
+HasKey returns a boolean which indidcates if the given sections and key exists in the configs.
+
+Example:
+
+```go
+func main() {
+    test := config.HasKey([]string{"com", "example", "app", "registry", "logger"}, "plugin", configs)
+}
 ```
 
 ## Authors
 
 - [Asim Aslam](https://github.com/asim/) - Author of [go-micro/config](https://github.com/go-micro/go-micro/tree/master/config) on which this is based on.
-- [David Brouwer](https://github.com/Davincible/) - Ideas
-- [René Jochum](https://github.com/jochumdev) - Developer
+- [David Brouwer](https://github.com/Davincible/) - Ideas and reviews.
+- [René Jochum](https://github.com/jochumdev) - Developer.
 
 ## License
 
-go-orb is Apache 2.0 licensed.
+go-orb is Apache 2.0 licensed and is based on go-micro.

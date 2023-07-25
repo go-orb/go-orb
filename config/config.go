@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/go-orb/go-orb/codecs"
 	"github.com/go-orb/go-orb/config/source"
 	"github.com/go-orb/go-orb/types"
 )
@@ -82,8 +83,8 @@ func Parse(sections []string, configs types.ConfigData, target any) error {
 
 		var err error
 
+		// Walk into the sections.
 		data := configData.Data
-
 		for _, section := range sections {
 			if data, err = Get(data, section, map[string]any{}); err != nil {
 				// Ignore unknown configSection in config.
@@ -113,6 +114,84 @@ func Parse(sections []string, configs types.ConfigData, target any) error {
 	}
 
 	return nil
+}
+
+// HasKey returns a boolean which indidcates if the given sections and key exists in the configs.
+func HasKey(sections []string, key string, configs types.ConfigData) bool {
+	for _, configData := range []source.Data(configs) {
+		if configData.Error != nil {
+			continue
+		}
+
+		var err error
+
+		// Walk into the sections.
+		data := configData.Data
+		for _, section := range sections {
+			if data, err = Get(data, section, map[string]any{}); err != nil {
+				// Ignore unknown configSection in config.
+				if errors.Is(err, ErrNotExistent) {
+					continue
+				}
+
+				return false
+			}
+		}
+
+		if _, err := Get(data, key, ""); err != nil {
+			// Ignore unknown configSection in config.
+			if errors.Is(err, ErrNotExistent) {
+				continue
+			}
+
+			return false
+		}
+
+		return true
+	}
+
+	return false
+}
+
+// ParseStruct is a helper to make any struct with `json` tags a source.Data (map[string]any{} with some more fields) with sections.
+func ParseStruct[TParse any](sections []string, toParse TParse) (source.Data, error) {
+	result := source.Data{Data: make(map[string]any)}
+
+	codec, err := codecs.Plugins.Get("json")
+	if err != nil {
+		result.Error = fmt.Errorf("getting the json codec: %w", err)
+		return result, result.Error
+	}
+
+	result.Marshaler = codec
+
+	data := result.Data
+	for _, s := range sections {
+		if tmp, ok := data[s]; ok {
+			switch t2 := tmp.(type) {
+			case map[string]any:
+				data = t2
+			default:
+				// Should never happen.
+				data = result.Data
+			}
+		} else {
+			tmp := map[string]any{}
+			data[s] = tmp
+			data = tmp
+		}
+	}
+
+	buf := bytes.Buffer{}
+	if err := codec.NewEncoder(&buf).Encode(toParse); err != nil {
+		return result, fmt.Errorf("encoding: %w", err)
+	}
+
+	if err := codec.NewDecoder(&buf).Decode(&data); err != nil {
+		return result, fmt.Errorf("decoding: %w", err)
+	}
+
+	return result, nil
 }
 
 func getSourceForURL(u *url.URL) (source.Source, error) {
