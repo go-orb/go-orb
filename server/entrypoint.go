@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/go-orb/go-orb/log"
+	"github.com/go-orb/go-orb/registry"
 	"github.com/go-orb/go-orb/types"
 )
 
@@ -60,6 +61,7 @@ type EntrypointConfig interface {
 type ProviderFunc func(
 	service types.ServiceName,
 	logger log.Logger,
+	reg registry.Type,
 	// config is the entrypoint plugin config. Here it is passed as an any to
 	// allow any config type to be passed through. The entrypoint provider should
 	// convert the any back into its own type, and error on type mismatch.

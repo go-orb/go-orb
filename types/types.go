@@ -19,6 +19,9 @@ var (
 // ServiceName is the name of the Service.
 type ServiceName string
 
+// ServiceVersion is the version of the Service.
+type ServiceVersion string
+
 // SplitServiceName splits the serviceName into a string slice, separated by
 // the global DefaultSeperator. Each item will be used as a key in the config.
 //

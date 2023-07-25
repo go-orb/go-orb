@@ -47,9 +47,11 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"golang.org/x/exp/slog"
 
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
+	"github.com/go-orb/go-orb/registry"
 	"github.com/go-orb/go-orb/types"
 )
 
@@ -68,8 +70,9 @@ var (
 //
 // For more info look at the entrypoint types.
 type Server struct {
-	Logger log.Logger
-	Config Config
+	Logger   log.Logger
+	Config   Config
+	Registry registry.Type
 
 	// entrypoints are all created entrypoints. All of the entrypoints in this
 	// map will be started upon the call of Start method.
@@ -77,17 +80,24 @@ type Server struct {
 }
 
 // ProvideServer creates a new server.
-func ProvideServer(name types.ServiceName, data types.ConfigData, logger log.Logger, opts ...Option) (Server, error) {
+func ProvideServer(
+	name types.ServiceName,
+	configs types.ConfigData,
+	logger log.Logger,
+	reg registry.Type,
+	opts ...Option,
+) (Server, error) {
 	cfg := NewConfig(opts...)
 
 	srv := Server{
 		Config:      cfg,
 		Logger:      logger,
+		Registry:    reg,
 		entrypoints: make(map[string]Entrypoint),
 	}
 
 	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, data, &srv.Config); err != nil {
+	if err := config.Parse(sections, configs, &srv.Config); err != nil {
 		return srv, err
 	}
 
@@ -142,6 +152,11 @@ func (s *Server) Stop(ctx context.Context) error {
 	return err
 }
 
+// GetEntrypoints returns the internal map of entrypoints, do not modify it.
+func (s *Server) GetEntrypoints() map[string]Entrypoint {
+	return s.entrypoints
+}
+
 // GetEntrypoint returns the requested entrypoint, if present.
 func (s *Server) GetEntrypoint(name string) (Entrypoint, error) {
 	e, ok := s.entrypoints[name]
@@ -182,7 +197,9 @@ func (s *Server) createEntrypoints(service types.ServiceName) error {
 			return fmt.Errorf("template config for %s is nil", name)
 		}
 
-		entrypoint, err := provider(service, s.Logger, template.Config)
+		pluginLogger := s.Logger.With(slog.String("component", ComponentType), slog.String("plugin", template.Type))
+
+		entrypoint, err := provider(service, pluginLogger, s.Registry, template.Config)
 		if err != nil {
 			return fmt.Errorf("create entrypoint %s (%s): %w", name, template.Type, err)
 		}

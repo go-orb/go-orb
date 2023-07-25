@@ -26,6 +26,10 @@ var (
 type Registry interface {
 	types.Component
 
+	ServiceName() string
+	ServiceVersion() string
+	NodeID() string
+
 	// Register registers a service within the registry.
 	Register(*Service, ...RegisterOption) error
 
