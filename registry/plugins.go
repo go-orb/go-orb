@@ -12,9 +12,9 @@ type ProviderFunc func(
 	data types.ConfigData,
 	logger log.Logger,
 	opts ...Option,
-) (Wire, error)
+) (Type, error)
 
-// Plugins is the plugins container for registry.
+// Plugins is the plugins container for registries.
 //
 //nolint:gochecknoglobals
 var Plugins = container.NewPlugins[ProviderFunc]()

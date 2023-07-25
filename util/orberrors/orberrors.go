@@ -69,4 +69,5 @@ var (
 	ErrInternalServerError = NewHTTP(http.StatusInternalServerError)
 	ErrUnauthorized        = NewHTTP(http.StatusUnauthorized)
 	ErrRequestTimeout      = NewHTTP(http.StatusRequestTimeout)
+	ErrBadRequest          = NewHTTP(http.StatusBadRequest)
 )

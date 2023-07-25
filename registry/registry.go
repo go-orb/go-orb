@@ -41,9 +41,9 @@ type Registry interface {
 	Watch(...WatchOption) (Watcher, error)
 }
 
-// Wire is the registry type it is returned when you use ProvideRegistry
+// Type is the registry type it is returned when you use ProvideRegistry
 // which selects a registry to use based on the plugin configuration.
-type Wire struct {
+type Type struct {
 	Registry
 }
 
@@ -89,12 +89,12 @@ func ProvideRegistry(
 	name types.ServiceName,
 	data types.ConfigData,
 	logger log.Logger,
-	opts ...Option) (Wire, error) {
+	opts ...Option) (Type, error) {
 	cfg := NewConfig(opts...)
 
 	sections := types.SplitServiceName(name)
 	if err := config.Parse(append(sections, DefaultConfigSection), data, cfg); err != nil {
-		return Wire{}, err
+		return Type{}, err
 	}
 
 	if cfg.Plugin == "" {
@@ -104,7 +104,7 @@ func ProvideRegistry(
 
 	provider, err := Plugins.Get(cfg.Plugin)
 	if err != nil {
-		return Wire{}, err
+		return Type{}, err
 	}
 
 	return provider(name, data, logger, opts...)
