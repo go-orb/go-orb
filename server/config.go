@@ -52,16 +52,12 @@ func NewConfig(options ...Option) Config {
 		cfg.Defaults[name] = newConfig()
 	}
 
-	cfg.ApplyOptions(options...)
+	// Apply options.
+	for _, o := range options {
+		o(&cfg)
+	}
 
 	return cfg
-}
-
-// ApplyOptions takes a list of options and applies them to the current config.
-func (c *Config) ApplyOptions(options ...Option) {
-	for _, option := range options {
-		option(c)
-	}
 }
 
 // UnmarshalJSON extracts the entrypoint configuration from a file config.

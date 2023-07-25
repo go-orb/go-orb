@@ -48,6 +48,7 @@ func NewConfig(opts ...Option) Config {
 		Plugin: DefaultPlugin,
 	}
 
+	// Apply options.
 	for _, o := range opts {
 		o(&cfg)
 	}

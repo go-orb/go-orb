@@ -10,8 +10,8 @@ import (
 	"github.com/go-orb/go-orb/util/container"
 )
 
-// PluginProvider can be started and stopped.
-type PluginProvider interface {
+// Provider can be started and stopped.
+type Provider interface {
 	fmt.Stringer
 
 	Start() error
@@ -20,16 +20,23 @@ type PluginProvider interface {
 	Handler() (slog.Handler, error)
 }
 
-// PluginProviderType is the struct that wraps the interface, so we don't have to pass interfaces everywhere.
-type PluginProviderType struct {
-	PluginProvider
+// ProviderType is the struct that wraps the interface, so we don't have to pass interfaces everywhere.
+type ProviderType struct {
+	Provider
 }
 
-// PluginProviderFunc is the function a Plugin must provide which returns a PluginProvider.
-type PluginProviderFunc func(section []string, data types.ConfigData) (PluginProviderType, error)
+// ProviderFunc is the function a Plugin must provide which returns a Provider encapsulated into a ProviderType.
+type ProviderFunc func(section []string, configs types.ConfigData, opts ...Option) (ProviderType, error)
 
 // Plugins is the registry for Logger plugins.
-var Plugins = container.NewPlugins[PluginProviderFunc]() //nolint:gochecknoglobals
+var plugins = container.NewPlugins[ProviderFunc]() //nolint:gochecknoglobals
 
 // PluginsCache contains plugin's already loaded and started.
-var PluginsCache = container.NewSafeMap[PluginProviderType]() //nolint:gochecknoglobals
+var pluginsCache = container.NewSafeMap[ProviderType]() //nolint:gochecknoglobals
+
+// Register makes a plugin available by the provided name.
+// If Register is called twice with the same name, it panics.
+func Register(name string, pFunc ProviderFunc) bool {
+	plugins.Register(name, pFunc)
+	return true
+}

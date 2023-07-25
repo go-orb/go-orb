@@ -79,13 +79,6 @@ func (c *Config) config() *Config {
 	return c
 }
 
-// ApplyOptions applies a set of options to the config.
-func (c *Config) ApplyOptions(opts ...Option) {
-	for _, o := range opts {
-		o(c)
-	}
-}
-
 // WithPlugin set the implementation to use.
 func WithPlugin(n string) Option {
 	return func(cfg ConfigType) {
@@ -108,7 +101,11 @@ func NewConfig(opts ...Option) Config {
 		Plugin:  DefaultRegistry,
 		Timeout: DefaultTimeout,
 	}
-	cfg.ApplyOptions(opts...)
+
+	// Apply options.
+	for _, o := range opts {
+		o(&cfg)
+	}
 
 	return cfg
 }

@@ -16,8 +16,11 @@ func NewPlugins[T any]() *Plugins[T] {
 }
 
 // Register a plugin.
+// If Register is called twice with the same name, it panics.
 func (p *Plugins[T]) Register(name string, element T) {
-	p.Set(name, element)
+	if err := p.Add(name, element); err != nil {
+		panic(err)
+	}
 }
 
 // Deregister a plugin.

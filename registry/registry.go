@@ -114,7 +114,7 @@ func ProvideRegistry(
 	}
 
 	// Configure the logger.
-	cLogger, err := logger.ReplaceIfExists(sections, configs)
+	cLogger, err := logger.WithConfig(sections, configs)
 	if err != nil {
 		return Type{}, err
 	}

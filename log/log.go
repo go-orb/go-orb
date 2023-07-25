@@ -34,7 +34,7 @@ type Logger struct {
 	config Config
 
 	// pluginProvider is the provider of the current log handler.
-	pluginProvider PluginProviderType
+	pluginProvider ProviderType
 
 	// fields are all parameters passed to Logger.With. We keep track of them
 	// in case a sublogger needs to be created with a different plugin, then we
@@ -67,24 +67,24 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 		}
 	}
 
-	pf, err := Plugins.Get(cfg.Plugin)
+	pf, err := plugins.Get(cfg.Plugin)
 	if err != nil {
 		slog.Error("getting a logger plugin", "plugin", cfg.Plugin, "error", err)
 		return Logger{}, err
 	}
 
-	provider, err := pf(sections, configs)
+	provider, err := pf(sections, configs, opts...)
 	if err != nil {
 		return Logger{}, err
 	}
 
-	cachedProvider, err := PluginsCache.Get(provider.String())
+	cachedProvider, err := pluginsCache.Get(provider.String())
 	if err != nil {
 		if err := provider.Start(); err != nil {
 			return Logger{}, err
 		}
 
-		PluginsCache.Set(cfg.Plugin, provider)
+		pluginsCache.Set(cfg.Plugin, provider)
 		cachedProvider = provider
 	}
 
@@ -139,19 +139,30 @@ func (l Logger) WithLevel(level slog.Leveler) Logger {
 	return l
 }
 
-// ReplaceIfExists returns a new logger if there's a config for it in datas else the current one,
-// it adds the fields from the current logger.
-func (l Logger) ReplaceIfExists(sections []string, configs types.ConfigData) (Logger, error) {
+// WithConfig returns a new logger if there's a config for it in configs else the current one.
+// It adds the fields from the current logger.
+func (l Logger) WithConfig(sections []string, configs types.ConfigData, opts ...Option) (Logger, error) {
 	if !config.HasKey(append(sections, DefaultConfigSection), "plugin", configs) {
 		return l, nil
 	}
 
-	newLogger, err := NewConfigDatas(append(sections, DefaultConfigSection), configs)
+	newLogger, err := NewConfigDatas(append(sections, DefaultConfigSection), configs, opts...)
 	if err != nil {
 		return Logger{}, err
 	}
 
 	return newLogger.With(l.fields...), nil
+}
+
+// WithOpts returns a new logger with the given opt's.
+// It adds the fields from the current logger.
+func (l Logger) WithOpts(opts ...Option) (Logger, error) {
+	nl, err := New(opts...)
+	if err != nil {
+		return Logger{}, err
+	}
+
+	return nl.With(l.fields...), nil
 }
 
 // With returns a new Logger that includes the given arguments, converted to
@@ -178,7 +189,7 @@ func (l Logger) Stop(ctx context.Context) error {
 		return nil
 	}
 
-	for p, pp := range PluginsCache.All() {
+	for p, pp := range pluginsCache.All() {
 		if err := pp.Stop(ctx); err != nil {
 			slog.Error("stopping a logger plugin", "plugin", p, "error", err)
 		}
