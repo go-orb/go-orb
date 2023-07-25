@@ -70,7 +70,7 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 	pf, err := plugins.Get(cfg.Plugin)
 	if err != nil {
 		slog.Error("getting a logger plugin", "plugin", cfg.Plugin, "error", err)
-		return Logger{}, err
+		return Logger{}, fmt.Errorf("while fetching plugin '%s': %w", cfg.Plugin, err)
 	}
 
 	provider, err := pf(sections, configs, opts...)
