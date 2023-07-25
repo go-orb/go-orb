@@ -138,6 +138,8 @@ We do not accept commits that fail to lint, either use `./scripts/test.sh lint a
 
 ## Authors
 
+### go-orb
+
 - [David Brouwer](https://github.com/Davincible)
 - [René Jochum](https://github.com/jochumdev)
 
@@ -153,4 +155,4 @@ A lot of this is copy&pasted from [go-micro](https://github.com/go-micro/go-micr
 
 ## License
 
-go-orb is Apache 2.0 licensed.
+go-orb is Apache 2.0 licensed and is based on go-micro.
