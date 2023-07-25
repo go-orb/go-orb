@@ -7,6 +7,7 @@ import (
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/types"
+	"golang.org/x/exp/slog"
 )
 
 // ComponentType is the registry component type name.
@@ -87,13 +88,14 @@ type Value struct {
 // then forwards all it's arguments to the provider which it get's from "Plugins".
 func ProvideRegistry(
 	name types.ServiceName,
-	data types.ConfigData,
+	version types.ServiceVersion,
+	configs types.ConfigData,
 	logger log.Logger,
 	opts ...Option) (Type, error) {
 	cfg := NewConfig(opts...)
 
-	sections := types.SplitServiceName(name)
-	if err := config.Parse(append(sections, DefaultConfigSection), data, cfg); err != nil {
+	sections := append(types.SplitServiceName(name), DefaultConfigSection)
+	if err := config.Parse(sections, configs, cfg); err != nil {
 		return Type{}, err
 	}
 
@@ -107,5 +109,13 @@ func ProvideRegistry(
 		return Type{}, err
 	}
 
-	return provider(name, data, logger, opts...)
+	// Configure the logger.
+	cLogger, err := logger.ReplaceIfExists(sections, configs)
+	if err != nil {
+		return Type{}, err
+	}
+
+	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
+
+	return provider(name, version, configs, cLogger, opts...)
 }

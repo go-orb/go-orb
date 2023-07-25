@@ -8,6 +8,11 @@ import (
 )
 
 // Names for common Levels.
+// TODO:  Something like this would be nice
+//
+//	type LevelT interface {
+//		slog.Level | string | constraints.Integer
+//	}
 const (
 	LevelTrace slog.Level = slog.LevelDebug - 1
 	LevelDebug slog.Level = slog.LevelDebug

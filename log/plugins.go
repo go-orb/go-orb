@@ -1,22 +1,35 @@
 package log
 
 import (
+	"context"
+	"fmt"
+
 	"golang.org/x/exp/slog"
 
+	"github.com/go-orb/go-orb/types"
 	"github.com/go-orb/go-orb/util/container"
 )
 
-type pluginHandler struct {
-	handler slog.Handler
-	level   slog.Level
+// PluginProvider can be started and stopped.
+type PluginProvider interface {
+	fmt.Stringer
+
+	Start() error
+	Stop(context.Context) error
+
+	Handler() (slog.Handler, error)
 }
 
-// Plugins is the registry for Logger plugins.
-var Plugins = container.NewPlugins[func(level slog.Leveler) (slog.Handler, error)]() //nolint:gochecknoglobals
+// PluginProviderType is the struct that wraps the interface, so we don't have to pass interfaces everywhere.
+type PluginProviderType struct {
+	PluginProvider
+}
 
-// plugins is a cache of lazyloaded plugin handlers.
-// In order to prevent creating multiple handlers, and thus potentially
-// multiple connections, depending on the handler, we cache the handlers, and
-// wrap them with a LevelHandler by default. This way we only create one
-// handler per plugin, for use in any amount of loggers.
-var plugins = container.NewSafeMap[pluginHandler]() //nolint:gochecknoglobals
+// PluginProviderFunc is the function a Plugin must provide which returns a PluginProvider.
+type PluginProviderFunc func(section []string, data types.ConfigData) (PluginProviderType, error)
+
+// Plugins is the registry for Logger plugins.
+var Plugins = container.NewPlugins[PluginProviderFunc]() //nolint:gochecknoglobals
+
+// PluginsCache contains plugin's already loaded and started.
+var PluginsCache = container.NewSafeMap[PluginProviderType]() //nolint:gochecknoglobals

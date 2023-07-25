@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/go-orb/go-orb/config/source/cli"
-	"github.com/go-orb/go-orb/log"
 )
 
 //nolint:gochecknoglobals
@@ -68,13 +67,12 @@ func init() {
 	}
 }
 
-// TODO: this config misses things compared to v4, should they be added here?
+// TODO(jochumdev): this config misses things compared to v4, should they be added here?
 
 // Config is the configuration that can be used in a registry.
 type Config struct {
-	Plugin  string     `json:"plugin,omitempty"  yaml:"plugin,omitempty"`
-	Timeout int        `json:"timeout,omitempty" yaml:"timeout,omitempty"`
-	Logger  log.Logger `json:"logger,omitempty"  yaml:"logger,omitempty"`
+	Plugin  string `json:"plugin,omitempty"  yaml:"plugin,omitempty"`
+	Timeout int    `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 }
 
 func (c *Config) config() *Config {
@@ -88,19 +86,19 @@ func (c *Config) ApplyOptions(opts ...Option) {
 	}
 }
 
-// WithTimeout sets the default registry timeout used.
-func WithTimeout(timeout int) Option {
+// WithPlugin set the implementation to use.
+func WithPlugin(n string) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
-		c.Timeout = timeout
+		c.Plugin = n
 	}
 }
 
-// WithLogger sets a specific logger to use.
-func WithLogger(logger log.Logger) Option {
+// WithTimeout sets the default registry timeout used.
+func WithTimeout(n int) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
-		c.Logger = logger
+		c.Timeout = n
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"golang.org/x/exp/slog"
 
 	"github.com/go-orb/go-orb/config"
+	"github.com/go-orb/go-orb/config/source"
 
 	"github.com/go-orb/go-orb/types"
 )
@@ -32,89 +33,93 @@ type Logger struct {
 	// externally. It keeps track of the current level set, and plugin used.
 	config Config
 
+	// pluginProvider is the provider of the current log handler.
+	pluginProvider PluginProviderType
+
 	// fields are all parameters passed to Logger.With. We keep track of them
 	// in case a sublogger needs to be created with a different plugin, then we
 	// manually need to add the fields to the handler plugin.
 	fields []any
 }
 
-// New creates a new Logger from a Config.
-func New(cfg Config) (Logger, error) {
-	return Logger{
-		config: cfg,
-	}.Plugin(cfg.Plugin, cfg.Level)
+// New creates a n4ew Logger from a Config.
+func New(opts ...Option) (Logger, error) {
+	return NewConfigDatas([]string{}, nil, opts...)
+}
+
+// NewConfigDatas will create a new logger with the given configs,
+// as well as this logger's fields.
+func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option) (Logger, error) {
+	var cfg Config
+	if configs == nil {
+		cfg = NewConfig(opts...)
+
+		data, err := config.ParseStruct(append(sections, DefaultConfigSection), &cfg)
+		if err != nil {
+			return Logger{}, fmt.Errorf("what: %w", err)
+		}
+
+		configs = []source.Data{data}
+	} else {
+		cfg = NewConfig(opts...)
+		if err := config.Parse(append(sections, DefaultConfigSection), configs, &cfg); err != nil {
+			return Logger{}, fmt.Errorf("what: %w", err)
+		}
+	}
+
+	pf, err := Plugins.Get(cfg.Plugin)
+	if err != nil {
+		slog.Error("getting a logger plugin", "plugin", cfg.Plugin, "error", err)
+		return Logger{}, err
+	}
+
+	provider, err := pf(sections, configs)
+	if err != nil {
+		return Logger{}, err
+	}
+
+	cachedProvider, err := PluginsCache.Get(provider.String())
+	if err != nil {
+		if err := provider.Start(); err != nil {
+			return Logger{}, err
+		}
+
+		PluginsCache.Set(cfg.Plugin, provider)
+		cachedProvider = provider
+	}
+
+	handler, err := cachedProvider.Handler()
+	if err != nil {
+		return Logger{}, err
+	}
+
+	r := Logger{
+		Logger:         slog.New(handler),
+		pluginProvider: cachedProvider,
+		config:         cfg,
+		fields:         []any{},
+	}
+
+	return r, nil
 }
 
 // ProvideLogger provides a new logger.
 // It will set the slog.Logger as package wide default logger.
 func ProvideLogger(
 	serviceName types.ServiceName,
-	data types.ConfigData,
+	configs types.ConfigData,
 	opts ...Option,
 ) (Logger, error) {
-	cfg := NewConfig()
-
-	for _, o := range opts {
-		o(&cfg)
-	}
-
 	sections := types.SplitServiceName(serviceName)
-	if err := config.Parse(append(sections, DefaultConfigSection), data, cfg); err != nil {
-		return Logger{}, err
-	}
 
-	logger, err := New(cfg)
+	logger, err := NewConfigDatas(append(sections, DefaultConfigSection), configs, opts...)
 	if err != nil {
 		return Logger{}, err
 	}
 
-	if cfg.SetDefault {
-		slog.SetDefault(logger.Logger)
-	}
+	slog.SetDefault(logger.Logger)
 
 	return logger, nil
-}
-
-// Plugin will return the plugin handler with set to TRACE level. To enable
-// a custom level wrap it with a LevelHandler.
-func (l Logger) Plugin(plugin string, level ...slog.Leveler) (Logger, error) {
-	lvl := l.config.Level
-	if len(level) > 0 && level[0] != nil {
-		lvl = level[0].Level()
-		l.config.Level = lvl
-	}
-
-	h, err := plugins.Get(plugin)
-	handler := h.handler
-
-	// Check if already have an instance of the plugin. If not create a new one.
-	if err != nil {
-		p, err := Plugins.Get(plugin)
-		if err != nil {
-			return l, fmt.Errorf("logger plugin '%s' does not exist, please register your plugin", plugin)
-		}
-
-		handler, err = p(lvl)
-		if err != nil {
-			return l, fmt.Errorf("create new plugin handler: %w", err)
-		}
-
-		plugins.Set(plugin, pluginHandler{
-			handler: handler,
-			level:   lvl,
-		})
-	} else if h.level != lvl {
-		handler = &LevelHandler{level: lvl, handler: handler}
-	}
-
-	l.config.Plugin = plugin
-	l.Logger = slog.New(handler)
-
-	if len(l.fields) > 0 {
-		l.Logger = l.Logger.With(l.fields...)
-	}
-
-	return l, nil
 }
 
 // WithLevel creates a copy of the logger with a new level.
@@ -122,10 +127,31 @@ func (l Logger) Plugin(plugin string, level ...slog.Leveler) (Logger, error) {
 func (l Logger) WithLevel(level slog.Leveler) Logger {
 	if level != nil {
 		l.config.Level = level.Level()
-		l.Logger = slog.New(&LevelHandler{level.Level(), l.Handler()})
+
+		handler, err := l.pluginProvider.Handler()
+		if err != nil {
+			return l
+		}
+
+		l.Logger = slog.New(&LevelHandler{level.Level(), handler})
 	}
 
 	return l
+}
+
+// ReplaceIfExists returns a new logger if there's a config for it in datas else the current one,
+// it adds the fields from the current logger.
+func (l Logger) ReplaceIfExists(sections []string, configs types.ConfigData) (Logger, error) {
+	if !config.HasKey(append(sections, DefaultConfigSection), "plugin", configs) {
+		return l, nil
+	}
+
+	newLogger, err := NewConfigDatas(append(sections, DefaultConfigSection), configs)
+	if err != nil {
+		return Logger{}, err
+	}
+
+	return newLogger.With(l.fields...), nil
 }
 
 // With returns a new Logger that includes the given arguments, converted to
@@ -134,39 +160,11 @@ func (l Logger) WithLevel(level slog.Leveler) Logger {
 //
 // The new Logger's handler is the result of calling WithAttrs on the receiver's
 // handler.
-func (l *Logger) With(args ...any) Logger {
+func (l Logger) With(args ...any) Logger {
 	l.fields = append(l.fields, args...)
 	l.Logger = l.Logger.With(args...)
 
-	return *l
-}
-
-// WithComponent will create a new logger for a component inheriting all
-// parent logger fields, and optionally set a new level and handler.
-//
-// If you want to use the parent handler and log level, pass an empty values.
-//
-// It will add two fields to the sub logger, the component (e.g. broker) as component
-// and the component plugin implementation (e.g. NATS) as plugin.
-func (l Logger) WithComponent(component, name, plugin string, level slog.Leveler) (Logger, error) {
-	l = l.With(
-		slog.String("component", component),
-		slog.String("plugin", name),
-	)
-
-	var err error
-	if len(plugin) > 0 {
-		l, err = l.Plugin(plugin, level)
-		if err != nil {
-			return Logger{}, err
-		}
-	}
-
-	if level.Level() != l.config.Level {
-		l = l.WithLevel(level)
-	}
-
-	return l, nil
+	return l
 }
 
 // Start no-op.
@@ -174,17 +172,23 @@ func (l Logger) Start() error {
 	return nil
 }
 
-// Stop no-op.
-func (l Logger) Stop(_ context.Context) error {
+// Stop stops all cached plugins if this is the default logger.
+func (l Logger) Stop(ctx context.Context) error {
+	if !l.config.SetDefault {
+		return nil
+	}
+
+	for p, pp := range PluginsCache.All() {
+		if err := pp.Stop(ctx); err != nil {
+			slog.Error("stopping a logger plugin", "plugin", p, "error", err)
+		}
+	}
+
 	return nil
 }
 
 // String returns current handler plugin used.
 func (l Logger) String() string {
-	if i, ok := l.Handler().(fmt.Stringer); ok {
-		return i.String()
-	}
-
 	return l.config.Plugin
 }
 
