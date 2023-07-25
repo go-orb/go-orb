@@ -56,9 +56,9 @@ func TestMatcher(t *testing.T) {
 }
 
 func TestMatcherDuplication(t *testing.T) {
-	plugins := container.NewPlugins[string]()
-	plugins.Register("one", "itemOne")
-	plugins.Register("two", "itemTwo")
+	plugins := container.NewMap[string]()
+	plugins.Set("one", "itemOne")
+	plugins.Set("two", "itemTwo")
 
 	m := NewMatcher(plugins)
 
@@ -90,9 +90,9 @@ func TestMatcherDuplication(t *testing.T) {
 }
 
 func TestMatcherJson(t *testing.T) {
-	plugins := container.NewPlugins[string]()
-	plugins.Register("abc", "abc")
-	plugins.Register("def", "def")
+	plugins := container.NewMap[string]()
+	plugins.Set("abc", "abc")
+	plugins.Set("def", "def")
 
 	a := struct {
 		Middlware Matcher[string] `json:"middleware"`
@@ -111,9 +111,9 @@ func TestMatcherJson(t *testing.T) {
 }
 
 func TestMatcherYaml(t *testing.T) {
-	plugins := container.NewPlugins[string]()
-	plugins.Register("abc", "abc")
-	plugins.Register("def", "def")
+	plugins := container.NewMap[string]()
+	plugins.Set("abc", "abc")
+	plugins.Set("def", "def")
 
 	a := struct {
 		Middlware Matcher[string] `yaml:"middleware"`
