@@ -51,3 +51,11 @@ func (c *SafeMap[T]) Get(name string) (T, error) {
 
 	return c.Map.Get(name)
 }
+
+// Keys returns the map's keys.
+func (c *SafeMap[T]) Keys() []string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.Map.Keys()
+}

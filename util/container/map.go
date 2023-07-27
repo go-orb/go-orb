@@ -45,3 +45,13 @@ func (c *Map[T]) Get(name string) (T, error) {
 
 	return p, nil
 }
+
+// Keys returns the map's keys.
+func (c *Map[T]) Keys() []string {
+	keys := make([]string, 0, len(c.elements))
+	for k := range c.elements {
+		keys = append(keys, k)
+	}
+
+	return keys
+}
