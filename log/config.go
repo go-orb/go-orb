@@ -14,6 +14,9 @@ var (
 	DefaultPlugin = "slog"
 	// DefaultSetDefault set's the "log" and slog default logger when true.
 	DefaultSetDefault = false
+	// DefaultConfigSection is the section key used in config files used to
+	// configure the logger options.
+	DefaultConfigSection = "logger"
 )
 
 var _ (ConfigType) = (*Config)(nil)

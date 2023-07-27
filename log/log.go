@@ -16,10 +16,6 @@ import (
 // This is here to make sure Logger implements the component interface.
 var _ types.Component = (*Logger)(nil)
 
-// DefaultConfigSection is the section key used in config files used to
-// configure the logger options.
-var DefaultConfigSection = "logger" //nolint:gochecknoglobals
-
 // ComponentType is the name of the component type logger.
 const ComponentType = "logger"
 
@@ -56,21 +52,21 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 
 		data, err := config.ParseStruct(append(sections, DefaultConfigSection), &cfg)
 		if err != nil {
-			return Logger{}, fmt.Errorf("what: %w", err)
+			return Logger{}, fmt.Errorf("while creating a new config: %w", err)
 		}
 
 		configs = []source.Data{data}
 	} else {
 		cfg = NewConfig(opts...)
 		if err := config.Parse(append(sections, DefaultConfigSection), configs, &cfg); err != nil {
-			return Logger{}, fmt.Errorf("what: %w", err)
+			return Logger{}, fmt.Errorf("while creating a new config: %w", err)
 		}
 	}
 
 	pf, err := plugins.Get(cfg.Plugin)
 	if err != nil {
 		slog.Error("getting a logger plugin", "plugin", cfg.Plugin, "error", err)
-		return Logger{}, fmt.Errorf("while fetching plugin '%s': %w", cfg.Plugin, err)
+		return Logger{}, fmt.Errorf("while getting the log plugin '%s': %w", cfg.Plugin, err)
 	}
 
 	provider, err := pf(sections, configs, opts...)
@@ -93,8 +89,13 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 		return Logger{}, err
 	}
 
+	lvlHandler, err := NewLevelHandler(cfg.Level, handler)
+	if err != nil {
+		return Logger{}, err
+	}
+
 	r := Logger{
-		Logger:         slog.New(handler),
+		Logger:         slog.New(lvlHandler),
 		pluginProvider: cachedProvider,
 		config:         cfg,
 		fields:         []any{},
@@ -112,7 +113,7 @@ func ProvideLogger(
 ) (Logger, error) {
 	sections := types.SplitServiceName(serviceName)
 
-	logger, err := NewConfigDatas(append(sections, DefaultConfigSection), configs, opts...)
+	logger, err := NewConfigDatas(sections, configs, opts...)
 	if err != nil {
 		return Logger{}, err
 	}
@@ -146,7 +147,7 @@ func (l Logger) WithConfig(sections []string, configs types.ConfigData, opts ...
 		return l, nil
 	}
 
-	newLogger, err := NewConfigDatas(append(sections, DefaultConfigSection), configs, opts...)
+	newLogger, err := NewConfigDatas(sections, configs, opts...)
 	if err != nil {
 		return Logger{}, err
 	}
