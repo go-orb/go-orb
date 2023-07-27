@@ -16,6 +16,7 @@ var Plugins = container.NewPlugins[Marshaler]() //nolint:gochecknoglobals
 func Register(name string, codec Marshaler) bool {
 	Plugins.Register(name, codec)
 	updateMimeMap()
+
 	return true
 }
 

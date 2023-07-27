@@ -40,7 +40,9 @@ function print_list() {
 
 # Add a job summary to GitHub Actions.
 function add_summary() {
-	printf "%s\n" "${1}" >>"${GITHUB_STEP_SUMMARY}" || true
+	if [[ -f ${GITHUB_STEP_SUMMARY} ]]; then
+		printf "%s\n" "${1}" >>"${GITHUB_STEP_SUMMARY}"
+	fi
 }
 
 # Install dependencies, usually servers.

@@ -21,8 +21,8 @@ func TestMetadataSet(t *testing.T) {
 
 func TestMetadataDelete(t *testing.T) {
 	md := Metadata{
-		"Foo": "bar",
-		"Baz": "empty",
+		"foo": "bar",
+		"baz": "empty",
 	}
 
 	ctx := md.To(context.TODO())
@@ -41,7 +41,7 @@ func TestMetadataDelete(t *testing.T) {
 
 func TestMetadataCopy(t *testing.T) {
 	md := Metadata{
-		"Foo": "bar",
+		"foo": "bar",
 		"bar": "baz",
 	}
 
@@ -56,7 +56,7 @@ func TestMetadataCopy(t *testing.T) {
 
 func TestMetadataContext(t *testing.T) {
 	md := Metadata{
-		"Foo": "bar",
+		"foo": "bar",
 	}
 
 	ctx := md.To(context.TODO())
@@ -66,7 +66,7 @@ func TestMetadataContext(t *testing.T) {
 		t.Errorf("Unexpected error retrieving metadata, got %t", ok)
 	}
 
-	if emd["Foo"] != md["Foo"] {
+	if emd["foo"] != md["foo"] {
 		t.Errorf("Expected key: %s val: %s, got key: %s val: %s", "Foo", md["Foo"], "Foo", emd["Foo"])
 	}
 
