@@ -15,7 +15,11 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("%d %s: %s", e.Code, e.Message, e.Wrapped)
+	if e.Wrapped == nil {
+		return fmt.Sprintf("%d %s", e.Code, e.Message)
+	}
+
+	return fmt.Errorf("%d %s: %w", e.Code, e.Message, e.Wrapped).Error()
 }
 
 // Toerror converts the "Error" to "error",
