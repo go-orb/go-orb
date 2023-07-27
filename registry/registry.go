@@ -67,7 +67,7 @@ type Node struct {
 	ID string `json:"id"`
 	// ip:port
 	Address string `json:"address"`
-	// frpc/grpc/http uvm., since v5!
+	// grpc/h2c/http/http3 uvm., since go-orb!
 	Transport string            `json:"transport"`
 	Metadata  map[string]string `json:"metadata"`
 }
@@ -99,7 +99,7 @@ func ProvideRegistry(
 	cfg := NewConfig(opts...)
 
 	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, configs, cfg); err != nil {
+	if err := config.Parse(sections, configs, &cfg); err != nil {
 		return Type{}, err
 	}
 
