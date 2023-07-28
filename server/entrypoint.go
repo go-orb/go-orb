@@ -41,6 +41,9 @@ type Entrypoint interface {
 
 	// Address returns the address the entrypoint is listening on.
 	Address() string
+
+	// EntrypointID returns the id (uuid) of this entrypoint in the registry.
+	EntrypointID() string
 }
 
 // EntrypointConfig provides a primitive way to constrain entrypoint config
