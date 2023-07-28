@@ -52,10 +52,26 @@ func (c *SafeMap[T]) Get(name string) (T, error) {
 	return c.Map.Get(name)
 }
 
+// Len returns the length of the internal map.
+func (c *SafeMap[T]) Len() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.Map.Len()
+}
+
 // Keys returns the map's keys.
 func (c *SafeMap[T]) Keys() []string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	return c.Map.Keys()
+}
+
+// Values returns the map's values.
+func (c *SafeMap[T]) Values() []T {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.Map.Values()
 }
