@@ -11,6 +11,7 @@ import (
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/registry"
 	"github.com/go-orb/go-orb/types"
+	"github.com/go-orb/go-orb/util/container"
 	"github.com/go-orb/go-orb/util/orberrors"
 	"golang.org/x/exp/slog"
 )
@@ -24,7 +25,7 @@ type Client interface {
 
 	Config() *Config
 
-	ResolveService(ctx context.Context, service string) (*registry.Node, error)
+	ResolveService(ctx context.Context, service string, preferredTransports ...string) (*container.Map[[]*registry.Node], error)
 
 	Call(ctx context.Context, req *Request[any, any], opts ...CallOption) (resp *RawResponse, err error)
 }
@@ -41,6 +42,7 @@ type RawResponse = Response[[]byte]
 // Response will be returned by CallWithResponse.
 type Response[T any] struct {
 	ContentType string
+	URL         string
 	Headers     map[string][]string
 	Body        T
 }
@@ -96,13 +98,17 @@ func (r *Request[TResp, TReq]) Node(ctx context.Context, opts *CallOptions) (*re
 		return node, nil
 	}
 
-	// Resolve the service and set the request's node.
-	node, err := r.client.ResolveService(ctx, r.service)
+	// Resolve the service to a list of nodes in a per transport map.
+	nodes, err := r.client.ResolveService(ctx, r.service, opts.PreferredTransports...)
 	if err != nil {
 		return nil, err
 	}
 
-	r.node = node
+	// Run the configured Selector to get a node from the resolved nodes.
+	r.node, err = opts.Selector(ctx, r.service, nodes, opts.PreferredTransports, opts.AnyTransport)
+	if err != nil {
+		return nil, err
+	}
 
 	return r.node, nil
 }

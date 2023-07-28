@@ -15,13 +15,15 @@ var (
 	// DefaultContentType is the default Content-Type for calls.
 	DefaultContentType = "application/protobuf"
 	// DefaultPreferredTransports set's in which order a transport will be selected.
-	DefaultPreferredTransports = []string{"grpc", "h2c", "http2", "http3"}
+	DefaultPreferredTransports = []string{"grpc", "h2c", "http", "http2", "http3"}
 
 	// DefaultPoolSize sets the connection pool size.
 	DefaultPoolSize = 100
 	// DefaultPoolTTL sets the connection pool ttl.
 	DefaultPoolTTL = time.Minute
 
+	// DefaultSelector is the default node selector.
+	DefaultSelector = SelectRandomNode
 	// DefaultBackoff is the default backoff function for retries.
 	DefaultBackoff = BackoffExponential
 	// DefaultRetry is the default check-for-retry function for retries.
@@ -79,11 +81,18 @@ type Config struct {
 	// Used to select a codec
 	ContentType string `json:"contentType" yaml:"contentType"`
 
+	// PreferredTransports contains a list of transport names in preferred order.
 	PreferredTransports []string `json:"preferredTransports" yaml:"preferredTransports"`
+
+	// AnyTransport enables Transports which are not in PreferredTransports.
+	AnyTransport bool `json:"anyTransport" yaml:"anyTransport"`
 
 	// Connection Pool
 	PoolSize int           `json:"poolSize" yaml:"poolSize"`
 	PoolTTL  time.Duration `json:"poolTTL"  yaml:"poolTTL"` //nolint:tagliatelle
+
+	// SelectorFunc get's executed by client.SelectNode which get it's info's from client.ResolveService.
+	Selector SelectorFunc `json:"-" yaml:"-"`
 
 	// Backoff func
 	Backoff BackoffFunc `json:"-" yaml:"-"`
@@ -126,10 +135,18 @@ func WithClientContentType(n string) Option {
 }
 
 // WithClientPreferredTransports set the order of transports.
-func WithClientPreferredTransports(n []string) Option {
+func WithClientPreferredTransports(n ...string) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
 		c.PreferredTransports = n
+	}
+}
+
+// WithClientAnyTransport enables Transports which are not in PreferredTransports.
+func WithClientAnyTransport() Option {
+	return func(cfg ConfigType) {
+		c := cfg.config()
+		c.AnyTransport = true
 	}
 }
 
@@ -149,7 +166,15 @@ func WithClientPoolTTL(n time.Duration) Option {
 	}
 }
 
-// WithClientBackoff overrides the backoff func.
+// WithClientSelector overrides the clients selector func.
+func WithClientSelector(n SelectorFunc) Option {
+	return func(cfg ConfigType) {
+		c := cfg.config()
+		c.Selector = n
+	}
+}
+
+// WithClientBackoff overrides the clients backoff func.
 func WithClientBackoff(n BackoffFunc) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
@@ -219,6 +244,7 @@ func NewConfig(opts ...Option) Config {
 		RequestTimeout:      DefaultRequestTimeout,
 		StreamTimeout:       DefaultStreamTimeout,
 		ReturnHeaders:       DefaultReturnHeaders,
+		Selector:            DefaultSelector,
 	}
 
 	// Apply options.
@@ -234,6 +260,12 @@ type CallOptions struct {
 	// Used to select a codec
 	ContentType string
 
+	// PreferredTransports contains a list of transport names in preferred order.
+	PreferredTransports []string
+
+	AnyTransport bool
+	// Selector is the node selector.
+	Selector SelectorFunc
 	// Backoff func
 	Backoff BackoffFunc
 	// Check if retriable func
@@ -270,11 +302,19 @@ func WithContentType(ct string) CallOption {
 	}
 }
 
-// func WithSelectOption(so ...selector.SelectOption) CallOption {
-// return func(o *CallOptions) {
-// o.SelectOptions = append(o.SelectOptions, so...)
-// }
-// }
+// WithPreferredTransports set's the preffered transports for this request.
+func WithPreferredTransports(n ...string) CallOption {
+	return func(o *CallOptions) {
+		o.PreferredTransports = n
+	}
+}
+
+// WithSelector overrides the calls SelectorFunc.
+func WithSelector(fn SelectorFunc) CallOption {
+	return func(o *CallOptions) {
+		o.Selector = fn
+	}
+}
 
 // WithBackoff is a CallOption which overrides that which
 // set in Options.CallOptions.
