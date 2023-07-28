@@ -74,7 +74,7 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 		return Logger{}, err
 	}
 
-	cachedProvider, err := pluginsCache.Get(provider.String())
+	cachedProvider, err := pluginsCache.Get(provider.Key())
 	if err != nil {
 		if err := provider.Start(); err != nil {
 			return Logger{}, err

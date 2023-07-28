@@ -2,7 +2,6 @@ package log
 
 import (
 	"context"
-	"fmt"
 
 	"golang.org/x/exp/slog"
 
@@ -10,9 +9,12 @@ import (
 	"github.com/go-orb/go-orb/util/container"
 )
 
-// Provider can be started and stopped.
+// Provider can be started/stopped and it returns a slog.Handler on request.
+// Providers must be cacheable - there will be always one Provider for a given type AND config.
 type Provider interface {
-	fmt.Stringer
+	// Key must return a unique key for the cache,
+	// this should be unique for this Provider with its config.
+	Key() string
 
 	Start() error
 	Stop(context.Context) error
