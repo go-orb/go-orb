@@ -15,7 +15,7 @@ var (
 	// DefaultContentType is the default Content-Type for calls.
 	DefaultContentType = "application/protobuf"
 	// DefaultPreferredTransports set's in which order a transport will be selected.
-	DefaultPreferredTransports = []string{"grpc", "h2c", "http", "http2", "http3"}
+	DefaultPreferredTransports = []string{"grpc", "h2c", "http", "http2", "http3", "https"}
 
 	// DefaultPoolSize sets the connection pool size.
 	DefaultPoolSize = 100
