@@ -192,7 +192,7 @@ func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, 
 // "service1", "Say.Hello", myRequest,
 // ).Call(context.Background(), clientFromWire)
 //
-// Response will be of type FooResponse.
+// Response will be of type *FooResponse.
 func NewRequest[TResp any, TReq any](
 	service string,
 	endpoint string,
@@ -211,7 +211,7 @@ func NewRequest[TResp any, TReq any](
 //
 // resp , err := client.Call[FooResponse](context.Background(), someClient, "service1", "Say.Hello", fooRequest)
 //
-// Response will be of type FooResponse.
+// Response will be of type *FooResponse.
 func Call[TResp any, TReq any](
 	ctx context.Context,
 	client Client,
