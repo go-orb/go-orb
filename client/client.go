@@ -147,6 +147,43 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 	return result, nil
 }
 
+// CallResponse is the same as Call with the difference that it returns a Response[*TResp] instead of *TResp.
+func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, opts ...CallOption) (resp Response[*TResp], err error) {
+	r.client = client
+
+	var result = Response[*TResp]{}
+
+	// Create a copy of Request to forward it.
+	// TODO(jochumdev): see if there's a better way to do this.
+	fwReq := &Request[any, any]{
+		service:  r.service,
+		endpoint: r.endpoint,
+		request:  r.request,
+		client:   r.client,
+		node:     r.node,
+	}
+
+	cresp, cerr := r.client.Call(ctx, fwReq, opts...)
+	if cerr != nil {
+		return result, cerr
+	}
+
+	result.ContentType = cresp.ContentType
+	result.Headers = cresp.Headers
+
+	codec, err := codecs.GetMime(cresp.ContentType)
+	if err != nil {
+		return result, orberrors.ErrBadRequest.Wrap(err)
+	}
+
+	err = codec.Unmarshal(cresp.Body, result.Body)
+	if err != nil {
+		return result, orberrors.ErrBadRequest.Wrap(err)
+	}
+
+	return result, nil
+}
+
 // NewRequest creates a request for a service+endpoint.
 //
 // Example (with call):
@@ -184,6 +221,20 @@ func Call[TResp any, TReq any](
 	opts ...CallOption,
 ) (*TResp, error) {
 	return NewRequest[TResp](service, endpoint, req).Call(ctx, client, opts...)
+}
+
+// CallResponse makes a call with the client, it's a shortcut for NewRequest(...).CallResponse(...),
+//
+// it is the same as Call with the difference that it returns a Response[*TResp] instead of *TResp.
+func CallResponse[TResp any, TReq any](
+	ctx context.Context,
+	client Client,
+	service string,
+	endpoint string,
+	req TReq,
+	opts ...CallOption,
+) (Response[*TResp], error) {
+	return NewRequest[TResp](service, endpoint, req).CallResponse(ctx, client, opts...)
 }
 
 // ProvideClient creates a new client instance with the implementation from cfg.Plugin.
