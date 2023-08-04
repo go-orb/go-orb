@@ -78,6 +78,8 @@ type Config struct {
 	// Plugin selects the client implementation.
 	Plugin string `json:"plugin" yaml:"plugin"`
 
+	Middleware []MiddlewareConfig
+
 	// Used to select a codec
 	ContentType string `json:"contentType" yaml:"contentType"`
 

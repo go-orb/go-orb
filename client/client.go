@@ -23,11 +23,9 @@ const ComponentType = "client"
 type Client interface {
 	types.Component
 
-	Config() *Config
-
 	ResolveService(ctx context.Context, service string, preferredTransports ...string) (*container.Map[[]*registry.Node], error)
 
-	Call(ctx context.Context, req *Request[any, any], opts ...CallOption) (resp *RawResponse, err error)
+	Call(ctx context.Context, req *Request[any, any], opts ...CallOption) (*RawResponse, error)
 }
 
 // Type is the client type it is returned when you use ProvideClient

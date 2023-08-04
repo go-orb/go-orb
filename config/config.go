@@ -46,8 +46,7 @@ func walkMap(sections []string, in map[string]any) (map[string]any, error) {
 			data = tmpData
 		}
 
-		var err error
-		if data, err = Get(data, section, map[string]any{}); err != nil {
+		if data, err := Get(data, section, map[string]any{}); err != nil {
 			return data, err
 		}
 	}
