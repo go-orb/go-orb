@@ -6,11 +6,54 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"github.com/go-orb/go-orb/codecs"
 	"github.com/go-orb/go-orb/config/source"
 	"github.com/go-orb/go-orb/types"
 )
+
+func isAlphaNumeric(s string) bool {
+	for _, v := range s {
+		if v < '0' || v > '9' {
+			return false
+		}
+	}
+
+	return true
+}
+
+func walkMap(sections []string, in map[string]any) (map[string]any, error) {
+	data := in
+
+	for _, section := range sections {
+		if isAlphaNumeric(section) {
+			snum, err := strconv.ParseInt(section, 10, 64)
+			if err != nil {
+				return data, fmt.Errorf("while parsing the section number: %w", err)
+			}
+
+			sliceData, err := Get(data, section, []any{})
+			if err != nil {
+				return data, err
+			}
+
+			tmpData, ok := sliceData[snum].(map[string]any)
+			if !ok {
+				return data, ErrNotExistent
+			}
+
+			data = tmpData
+		}
+
+		var err error
+		if data, err = Get(data, section, map[string]any{}); err != nil {
+			return data, err
+		}
+	}
+
+	return data, nil
+}
 
 // Read reads urls into []Data where Data is map[string]any.
 //
@@ -84,16 +127,13 @@ func Parse(sections []string, configs types.ConfigData, target any) error {
 		var err error
 
 		// Walk into the sections.
-		data := configData.Data
-		for _, section := range sections {
-			if data, err = Get(data, section, map[string]any{}); err != nil {
-				// Ignore unknown configSection in config.
-				if errors.Is(err, ErrNotExistent) {
-					continue
-				}
-
-				return err
+		data, err := walkMap(sections, configData.Data)
+		if err != nil {
+			if errors.Is(err, ErrNotExistent) {
+				continue
 			}
+
+			return err
 		}
 
 		buf := bytes.Buffer{}
@@ -126,16 +166,13 @@ func HasKey(sections []string, key string, configs types.ConfigData) bool {
 		var err error
 
 		// Walk into the sections.
-		data := configData.Data
-		for _, section := range sections {
-			if data, err = Get(data, section, map[string]any{}); err != nil {
-				// Ignore unknown configSection in config.
-				if errors.Is(err, ErrNotExistent) {
-					continue
-				}
-
-				return false
+		data, err := walkMap(sections, configData.Data)
+		if err != nil {
+			if errors.Is(err, ErrNotExistent) {
+				continue
 			}
+
+			return false
 		}
 
 		if _, err := Get(data, key, ""); err != nil {

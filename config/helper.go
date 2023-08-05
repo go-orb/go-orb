@@ -12,16 +12,14 @@ import (
 //   - any non-container (string/float64/uvm.)
 //   - []string slice
 //   - []any slice
-//   - map[string]string
-//   - map[string]any
+//   - []map[string]any
 func Get[T any](data map[string]any, key string, def T) (T, error) {
 	value, ok := data[key]
 	if !ok {
 		return def, ErrNotExistent
 	}
 
-	var tmp T
-	switch any(tmp).(type) {
+	switch any(def).(type) {
 	case []string:
 		switch vt := value.(type) {
 		case []any:
@@ -32,40 +30,28 @@ func Get[T any](data map[string]any, key string, def T) (T, error) {
 
 			return any(res).(T), nil
 		default:
-			return tmp, ErrTypesDontMatch
+			return def, ErrTypesDontMatch
 		}
 	case []any:
 		switch value.(type) {
 		case []any:
 			return value.(T), nil
 		default:
-			return tmp, ErrTypesDontMatch
-		}
-	case map[string]string:
-		switch vt := value.(type) {
-		case map[string]any:
-			var res = map[string]string{}
-			for k, v := range vt {
-				res[k] = fmt.Sprintf("%v", v)
-			}
-
-			return any(res).(T), nil
-		default:
-			return tmp, ErrTypesDontMatch
+			return def, ErrTypesDontMatch
 		}
 	case map[string]any:
 		switch value.(type) {
 		case map[string]any:
 			return value.(T), nil
 		default:
-			return tmp, ErrTypesDontMatch
+			return def, ErrTypesDontMatch
 		}
 	default:
 		switch vt := value.(type) {
 		case T:
 			return vt, nil
 		default:
-			return tmp, ErrTypesDontMatch
+			return def, ErrTypesDontMatch
 		}
 	}
 }

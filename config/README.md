@@ -61,6 +61,14 @@ func main() {
 
 Parse parses the config from config.Read into the given struct.
 
+The first argument "sections" can have a alpha-numeric entry like:
+
+```go
+[]string{"app", "config", "middleware", "5"}
+```
+
+When it finds that "5" it will try to parse "middleware" as slice and parses the 5th entry of that slice into the result.
+
 Example:
 
 ```go
@@ -98,6 +106,8 @@ func main() {
 ### config.HasKey
 
 HasKey returns a boolean which indidcates if the given sections and key exists in the configs.
+
+HasKey has also support for alpha-numeric keys, same as `Parse`.
 
 Example:
 

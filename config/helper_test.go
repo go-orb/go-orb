@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var testJSON = `{
@@ -26,7 +27,11 @@ var testJSON = `{
 		"key2": "value2",
 		"key3": 1,
 		"key4": true
-	}
+	},
+	"slicemap": [
+		{"name": "0", "key": "value0"},
+		{"name": "1", "key": "value1"}
+	]
 }`
 
 func testData(t *testing.T) map[string]any {
@@ -45,13 +50,13 @@ func TestReadString(t *testing.T) {
 
 	// Must return the correct value.
 	str, err := Get(data, "string", "x")
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "value", str)
 
 	// Must return default if type don't match
-	i, err := Get(data, "string", 0)
+	i, err := Get(data, "string", 10)
 	assert.ErrorIs(t, err, ErrTypesDontMatch)
-	assert.Equal(t, i, 0)
+	assert.Equal(t, i, 10)
 
 	// Must return default
 	str, err = Get(data, "string2", "x")
@@ -64,7 +69,7 @@ func TestReadStringSlice(t *testing.T) {
 
 	// Must return the correct value.
 	strs, err := Get(data, "stringslice", []string{})
-	assert.Nil(t, nil, err)
+	require.NoError(t, err)
 	assert.Equal(t, []string{"value1", "value2", "0", "true"}, strs)
 
 	// Must return error if not a slice
@@ -82,7 +87,7 @@ func TestReadMixedSlice(t *testing.T) {
 
 	// Must return the correct value.
 	anys, err := Get(data, "mixedslice", []any{})
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []any{"value1", float64(0), float64(1), float64(2)}, anys)
 
 	// Must return error if not a slice
@@ -90,33 +95,28 @@ func TestReadMixedSlice(t *testing.T) {
 	assert.ErrorIs(t, err, ErrTypesDontMatch)
 }
 
-func TestReadStringMap(t *testing.T) {
-	data := testData(t)
-
-	// Must return the correct value.
-	maps, err := Get(data, "stringmap", map[string]string{})
-	assert.Nil(t, nil, err)
-	assert.Equal(t, map[string]string{"key1": "value1", "key2": "value2", "key3": "1", "key4": "true"}, maps)
-
-	// Must return error if not a map.
-	_, err = Get(data, "string", map[string]string{})
-	assert.ErrorIs(t, err, ErrTypesDontMatch)
-
-	// Must return default
-	maps, err = Get(data, "stringslice2", map[string]string{"a": "a"})
-	assert.ErrorIs(t, err, ErrNotExistent)
-	assert.Equal(t, map[string]string{"a": "a"}, maps)
-}
-
 func TestReadMixedMap(t *testing.T) {
 	data := testData(t)
 
 	// Must return the correct value.
 	mapa, err := Get(data, "stringmap", map[string]any{})
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"key1": "value1", "key2": "value2", "key3": float64(1), "key4": true}, mapa)
 
 	// Must return error if not a slice
 	_, err = Get(data, "string", map[string]any{})
+	assert.ErrorIs(t, err, ErrTypesDontMatch)
+}
+
+func TestReadSliceMap(t *testing.T) {
+	data := testData(t)
+
+	// Must return the correct value.
+	mapa, err := Get(data, "slicemap", []any{})
+	require.NoError(t, err)
+	assert.Equal(t, []any{map[string]any{"name": "0", "key": "value0"}, map[string]any{"name": "1", "key": "value1"}}, mapa)
+
+	// Must return error if not a slice
+	_, err = Get(data, "string", []any{})
 	assert.ErrorIs(t, err, ErrTypesDontMatch)
 }
