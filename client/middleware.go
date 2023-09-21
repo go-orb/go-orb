@@ -16,6 +16,8 @@ type MiddlewareConfig struct {
 // MiddlewareCallHandler is the middleware handler for client.Call.
 type MiddlewareCallHandler func(ctx context.Context, req *Request[any, any], opts *CallOptions) (*RawResponse, error)
 
+type MiddlewareCallNoCodecHandler func(ctx context.Context, req *Request[any, any], result any, opts *CallOptions) error
+
 // Middleware is the middleware for clients.
 type Middleware interface {
 	// String returns the name of this middleware.
@@ -24,6 +26,10 @@ type Middleware interface {
 	Call(
 		next MiddlewareCallHandler,
 	) MiddlewareCallHandler
+
+	CallNoCodec(
+		next MiddlewareCallNoCodecHandler,
+	) MiddlewareCallNoCodecHandler
 }
 
 // MiddlewareFactory is used to create a new client Middleware.

@@ -27,7 +27,10 @@ type Client interface {
 
 	ResolveService(ctx context.Context, service string, preferredTransports ...string) (*container.Map[[]*registry.Node], error)
 
-	Call(ctx context.Context, req *Request[any, any], opts ...CallOption) (*RawResponse, error)
+	NeedsCodec(ctx context.Context, req *Request[any, any], opts ...CallOption) bool
+
+	Call(ctx context.Context, req *Request[any, any], result any, opts ...CallOption) (*RawResponse, error)
+	CallNoCodec(ctx context.Context, req *Request[any, any], result any, opts ...CallOption) error
 }
 
 // Type is the client type it is returned when you use ProvideClient
@@ -107,6 +110,7 @@ func (r *Request[TResp, TReq]) Node(ctx context.Context, opts *CallOptions) (*re
 	// Run the configured Selector to get a node from the resolved nodes.
 	r.node, err = opts.Selector(ctx, r.service, nodes, opts.PreferredTransports, opts.AnyTransport)
 	if err != nil {
+		r.node = nil
 		return nil, err
 	}
 
@@ -129,22 +133,27 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 		node:     r.node,
 	}
 
-	cresp, cerr := r.client.Call(ctx, fwReq, opts...)
-	if cerr != nil {
-		return result, cerr
+	if r.client.NeedsCodec(ctx, fwReq, opts...) {
+		cresp, cerr := r.client.Call(ctx, fwReq, result, opts...)
+		if cerr != nil {
+			return result, cerr
+		}
+
+		codec, err := codecs.GetMime(cresp.ContentType)
+		if err != nil {
+			return result, orberrors.ErrBadRequest.Wrap(err)
+		}
+
+		err = codec.Unmarshal(cresp.Body, result)
+		if err != nil {
+			return result, orberrors.ErrBadRequest.Wrap(err)
+		}
+
+		return result, nil
 	}
 
-	codec, err := codecs.GetMime(cresp.ContentType)
-	if err != nil {
-		return result, orberrors.ErrBadRequest.Wrap(err)
-	}
-
-	err = codec.Unmarshal(cresp.Body, result)
-	if err != nil {
-		return result, orberrors.ErrBadRequest.Wrap(err)
-	}
-
-	return result, nil
+	cerr := r.client.CallNoCodec(ctx, fwReq, result, opts...)
+	return result, cerr
 }
 
 // CallResponse is the same as Call with the difference that it returns a Response[*TResp] instead of *TResp.
@@ -152,6 +161,7 @@ func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, 
 	r.client = client
 
 	var result = Response[*TResp]{}
+	var resultVar = new(TResp)
 
 	// Create a copy of Request to forward it.
 	// TODO(jochumdev): see if there's a better way to do this.
@@ -163,25 +173,31 @@ func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, 
 		node:     r.node,
 	}
 
-	cresp, cerr := r.client.Call(ctx, fwReq, opts...)
-	if cerr != nil {
-		return result, cerr
+	if r.client.NeedsCodec(ctx, fwReq, opts...) {
+		cresp, cerr := r.client.Call(ctx, fwReq, result, opts...)
+		if cerr != nil {
+			return result, cerr
+		}
+
+		result.ContentType = cresp.ContentType
+		result.Headers = cresp.Headers
+
+		codec, err := codecs.GetMime(cresp.ContentType)
+		if err != nil {
+			return result, orberrors.ErrBadRequest.Wrap(err)
+		}
+
+		err = codec.Unmarshal(cresp.Body, result.Body)
+		if err != nil {
+			return result, orberrors.ErrBadRequest.Wrap(err)
+		}
+
+		return result, nil
 	}
 
-	result.ContentType = cresp.ContentType
-	result.Headers = cresp.Headers
-
-	codec, err := codecs.GetMime(cresp.ContentType)
-	if err != nil {
-		return result, orberrors.ErrBadRequest.Wrap(err)
-	}
-
-	err = codec.Unmarshal(cresp.Body, result.Body)
-	if err != nil {
-		return result, orberrors.ErrBadRequest.Wrap(err)
-	}
-
-	return result, nil
+	cerr := r.client.CallNoCodec(ctx, fwReq, resultVar, opts...)
+	result.Body = resultVar
+	return result, cerr
 }
 
 // NewRequest creates a request for a service+endpoint.

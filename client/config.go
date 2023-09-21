@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"time"
 )
 
@@ -113,6 +114,8 @@ type Config struct {
 	StreamTimeout time.Duration `json:"streamTimeout" yaml:"streamTimeout"`
 	// ReturnHeaders set to true will add Headers to the response
 	ReturnHeaders bool `json:"returnHeaders" yaml:"returnHeaders"`
+	// TLS config.
+	TlsConfig *tls.Config
 }
 
 func (c *Config) config() *Config {
@@ -232,6 +235,14 @@ func WithClientStreamTimeout(n time.Duration) Option {
 	}
 }
 
+// WithTLSConfig set's the clients TLS config.
+func WithClientTLSConfig(n *tls.Config) Option {
+	return func(cfg ConfigType) {
+		c := cfg.config()
+		c.TlsConfig = n
+	}
+}
+
 // NewConfig generates a new config with all the defaults.
 func NewConfig(opts ...Option) Config {
 	cfg := Config{
@@ -290,6 +301,8 @@ type CallOptions struct {
 	// URL bypasses the registry when set. This is mainly for tests.
 	// Only <scheme>://<host:port> will be used from it.
 	URL string
+	// TLS config.
+	TlsConfig *tls.Config
 }
 
 // CallOption used by Call or Stream.
@@ -385,5 +398,12 @@ func WithHeaders() CallOption {
 func WithURL(n string) CallOption {
 	return func(o *CallOptions) {
 		o.URL = n
+	}
+}
+
+// WithTLSConfig set's the clients TLS config.
+func WithTLSConfig(n *tls.Config) CallOption {
+	return func(o *CallOptions) {
+		o.TlsConfig = n
 	}
 }
