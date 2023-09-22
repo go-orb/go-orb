@@ -18,8 +18,8 @@ var (
 	// DefaultPreferredTransports set's in which order a transport will be selected.
 	DefaultPreferredTransports = []string{"grpc", "h2c", "http", "http2", "http3", "https"}
 
-	// DefaultPoolSize sets the connection pool size.
-	DefaultPoolSize = 100
+	// DefaultPoolSize sets the connection pool size per service.
+	DefaultPoolSize = 4
 	// DefaultPoolTTL sets the connection pool ttl.
 	DefaultPoolTTL = time.Minute
 
@@ -276,6 +276,11 @@ type CallOptions struct {
 	// PreferredTransports contains a list of transport names in preferred order.
 	PreferredTransports []string
 
+	// PoolSize sets the connection pool size per service.
+	PoolSize int
+	// PoolTTL sets the connection pool ttl.
+	PoolTTL time.Duration
+
 	AnyTransport bool
 	// Selector is the node selector.
 	Selector SelectorFunc
@@ -321,6 +326,20 @@ func WithContentType(ct string) CallOption {
 func WithPreferredTransports(n ...string) CallOption {
 	return func(o *CallOptions) {
 		o.PreferredTransports = n
+	}
+}
+
+// WithPoolSize sets the connection pool size per service.
+func WithPoolSize(n int) CallOption {
+	return func(o *CallOptions) {
+		o.PoolSize = n
+	}
+}
+
+// WithPoolTTL sets the connection pool ttl.
+func WithPoolTTL(n time.Duration) CallOption {
+	return func(o *CallOptions) {
+		o.PoolTTL = n
 	}
 }
 
