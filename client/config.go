@@ -18,8 +18,10 @@ var (
 	// DefaultPreferredTransports set's in which order a transport will be selected.
 	DefaultPreferredTransports = []string{"grpc", "h2c", "http", "http2", "http3", "https"}
 
+	// DefaultPoolHosts set the number of hosts in a pool.
+	DefaultPoolHosts = 16
 	// DefaultPoolSize sets the connection pool size per service.
-	DefaultPoolSize = 4
+	DefaultPoolSize = 100
 	// DefaultPoolTTL sets the connection pool ttl.
 	DefaultPoolTTL = time.Minute
 
@@ -91,8 +93,9 @@ type Config struct {
 	AnyTransport bool `json:"anyTransport" yaml:"anyTransport"`
 
 	// Connection Pool
-	PoolSize int           `json:"poolSize" yaml:"poolSize"`
-	PoolTTL  time.Duration `json:"poolTTL"  yaml:"poolTTL"` //nolint:tagliatelle
+	PoolHosts int           `json:"poolHosts" yaml:"PoolHosts"`
+	PoolSize  int           `json:"poolSize" yaml:"poolSize"`
+	PoolTTL   time.Duration `json:"poolTTL"  yaml:"poolTTL"` //nolint:tagliatelle
 
 	// SelectorFunc get's executed by client.SelectNode which get it's info's from client.ResolveService.
 	Selector SelectorFunc `json:"-" yaml:"-"`
@@ -249,6 +252,7 @@ func NewConfig(opts ...Option) Config {
 		Plugin:              DefaultClientPlugin,
 		ContentType:         DefaultContentType,
 		PreferredTransports: DefaultPreferredTransports,
+		PoolHosts:           DefaultPoolHosts,
 		PoolSize:            DefaultPoolSize,
 		PoolTTL:             DefaultPoolTTL,
 		Retries:             DefaultRetries,
@@ -276,6 +280,8 @@ type CallOptions struct {
 	// PreferredTransports contains a list of transport names in preferred order.
 	PreferredTransports []string
 
+	// PoolHosts sets the number of hosts in a pool
+	PoolHosts int
 	// PoolSize sets the connection pool size per service.
 	PoolSize int
 	// PoolTTL sets the connection pool ttl.
@@ -293,7 +299,7 @@ type CallOptions struct {
 	// Transport Dial Timeout. Used for initial dial to establish a connection.
 	DialTimeout time.Duration
 	// ConnectionTimeout of one request to the server.
-	// Set this lower than the RequestTimeout to enbale retries on connection timeout.
+	// Set this lower than the RequestTimeout to enable retries on connection timeout.
 	ConnectionTimeout time.Duration
 	// Request/Response timeout of entire srv.Call, for single request timeout set ConnectionTimeout.
 	RequestTimeout time.Duration
@@ -326,6 +332,13 @@ func WithContentType(ct string) CallOption {
 func WithPreferredTransports(n ...string) CallOption {
 	return func(o *CallOptions) {
 		o.PreferredTransports = n
+	}
+}
+
+// WithPoolHosts sets the number of hosts in a pool.
+func WithPoolHosts(n int) CallOption {
+	return func(o *CallOptions) {
+		o.PoolHosts = n
 	}
 }
 
