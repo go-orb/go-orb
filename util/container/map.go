@@ -46,6 +46,11 @@ func (c *Map[T]) Get(name string) (T, error) {
 	return p, nil
 }
 
+// Len returns the length of the internal map.
+func (c *Map[T]) Len() int {
+	return len(c.elements)
+}
+
 // Keys returns the map's keys.
 func (c *Map[T]) Keys() []string {
 	keys := make([]string, 0, len(c.elements))
@@ -54,4 +59,14 @@ func (c *Map[T]) Keys() []string {
 	}
 
 	return keys
+}
+
+// Values returns the map's values.
+func (c *Map[T]) Values() []T {
+	values := make([]T, 0, len(c.elements))
+	for _, v := range c.elements {
+		values = append(values, v)
+	}
+
+	return values
 }
