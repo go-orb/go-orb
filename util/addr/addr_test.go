@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestYeet(t *testing.T) {
@@ -42,9 +43,9 @@ func TestIPParser(t *testing.T) {
 
 func TestParsePort(t *testing.T) {
 	_, err := ParsePort(":8080")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	_, err = ParsePort(":abc")
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestIsLocal(t *testing.T) {
@@ -93,6 +94,86 @@ func TestExtractor(t *testing.T) {
 			}
 		} else if addr != d.expect {
 			t.Errorf("Expected %s got %s", d.expect, addr)
+		}
+	}
+}
+
+func TestFindIP(t *testing.T) {
+	localhost, err := net.ResolveIPAddr("ip", "127.0.0.1")
+	require.NoError(t, err)
+	localhostIPv6, err := net.ResolveIPAddr("ip", "::1")
+	require.NoError(t, err)
+	privateIP, err := net.ResolveIPAddr("ip", "10.0.0.1")
+	require.NoError(t, err)
+	publicIP, err := net.ResolveIPAddr("ip", "100.0.0.1")
+	require.NoError(t, err)
+	publicIPv6, err := net.ResolveIPAddr("ip", "2001:0db8:85a3:0000:0000:8a2e:0370:7334")
+	require.NoError(t, err)
+
+	testCases := []struct {
+		addrs  []net.Addr
+		ip     net.IP
+		errMsg string
+	}{
+		{
+			addrs:  []net.Addr{},
+			ip:     nil,
+			errMsg: ErrIPNotFound.Error(),
+		},
+		{
+			addrs: []net.Addr{localhost},
+			ip:    localhost.IP,
+		},
+		{
+			addrs: []net.Addr{localhost, localhostIPv6},
+			ip:    localhost.IP,
+		},
+		{
+			addrs: []net.Addr{localhostIPv6},
+			ip:    localhostIPv6.IP,
+		},
+		{
+			addrs: []net.Addr{privateIP, localhost},
+			ip:    privateIP.IP,
+		},
+		{
+			addrs: []net.Addr{privateIP, publicIP, localhost},
+			ip:    privateIP.IP,
+		},
+		{
+			addrs: []net.Addr{publicIP, privateIP, localhost},
+			ip:    privateIP.IP,
+		},
+		{
+			addrs: []net.Addr{publicIP, localhost},
+			ip:    publicIP.IP,
+		},
+		{
+			addrs: []net.Addr{publicIP, localhostIPv6},
+			ip:    publicIP.IP,
+		},
+		{
+			addrs: []net.Addr{localhostIPv6, publicIP},
+			ip:    publicIP.IP,
+		},
+		{
+			addrs: []net.Addr{localhostIPv6, publicIPv6, publicIP},
+			ip:    publicIPv6.IP,
+		},
+		{
+			addrs: []net.Addr{publicIP, publicIPv6},
+			ip:    publicIP.IP,
+		},
+	}
+
+	for _, tc := range testCases {
+		ip, err := findIP(tc.addrs)
+		if tc.errMsg == "" {
+			require.NoError(t, err)
+			require.Equal(t, tc.ip.String(), ip.String())
+		} else {
+			require.Error(t, err)
+			require.Equal(t, tc.errMsg, err.Error())
 		}
 	}
 }

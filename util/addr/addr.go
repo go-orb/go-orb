@@ -105,8 +105,8 @@ func ParsePort(address string) (int, error) {
 }
 
 // Extract returns a valid IP address. If the address provided is a valid
-// address, it will be returned directly. Otherwise the available interfaces
-// be itterated over to find an IP address, prefferably private.
+// address, it will be returned directly. Otherwise, the available interfaces
+// will be iterated over to find an IP address, preferably private.
 func Extract(addr string) (string, error) {
 	// if addr is already specified then it's directly returned
 	if len(addr) > 0 {
@@ -185,34 +185,54 @@ func IPs() []string {
 	return ipAddrs
 }
 
-// findIP will return the first private IP available in the list,
-// if no private IP is available it will return a public IP if present.
+// findIP will return the first private IP available in the list.
+// If no private IP is available it will return the first public IP, if present.
+// If no public IP is available, it will return the first loopback IP, if present.
 func findIP(addresses []net.Addr) (net.IP, error) {
-	var publicIP net.IP
+	var (
+		publicIP net.IP
+		localIP  net.IP
+	)
 
 	for _, rawAddr := range addresses {
-		var ip net.IP
+		var myIP net.IP
 		switch addr := rawAddr.(type) {
 		case *net.IPAddr:
-			ip = addr.IP
+			myIP = addr.IP
 		case *net.IPNet:
-			ip = addr.IP
+			myIP = addr.IP
 		default:
 			continue
 		}
 
-		if !ip.IsPrivate() {
-			publicIP = ip
+		if myIP.IsLoopback() {
+			if localIP == nil {
+				localIP = myIP
+			}
+
+			continue
+		}
+
+		if !myIP.IsPrivate() {
+			if publicIP == nil {
+				publicIP = myIP
+			}
+
 			continue
 		}
 
 		// Return private IP if available
-		return ip, nil
+		return myIP, nil
 	}
 
 	// Return public or virtual IP
 	if len(publicIP) > 0 {
 		return publicIP, nil
+	}
+
+	// Return local IP
+	if len(localIP) > 0 {
+		return localIP, nil
 	}
 
 	return nil, ErrIPNotFound
