@@ -55,13 +55,13 @@ func TestReadString(t *testing.T) {
 
 	// Must return default if type don't match
 	i, err := Get(data, "string", 10)
-	assert.ErrorIs(t, err, ErrTypesDontMatch)
-	assert.Equal(t, i, 10)
+	require.ErrorIs(t, err, ErrTypesDontMatch)
+	assert.Equal(t, 10, i)
 
 	// Must return default
 	str, err = Get(data, "string2", "x")
-	assert.ErrorIs(t, err, ErrNotExistent)
-	assert.Equal(t, str, "x")
+	require.ErrorIs(t, err, ErrNotExistent)
+	assert.Equal(t, "x", str)
 }
 
 func TestReadStringSlice(t *testing.T) {
@@ -74,11 +74,11 @@ func TestReadStringSlice(t *testing.T) {
 
 	// Must return error if not a slice
 	_, err = Get(data, "string", []string{})
-	assert.ErrorIs(t, err, ErrTypesDontMatch)
+	require.ErrorIs(t, err, ErrTypesDontMatch)
 
 	// Must return default
 	strs, err = Get(data, "stringslice2", []string{"a", "b"})
-	assert.ErrorIs(t, err, ErrNotExistent)
+	require.ErrorIs(t, err, ErrNotExistent)
 	assert.Equal(t, []string{"a", "b"}, strs)
 }
 
@@ -92,7 +92,7 @@ func TestReadMixedSlice(t *testing.T) {
 
 	// Must return error if not a slice
 	_, err = Get(data, "string", []any{})
-	assert.ErrorIs(t, err, ErrTypesDontMatch)
+	require.ErrorIs(t, err, ErrTypesDontMatch)
 }
 
 func TestReadMixedMap(t *testing.T) {
@@ -105,7 +105,7 @@ func TestReadMixedMap(t *testing.T) {
 
 	// Must return error if not a slice
 	_, err = Get(data, "string", map[string]any{})
-	assert.ErrorIs(t, err, ErrTypesDontMatch)
+	require.ErrorIs(t, err, ErrTypesDontMatch)
 }
 
 func TestReadSliceMap(t *testing.T) {
@@ -118,5 +118,5 @@ func TestReadSliceMap(t *testing.T) {
 
 	// Must return error if not a slice
 	_, err = Get(data, "string", []any{})
-	assert.ErrorIs(t, err, ErrTypesDontMatch)
+	require.ErrorIs(t, err, ErrTypesDontMatch)
 }

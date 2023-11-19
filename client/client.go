@@ -153,6 +153,7 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 	}
 
 	cerr := r.client.CallNoCodec(ctx, fwReq, result, opts...)
+
 	return result, cerr
 }
 
@@ -160,8 +161,10 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, opts ...CallOption) (resp Response[*TResp], err error) {
 	r.client = client
 
-	var result = Response[*TResp]{}
-	var resultVar = new(TResp)
+	var (
+		result    = Response[*TResp]{}
+		resultVar = new(TResp)
+	)
 
 	// Create a copy of Request to forward it.
 	// TODO(jochumdev): see if there's a better way to do this.
@@ -197,6 +200,7 @@ func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, 
 
 	cerr := r.client.CallNoCodec(ctx, fwReq, resultVar, opts...)
 	result.Body = resultVar
+
 	return result, cerr
 }
 

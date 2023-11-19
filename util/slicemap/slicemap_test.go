@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/constraints"
 )
 
@@ -121,9 +122,9 @@ func TestLookup(t *testing.T) {
 			for q, query := range test.Query {
 				v, err := Lookup(test.Map, query)
 				if test.Expected[q] == nil {
-					assert.Error(t, err)
+					require.Error(t, err)
 				} else {
-					assert.NoError(t, err)
+					require.NoError(t, err)
 				}
 				assert.Equal(t, test.Expected[q], v)
 			}
@@ -147,12 +148,12 @@ func TestGet(t *testing.T) {
 	}
 
 	val, ok := Get[int](a, "one")
-	assert.Equal(t, true, ok)
+	assert.True(t, ok)
 	assert.Equal(t, 5, val)
 
 	_, ok = Get[string](a, "two")
-	assert.Equal(t, false, ok)
+	assert.False(t, ok)
 
 	_, ok = Get[string](a, "three")
-	assert.Equal(t, false, ok)
+	assert.False(t, ok)
 }

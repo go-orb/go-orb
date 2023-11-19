@@ -20,7 +20,7 @@ func TestStringFlag(t *testing.T) {
 
 	flag.Value = int64(0)
 	_, err := FlagValue[string](flag)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	flag.Value = "somevalue"
 	v, err := FlagValue[string](flag)
@@ -41,7 +41,7 @@ func TestIntFlag(t *testing.T) {
 
 	flag.Value = ""
 	_, err := FlagValue[int](flag)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	flag.Value = 10
 	v, err := FlagValue[int](flag)
@@ -62,7 +62,7 @@ func TestStringSliceFlag(t *testing.T) {
 
 	flag.Value = ""
 	_, err := FlagValue[[]string](flag)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	flag.Value = []string{"a", "b"}
 	v, err := FlagValue[[]string](flag)

@@ -34,7 +34,7 @@ type Entrypoint interface {
 	//
 	// A registration function takes a pointer to the server, which can then
 	// be used to register handlers in the server specific way.
-	Register(RegistrationFunc)
+	Register(fun RegistrationFunc)
 
 	// Transport returns the client transport that is required to talk to this entrypoint.
 	Transport() string

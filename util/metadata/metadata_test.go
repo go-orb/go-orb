@@ -108,7 +108,7 @@ func TestMergeContext(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, _ := From(Merge(tt.args.existing.To(context.TODO()), tt.args.append, tt.args.overwrite))
-			require.Equal(t, got, tt.want)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
 	"github.com/go-orb/go-orb/util/container"
@@ -66,27 +67,27 @@ func TestMatcherDuplication(t *testing.T) {
 	m.Use("customOne", "itemOneC")
 	m.Use("customOne", "itemOneC")
 
-	assert.Equal(t, 1, len(m.globals), "customOne")
+	assert.Len(t, m.globals, 1, "customOne")
 
-	assert.NoError(t, m.AddPlugin("/helloworld", "one"))
-	assert.NoError(t, m.AddPlugin("/helloworld", "one"))
+	require.NoError(t, m.AddPlugin("/helloworld", "one"))
+	require.NoError(t, m.AddPlugin("/helloworld", "one"))
 
 	var seen bool
 	for _, i := range m.selectors {
-		assert.Equal(t, 1, len(i))
+		assert.Len(t, i, 1)
 		seen = true
 	}
-	assert.Equal(t, true, seen)
+	assert.True(t, seen)
 
-	assert.NoError(t, m.AddPlugin("/helloworld", "two"))
-	assert.NoError(t, m.AddPlugin("/helloworld", "two"))
+	require.NoError(t, m.AddPlugin("/helloworld", "two"))
+	require.NoError(t, m.AddPlugin("/helloworld", "two"))
 
 	seen = false
 	for _, i := range m.selectors {
-		assert.Equal(t, 2, len(i))
+		assert.Len(t, i, 2)
 		seen = true
 	}
-	assert.Equal(t, true, seen)
+	assert.True(t, seen)
 }
 
 func TestMatcherJson(t *testing.T) {
@@ -104,8 +105,8 @@ func TestMatcherJson(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, 1, len(a.Middlware.globals))
-	assert.Equal(t, 1, len(a.Middlware.selectors))
+	assert.Len(t, a.Middlware.globals, 1)
+	assert.Len(t, a.Middlware.selectors, 1)
 	assert.Equal(t, []string{"abc"}, a.Middlware.Match("/bar"))
 	assert.Equal(t, []string{"abc", "def"}, a.Middlware.Match("/foo"))
 }
@@ -125,8 +126,8 @@ func TestMatcherYaml(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, 1, len(a.Middlware.globals))
-	assert.Equal(t, 1, len(a.Middlware.selectors))
+	assert.Len(t, a.Middlware.globals, 1)
+	assert.Len(t, a.Middlware.selectors, 1)
 	assert.Equal(t, []string{"abc"}, a.Middlware.Match("/bar"))
 	assert.Equal(t, []string{"abc", "def"}, a.Middlware.Match("/foo9"))
 }

@@ -93,9 +93,9 @@ type Config struct {
 	AnyTransport bool `json:"anyTransport" yaml:"anyTransport"`
 
 	// Connection Pool
-	PoolHosts int           `json:"poolHosts" yaml:"PoolHosts"`
-	PoolSize  int           `json:"poolSize" yaml:"poolSize"`
-	PoolTTL   time.Duration `json:"poolTTL"  yaml:"poolTTL"` //nolint:tagliatelle
+	PoolHosts int           `json:"poolHosts" yaml:"poolHosts"`
+	PoolSize  int           `json:"poolSize"  yaml:"poolSize"`
+	PoolTTL   time.Duration `json:"poolTtl"   yaml:"poolTtl"`
 
 	// SelectorFunc get's executed by client.SelectNode which get it's info's from client.ResolveService.
 	Selector SelectorFunc `json:"-" yaml:"-"`
@@ -118,7 +118,7 @@ type Config struct {
 	// ReturnHeaders set to true will add Headers to the response
 	ReturnHeaders bool `json:"returnHeaders" yaml:"returnHeaders"`
 	// TLS config.
-	TlsConfig *tls.Config
+	TLSConfig *tls.Config
 }
 
 func (c *Config) config() *Config {
@@ -238,11 +238,11 @@ func WithClientStreamTimeout(n time.Duration) Option {
 	}
 }
 
-// WithTLSConfig set's the clients TLS config.
+// WithClientTLSConfig set's the clients TLS config.
 func WithClientTLSConfig(n *tls.Config) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
-		c.TlsConfig = n
+		c.TLSConfig = n
 	}
 }
 
@@ -313,7 +313,7 @@ type CallOptions struct {
 	// Only <scheme>://<host:port> will be used from it.
 	URL string
 	// TLS config.
-	TlsConfig *tls.Config
+	TLSConfig *tls.Config
 }
 
 // CallOption used by Call or Stream.
@@ -436,6 +436,6 @@ func WithURL(n string) CallOption {
 // WithTLSConfig set's the clients TLS config.
 func WithTLSConfig(n *tls.Config) CallOption {
 	return func(o *CallOptions) {
-		o.TlsConfig = n
+		o.TLSConfig = n
 	}
 }

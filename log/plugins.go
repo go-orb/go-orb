@@ -17,7 +17,7 @@ type Provider interface {
 	Key() string
 
 	Start() error
-	Stop(context.Context) error
+	Stop(ctx context.Context) error
 
 	Handler() (slog.Handler, error)
 }

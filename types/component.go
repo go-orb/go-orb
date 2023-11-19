@@ -9,7 +9,7 @@ type Component interface {
 
 	// Stop the component. E.g. disconnect from the broker.
 	// The context will contain a timeout, and cancelation should be respected.
-	Stop(context.Context) error
+	Stop(ctx context.Context) error
 
 	// Type returns the component type, e.g. broker.
 	Type() string

@@ -30,19 +30,19 @@ type Registry interface {
 	ServiceVersion() string
 
 	// Register registers a service within the registry.
-	Register(*Service, ...RegisterOption) error
+	Register(srv *Service, opts ...RegisterOption) error
 
 	// Deregister deregisters a service within the registry.
-	Deregister(*Service, ...DeregisterOption) error
+	Deregister(srv *Service, opts ...DeregisterOption) error
 
 	// GetService returns a service from the registry.
-	GetService(string, ...GetOption) ([]*Service, error)
+	GetService(name string, opts ...GetOption) ([]*Service, error)
 
 	// ListServices lists services within the registry.
-	ListServices(...ListOption) ([]*Service, error)
+	ListServices(opts ...ListOption) ([]*Service, error)
 
 	// Watch returns a Watcher which you can watch on.
-	Watch(...WatchOption) (Watcher, error)
+	Watch(opts ...WatchOption) (Watcher, error)
 }
 
 // Type is the registry type it is returned when you use ProvideRegistry
