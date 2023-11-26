@@ -38,7 +38,7 @@ type Logger struct {
 	fields []any
 }
 
-// New creates a n4ew Logger from a Config.
+// New creates a new Logger from a Config.
 func New(opts ...Option) (Logger, error) {
 	return NewConfigDatas([]string{}, nil, opts...)
 }
