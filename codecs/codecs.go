@@ -31,8 +31,14 @@ type Marshaler interface {
 	// NewEncoder returns an Encoder which writes bytes sequence into "w".
 	NewEncoder(w io.Writer) Encoder
 
+	// Encodes returns if this codec is able to encode the given type.
+	Encodes(v any) bool
+
+	// Decodes returns if this codec is able to decode the given type.
+	Decodes(v any) bool
+
 	// ContentTypes returns the list of content types this codec is able to
-	// handle.
+	// output.
 	ContentTypes() []string
 
 	// String returns the codec name.

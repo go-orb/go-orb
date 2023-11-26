@@ -52,9 +52,20 @@ func updateMimeMap() {
 	}
 }
 
+// filterMime trims before a space or semicolon.
+func filterMime(mime string) string {
+	for i, char := range mime {
+		if char == ' ' || char == ';' {
+			return mime[:i]
+		}
+	}
+
+	return mime
+}
+
 // GetMime returns a codec for a mime type.
 func GetMime(mime string) (Marshaler, error) {
-	codec, err := mimeMap.Get(mime)
+	codec, err := mimeMap.Get(filterMime(mime))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrUnknownMimeType, mime)
 	}
