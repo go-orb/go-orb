@@ -40,6 +40,7 @@ func (j *CodecJSON) NewDecoder(r io.Reader) Decoder {
 func (j *CodecJSON) ContentTypes() []string {
 	return []string{
 		"application/json",
+		"application/json; charset=utf-8",
 	}
 }
 
