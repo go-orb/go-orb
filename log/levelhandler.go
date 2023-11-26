@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 var _ slog.Handler = (*LevelHandler)(nil)

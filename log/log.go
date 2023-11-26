@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/config/source"

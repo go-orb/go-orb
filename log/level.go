@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // Names for common Levels.

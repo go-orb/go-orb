@@ -46,8 +46,9 @@ import (
 	"fmt"
 	"time"
 
+	"log/slog"
+
 	"github.com/hashicorp/go-multierror"
-	"golang.org/x/exp/slog"
 
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"

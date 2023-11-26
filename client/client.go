@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"log/slog"
+
 	"github.com/go-orb/go-orb/codecs"
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
@@ -13,7 +15,6 @@ import (
 	"github.com/go-orb/go-orb/types"
 	"github.com/go-orb/go-orb/util/container"
 	"github.com/go-orb/go-orb/util/orberrors"
-	"golang.org/x/exp/slog"
 )
 
 // ComponentType is the client component type name.

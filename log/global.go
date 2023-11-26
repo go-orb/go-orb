@@ -5,7 +5,7 @@ package log
 import (
 	"context"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // Trace calls Logger.Trace on the default logger.

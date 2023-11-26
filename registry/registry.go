@@ -4,10 +4,11 @@ package registry
 import (
 	"errors"
 
+	"log/slog"
+
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/types"
-	"golang.org/x/exp/slog"
 )
 
 // ComponentType is the registry component type name.

@@ -8,8 +8,9 @@ import (
 	"regexp"
 	"strings"
 
+	"log/slog"
+
 	"github.com/sanity-io/litter"
-	"golang.org/x/exp/slog"
 	"gopkg.in/yaml.v3"
 
 	"github.com/go-orb/go-orb/util/container"

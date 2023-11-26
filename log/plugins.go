@@ -3,7 +3,7 @@ package log
 import (
 	"context"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	"github.com/go-orb/go-orb/types"
 	"github.com/go-orb/go-orb/util/container"
