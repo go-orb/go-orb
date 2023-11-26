@@ -199,7 +199,7 @@ func Dump(configs types.ConfigData) error {
 	}
 
 	for _, config := range configs {
-		jsonb, err := codec.Marshal(config.Data)
+		jsonb, err := codec.Encode(config.Data)
 		if err == nil {
 			fmt.Println(string(jsonb)) //nolint:forbidigo
 		}

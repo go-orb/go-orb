@@ -27,12 +27,12 @@ func OverlayMap(data map[string]any, target any) error {
 		}
 	}
 
-	b, err := codec.Marshal(data)
+	b, err := codec.Encode(data)
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}
 
-	if err := codec.Unmarshal(b, target); err != nil {
+	if err := codec.Decode(b, target); err != nil {
 		return fmt.Errorf("unmarshal: %w", err)
 	}
 

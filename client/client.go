@@ -145,7 +145,7 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
 
-		err = codec.Unmarshal(cresp.Body, result)
+		err = codec.Decode(cresp.Body, result)
 		if err != nil {
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
@@ -191,7 +191,7 @@ func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, 
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
 
-		err = codec.Unmarshal(cresp.Body, result.Body)
+		err = codec.Decode(cresp.Body, result.Body)
 		if err != nil {
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}

@@ -18,12 +18,12 @@ type Map map[string]Marshaler
 
 // Marshaler is able to encode/decode a content type to/from a byte sequence.
 type Marshaler interface {
-	// Marshal marshals "v" into byte sequence.
-	Marshal(v any) ([]byte, error)
+	// Encode encodes "v" into byte sequence.
+	Encode(v any) ([]byte, error)
 
-	// Unmarshal unmarshals "data" into "v".
+	// Decode decodes "data" into "v".
 	// "v" must be a pointer value.
-	Unmarshal(data []byte, v any) error
+	Decode(data []byte, v any) error
 
 	// NewDecoder returns a Decoder which reads byte sequence from "r".
 	NewDecoder(r io.Reader) Decoder
@@ -31,7 +31,7 @@ type Marshaler interface {
 	// NewEncoder returns an Encoder which writes bytes sequence into "w".
 	NewEncoder(w io.Writer) Encoder
 
-	// ContentTypes returns the list of content types this marshaller is able to
+	// ContentTypes returns the list of content types this codec is able to
 	// handle.
 	ContentTypes() []string
 
