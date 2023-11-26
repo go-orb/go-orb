@@ -107,6 +107,8 @@ func ProvideRegistry(
 		cfg.Plugin = DefaultRegistry
 	}
 
+	logger.Debug("Registry", "plugin", cfg.Plugin)
+
 	provider, err := Plugins.Get(cfg.Plugin)
 	if err != nil {
 		return Type{}, err

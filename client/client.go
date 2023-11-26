@@ -276,6 +276,8 @@ func ProvideClient(
 		cfg.Plugin = DefaultClientPlugin
 	}
 
+	logger.Debug("Client", "plugin", cfg.Plugin)
+
 	provider, err := plugins.Get(cfg.Plugin)
 	if err != nil {
 		return Type{}, fmt.Errorf("client plugin (%s) not found, did you register it: %w", cfg.Plugin, err)
