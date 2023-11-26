@@ -209,6 +209,11 @@ func (l Logger) Type() string {
 	return ComponentType
 }
 
+// Level returns the level as int.
+func (l Logger) Level() slog.Level {
+	return l.config.Level
+}
+
 // Trace logs at TraceLevel.
 func (l *Logger) Trace(msg string, args ...any) {
 	l.Log(context.Background(), LevelTrace, msg, args...)
