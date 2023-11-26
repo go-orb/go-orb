@@ -2,6 +2,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/url"
@@ -41,7 +42,7 @@ type Type struct {
 }
 
 // RawResponse is a internal struct to pass the transport's response with header and content-type around.
-type RawResponse = Response[[]byte]
+type RawResponse = Response[*bytes.Buffer]
 
 // Response will be returned by CallWithResponse.
 type Response[T any] struct {
@@ -145,7 +146,7 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
 
-		err = codec.Decode(cresp.Body, result)
+		err = codec.NewDecoder(cresp.Body).Decode(result)
 		if err != nil {
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
@@ -191,7 +192,7 @@ func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, 
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
 
-		err = codec.Decode(cresp.Body, result.Body)
+		err = codec.NewDecoder(cresp.Body).Decode(result)
 		if err != nil {
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}

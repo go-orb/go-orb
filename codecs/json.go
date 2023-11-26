@@ -59,7 +59,7 @@ func (j *CodecJSON) NewDecoder(r io.Reader) Decoder {
 	return &wrapDecoder{impl: json.NewDecoder(r)}
 }
 
-// Encodes returns if this codec is able to encode the given type.
+// Encodes returns if this is able to encode the given type.
 func (j *CodecJSON) Encodes(v any) bool {
 	switch v.(type) {
 	case []string:
@@ -77,7 +77,7 @@ func (j *CodecJSON) Encodes(v any) bool {
 	}
 }
 
-// Decodes returns if this codec is able to decode the given type.
+// Decodes returns if this is able to decode the given type.
 func (j *CodecJSON) Decodes(v any) bool {
 	return j.Encodes(v)
 }
