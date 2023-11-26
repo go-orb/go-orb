@@ -2,7 +2,7 @@
 
 Package go-orb/config is a pluggable config provider for loosely coupled components.
 
-It provides 2 main functions and 2 helper
+It provides 2 main functions and some helpers.
 
 ## Functions
 
@@ -116,6 +116,10 @@ func main() {
     test := config.HasKey([]string{"com", "example", "app", "registry", "logger"}, "plugin", configs)
 }
 ```
+
+### config.Dump
+
+Dump is a helper function to dump configDatas to the console.
 
 ## Authors
 

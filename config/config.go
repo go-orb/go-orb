@@ -190,6 +190,24 @@ func HasKey(sections []string, key string, configs types.ConfigData) bool {
 	return false
 }
 
+// Dump is a helper function to dump configDatas to the console.
+func Dump(configs types.ConfigData) error {
+	codec, err := codecs.Plugins.Get("json")
+	if err != nil {
+		err = fmt.Errorf("getting the json codec: %w", err)
+		return err
+	}
+
+	for _, config := range configs {
+		jsonb, err := codec.Marshal(config.Data)
+		if err == nil {
+			fmt.Println(string(jsonb)) //nolint:forbidigo
+		}
+	}
+
+	return nil
+}
+
 // ParseStruct is a helper to make any struct with `json` tags a source.Data (map[string]any{} with some more fields) with sections.
 func ParseStruct[TParse any](sections []string, toParse TParse) (source.Data, error) {
 	result := source.Data{Data: make(map[string]any)}
