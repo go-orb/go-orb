@@ -21,9 +21,12 @@ func OverlayMap(data map[string]any, target any) error {
 
 	var err error
 	if codec == nil {
-		codec, err = codecs.GetCodec([]string{"yaml", "json"})
+		codec, err = codecs.GetMime("application/yaml")
 		if err != nil {
-			return fmt.Errorf("parse entrypoint config: %w", err)
+			codec, err = codecs.GetMime("application/json")
+			if err != nil {
+				return fmt.Errorf("parse entrypoint config: %w", err)
+			}
 		}
 	}
 

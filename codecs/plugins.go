@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-orb/go-orb/util/container"
-	"github.com/go-orb/go-orb/util/slicemap"
 )
 
 // Plugins is the registry for codec plugins.
@@ -20,33 +19,21 @@ func Register(name string, codec Marshaler) bool {
 	return true
 }
 
-// GetCodec returns the first codec by preference list.
-func GetCodec(preference []string) (Marshaler, error) {
-	var codec Marshaler
-
-	allCodecs := Plugins.All()
-	for name, c := range allCodecs {
-		if slicemap.In(preference, name) {
-			codec = c
-		}
-	}
-
-	if codec == nil {
-		return nil, fmt.Errorf("no matching codec plugin found for %v, please import atleast one of them", preference)
-	}
-
-	return codec, nil
-}
-
-var mimeMap = container.NewSafeMap[Marshaler]() //nolint:gochecknoglobals
+var mimeMap = container.NewSafeMap[[]Marshaler]() //nolint:gochecknoglobals
 
 func updateMimeMap() {
 	for _, codec := range Plugins.All() {
 		// One codec can support multiple mime types, we add all of them to the map.
 		for _, mime := range codec.ContentTypes() {
-			err := mimeMap.Add(mime, codec)
+			err := mimeMap.Add(mime, []Marshaler{codec})
 			if errors.Is(err, container.ErrExists) {
-				continue
+				existing, err := mimeMap.Get(mime)
+				if err != nil {
+					continue
+				}
+
+				existing = append(existing, codec)
+				mimeMap.Set(mime, existing)
 			}
 		}
 	}
@@ -67,8 +54,40 @@ func filterMime(mime string) string {
 func GetMime(mime string) (Marshaler, error) {
 	codec, err := mimeMap.Get(filterMime(mime))
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrUnknownMimeType, mime)
+		return nil, fmt.Errorf("%w for %s", ErrUnknownMimeType, mime)
 	}
 
-	return codec, nil
+	return codec[0], nil
+}
+
+// GetEncoder returns a encoder codec for a mime and golang type.
+func GetEncoder(mime string, v any) (Marshaler, error) {
+	codecs, err := mimeMap.Get(filterMime(mime))
+	if err != nil {
+		return nil, fmt.Errorf("%w for %s", ErrUnknownMimeType, mime)
+	}
+
+	for _, codec := range codecs {
+		if codec.Encodes(v) {
+			return codec, nil
+		}
+	}
+
+	return nil, fmt.Errorf("%w for '%s'", ErrUnknownMimeType, mime)
+}
+
+// GetDecoder returns a decoder codec for a mime and golang type.
+func GetDecoder(mime string, v any) (Marshaler, error) {
+	codecs, err := mimeMap.Get(filterMime(mime))
+	if err != nil {
+		return nil, fmt.Errorf("%w for %s", ErrUnknownMimeType, mime)
+	}
+
+	for _, codec := range codecs {
+		if codec.Decodes(v) {
+			return codec, nil
+		}
+	}
+
+	return nil, fmt.Errorf("%w for '%s'", ErrUnknownMimeType, mime)
 }
