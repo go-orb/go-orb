@@ -108,6 +108,25 @@ if err != nil {
 return out, nil
 ```
 
+### Send hand written json
+
+go-orb has support for sending nearly anything you throw in as `application/json` to the Server.
+
+#### hand-written
+
+```go
+resp , err := client.Call[map[string]any](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", `{"name": "Alex"}`)
+```
+
+#### map[string]any{}
+
+```go
+req := make(map[string]any)
+req["name"] = "Alex"
+
+resp , err := client.Call[map[string]any](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", req)
+```
+
 #### Structured logging
 
 We like structured logging, this is why we replaced all logging with one based on [slog](https://pkg.go.dev/golang.org/x/exp/slog).

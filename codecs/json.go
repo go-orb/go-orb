@@ -40,14 +40,6 @@ type wrapEncoder struct {
 
 func (j *wrapEncoder) Encode(v any) error {
 	switch vt := v.(type) {
-	case []string:
-		return j.impl.Encode(v)
-	case []byte:
-		return j.impl.Encode(v)
-	case []any:
-		return j.impl.Encode(v)
-	case map[string]any:
-		return j.impl.Encode(v)
 	case string:
 		_, err := j.w.Write([]byte(vt))
 		return err
@@ -75,26 +67,13 @@ func (j *CodecJSON) NewDecoder(r io.Reader) Decoder {
 }
 
 // Encodes returns if this is able to encode the given type.
-func (j *CodecJSON) Encodes(v any) bool {
-	switch v.(type) {
-	case []string:
-		return true
-	case []byte:
-		return true
-	case []any:
-		return true
-	case map[string]any:
-		return true
-	case string:
-		return true
-	default:
-		return false
-	}
+func (j *CodecJSON) Encodes(_ any) bool {
+	return true
 }
 
 // Decodes returns if this is able to decode the given type.
-func (j *CodecJSON) Decodes(v any) bool {
-	return j.Encodes(v)
+func (j *CodecJSON) Decodes(_ any) bool {
+	return true
 }
 
 // ContentTypes returns the content types the marshaler can handle.
