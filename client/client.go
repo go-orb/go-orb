@@ -141,7 +141,7 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 			return result, cerr
 		}
 
-		codec, err := codecs.GetMime(cresp.ContentType)
+		codec, err := codecs.GetDecoder(cresp.ContentType, result)
 		if err != nil {
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
@@ -187,7 +187,7 @@ func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, 
 		result.ContentType = cresp.ContentType
 		result.Headers = cresp.Headers
 
-		codec, err := codecs.GetMime(cresp.ContentType)
+		codec, err := codecs.GetDecoder(cresp.ContentType, result)
 		if err != nil {
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}

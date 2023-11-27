@@ -34,16 +34,31 @@ func (j *CodecJSON) Decode(b []byte, v any) error {
 }
 
 type wrapEncoder struct {
+	w    io.Writer
 	impl *json.Encoder
 }
 
 func (j *wrapEncoder) Encode(v any) error {
-	return j.impl.Encode(v)
+	switch vt := v.(type) {
+	case []string:
+		return j.impl.Encode(v)
+	case []byte:
+		return j.impl.Encode(v)
+	case []any:
+		return j.impl.Encode(v)
+	case map[string]any:
+		return j.impl.Encode(v)
+	case string:
+		_, err := j.w.Write([]byte(vt))
+		return err
+	default:
+		return j.impl.Encode(v)
+	}
 }
 
 // NewEncoder returns a new JSON encoder.
 func (j *CodecJSON) NewEncoder(w io.Writer) Encoder {
-	return &wrapEncoder{impl: json.NewEncoder(w)}
+	return &wrapEncoder{w: w, impl: json.NewEncoder(w)}
 }
 
 type wrapDecoder struct {
