@@ -84,6 +84,8 @@ if err != nil {
 }
 ```
 
+## Helpers
+
 ### config.ParseStruct
 
 ParseStruct is a helper to make any struct with `json` tags a source.Data (map[string]any{} with some more fields) with sections.

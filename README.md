@@ -112,7 +112,7 @@ return out, nil
 
 go-orb has support for sending nearly anything you throw in as `application/json` to the Server.
 
-#### hand-written
+#### pre encoded / proxy
 
 ```go
 resp , err := client.Call[map[string]any](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", `{"name": "Alex"}`, client.WithContentType("application/json"))
@@ -129,7 +129,7 @@ resp , err := client.Call[map[string]any](context.Background(), clientDi, "org.o
 
 #### Structured logging
 
-We like structured logging, this is why we replaced all logging with one based on [slog](https://pkg.go.dev/golang.org/x/exp/slog).
+We like structured logging, this is why we replaced all logging with one based on [slog](https://pkg.go.dev/log/slog).
 
 #### go-orb/go-orb is just interfaces
 
@@ -137,7 +137,7 @@ We made sure that go-orb/go-orb (the core) is just a bunch of interfaces as well
 
 #### Linted and analyzed
 
-We make sure everything is linted and staticaly analyzed by golangcli-lint. This is enforced by CI/CD pipelines here on github.
+Everything is linted and staticaly analyzed by golangcli-lint, enforced with CI/CD pipelines on github.
 
 ## Community
 
@@ -149,7 +149,7 @@ Chat with us on [Discord](https://discord.gg/sggGS389qb).
 
 #### No go-orb/plugins imports here
 
-To prevent import cycles it's not allowed to import github.com/go-orb/plugins here.
+To prevent import cycles it's not allowed to import [go-orb/plugins](https://github.com/go-orb/plugins) here.
 
 #### Lint
 
