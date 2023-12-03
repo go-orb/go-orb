@@ -54,6 +54,7 @@ import (
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/registry"
 	"github.com/go-orb/go-orb/types"
+	"github.com/go-orb/go-orb/util/container"
 )
 
 var _ types.Component = (*Server)(nil)
@@ -77,7 +78,7 @@ type Server struct {
 
 	// entrypoints are all created entrypoints. All of the entrypoints in this
 	// map will be started upon the call of Start method.
-	entrypoints map[string]Entrypoint
+	entrypoints *container.SafeMap[string, Entrypoint]
 }
 
 // ProvideServer creates a new server.
@@ -94,7 +95,7 @@ func ProvideServer(
 		Config:      cfg,
 		Logger:      logger,
 		Registry:    reg,
-		entrypoints: make(map[string]Entrypoint),
+		entrypoints: container.NewSafeMap[string, Entrypoint](),
 	}
 
 	sections := append(types.SplitServiceName(name), DefaultConfigSection)
@@ -111,8 +112,14 @@ func ProvideServer(
 
 // Start will start the HTTP servers on all entrypoints.
 func (s *Server) Start() error {
-	// TODO: catch startup errors better from blocking go-routines
-	for addr, entrypoint := range s.entrypoints {
+	if s == nil {
+		return errors.New("failed to create server can't start")
+	}
+
+	// TODO(davincible): catch startup errors better from blocking go-routines
+	var gErr error
+
+	s.entrypoints.Range(func(addr string, entrypoint Entrypoint) bool {
 		if err := entrypoint.Start(); err != nil {
 			// Stop any started entrypoints before returning error to give them a chance
 			// to free up resources.
@@ -121,28 +128,34 @@ func (s *Server) Start() error {
 
 			_ = s.Stop(ctx) //nolint:errcheck
 
-			return fmt.Errorf("start entrypoint (%s): %w", addr, err)
+			gErr = fmt.Errorf("start entrypoint (%s): %w", addr, err)
+			return false
 		}
-	}
 
-	return nil
+		return true
+	})
+
+	return gErr
 }
 
-// Stop will stop the HTTP servers on all entrypoints and close the listeners.
+// Stop will stop the servers on all entrypoints and close the listeners.
 func (s *Server) Stop(ctx context.Context) error {
-	errChan := make(chan error)
-
-	// Stop all servers in parallel to make sure they get equal amount of time
-	// to shutdown gracefully.
-	for _, e := range s.entrypoints {
-		go func(e Entrypoint) {
-			errChan <- e.Stop(ctx)
-		}(e)
+	if s == nil {
+		return errors.New("failed to create server can't stop")
 	}
+
+	errChan := make(chan error, s.entrypoints.Len())
+
+	// Stop all servers.
+	s.entrypoints.Range(func(_ string, e Entrypoint) bool {
+		errChan <- e.Stop(ctx)
+
+		return true
+	})
 
 	var err error
 
-	for i := 0; i < len(s.entrypoints); i++ {
+	for i := 0; i < s.entrypoints.Len(); i++ {
 		if nerr := <-errChan; nerr != nil {
 			err = multierror.Append(err, fmt.Errorf("stop entrypoint: %w", nerr))
 		}
@@ -155,7 +168,7 @@ func (s *Server) Stop(ctx context.Context) error {
 
 // GetEntrypoint returns the requested entrypoint, if present.
 func (s *Server) GetEntrypoint(name string) (Entrypoint, error) {
-	e, ok := s.entrypoints[name]
+	e, ok := s.entrypoints.Get(name)
 	if !ok {
 		return nil, ErrEntrypointNotFound
 	}
@@ -196,7 +209,7 @@ func (s *Server) createEntrypoints(service types.ServiceName) error {
 			return fmt.Errorf("create entrypoint %s (%s): %w", name, template.Type, err)
 		}
 
-		s.entrypoints[name] = entrypoint
+		s.entrypoints.Set(name, entrypoint)
 	}
 
 	return nil
