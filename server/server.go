@@ -153,11 +153,6 @@ func (s *Server) Stop(ctx context.Context) error {
 	return err
 }
 
-// GetEntrypoints returns the internal map of entrypoints, do not modify it.
-func (s *Server) GetEntrypoints() map[string]Entrypoint {
-	return s.entrypoints
-}
-
 // GetEntrypoint returns the requested entrypoint, if present.
 func (s *Server) GetEntrypoint(name string) (Entrypoint, error) {
 	e, ok := s.entrypoints[name]
@@ -185,12 +180,8 @@ func (s *Server) createEntrypoints(service types.ServiceName) error {
 			continue
 		}
 
-		if _, ok := Plugins.All()[template.Type]; !ok {
-			return fmt.Errorf("server plugin %s does not exist, did you regiser it?", template.Type)
-		}
-
-		provider, err := Plugins.Get(template.Type)
-		if err != nil {
+		provider, ok := Plugins.Get(template.Type)
+		if !ok {
 			return fmt.Errorf("entrypoint provider for %s not found, did you register it by importing the package?", template.Type)
 		}
 

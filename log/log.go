@@ -63,10 +63,10 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 		}
 	}
 
-	pf, err := plugins.Get(cfg.Plugin)
-	if err != nil {
-		slog.Error("getting a logger plugin", "plugin", cfg.Plugin, "error", err)
-		return Logger{}, fmt.Errorf("while getting the log plugin '%s': %w", cfg.Plugin, err)
+	pf, ok := plugins.Get(cfg.Plugin)
+	if !ok {
+		slog.Error("getting a logger plugin", "plugin", cfg.Plugin)
+		return Logger{}, fmt.Errorf("while getting the log plugin '%s'", cfg.Plugin)
 	}
 
 	provider, err := pf(sections, configs, opts...)
@@ -74,10 +74,10 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 		return Logger{}, err
 	}
 
-	cachedProvider, err := pluginsCache.Get(provider.Key())
-	if err != nil {
+	cachedProvider, ok := pluginsCache.Get(provider.Key())
+	if !ok {
 		if err := provider.Start(); err != nil {
-			return Logger{}, err
+			return Logger{}, fmt.Errorf("unknown provider '%s'", provider.Key())
 		}
 
 		pluginsCache.Set(cfg.Plugin, provider)
@@ -89,7 +89,12 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 		return Logger{}, err
 	}
 
-	lvlHandler, err := NewLevelHandler(cfg.Level, handler)
+	lvl, err := ParseLevel(cfg.Level)
+	if err != nil {
+		return Logger{}, err
+	}
+
+	lvlHandler, err := NewLevelHandler(lvl, handler)
 	if err != nil {
 		return Logger{}, err
 	}
@@ -125,16 +130,21 @@ func ProvideLogger(
 
 // WithLevel creates a copy of the logger with a new level.
 // It will inherit all the fields and the context from the parent logger.
-func (l Logger) WithLevel(level slog.Leveler) Logger {
-	if level != nil {
-		l.config.Level = level.Level()
+func (l Logger) WithLevel(level string) Logger {
+	if level != "" {
+		l.config.Level = level
 
 		handler, err := l.pluginProvider.Handler()
 		if err != nil {
 			return l
 		}
 
-		l.Logger = slog.New(&LevelHandler{level.Level(), handler})
+		lvl, err := ParseLevel(level)
+		if err != nil {
+			return l
+		}
+
+		l.Logger = slog.New(&LevelHandler{lvl, handler})
 	}
 
 	return l
@@ -190,11 +200,13 @@ func (l Logger) Stop(ctx context.Context) error {
 		return nil
 	}
 
-	for p, pp := range pluginsCache.All() {
+	pluginsCache.Range(func(p string, pp ProviderType) bool {
 		if err := pp.Stop(ctx); err != nil {
 			slog.Error("stopping a logger plugin", "plugin", p, "error", err)
 		}
-	}
+
+		return true
+	})
 
 	return nil
 }
@@ -211,7 +223,12 @@ func (l Logger) Type() string {
 
 // Level returns the level as int.
 func (l Logger) Level() slog.Level {
-	return l.config.Level
+	lvl, err := ParseLevel(l.config.Level)
+	if err != nil {
+		l.Error("While parsing the level", "error", err)
+	}
+
+	return lvl
 }
 
 // Trace logs at TraceLevel.

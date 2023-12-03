@@ -42,6 +42,17 @@ func (e *Error) Unwrap() error {
 	return e.Wrapped
 }
 
+// Is returns if the given error is an (orb)Error.
+func (e *Error) Is(err error) bool {
+	orberr, ok := err.(*Error)
+
+	if !ok {
+		return false
+	}
+
+	return orberr.Code == e.Code && orberr.Message == e.Message && errors.Is(orberr.Wrapped, e.Wrapped)
+}
+
 // New creates a new orb error with the given parameters.
 func New(code int, message string) *Error {
 	return &Error{
@@ -60,12 +71,17 @@ func NewHTTP(code int) *Error {
 
 // From converts an error to orberrors.Error.
 func From(err error) *Error {
-	var orbe *Error
-	if errors.As(err, &orbe) {
-		return orbe
+	var orbErr *Error
+	if errors.As(err, &orbErr) {
+		return orbErr
 	}
 
-	return New(http.StatusInternalServerError, err.Error())
+	// Make copy.
+	return &Error{
+		Code:    http.StatusInternalServerError,
+		Message: err.Error(),
+		Wrapped: errors.Unwrap(err),
+	}
 }
 
 // A list of default errors.

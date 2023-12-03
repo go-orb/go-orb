@@ -2,9 +2,9 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/url"
 
 	"log/slog"
@@ -14,12 +14,14 @@ import (
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/registry"
 	"github.com/go-orb/go-orb/types"
-	"github.com/go-orb/go-orb/util/container"
 	"github.com/go-orb/go-orb/util/orberrors"
 )
 
 // ComponentType is the client component type name.
 const ComponentType = "client"
+
+// NodeMap is the type for a string map with list of registry nodes.
+type NodeMap map[string][]*registry.Node
 
 // Client is the interface for clients.
 type Client interface {
@@ -27,7 +29,7 @@ type Client interface {
 
 	Config() *Config
 
-	ResolveService(ctx context.Context, service string, preferredTransports ...string) (*container.Map[[]*registry.Node], error)
+	ResolveService(ctx context.Context, service string, preferredTransports ...string) (NodeMap, error)
 
 	NeedsCodec(ctx context.Context, req *Request[any, any], opts ...CallOption) bool
 
@@ -42,7 +44,7 @@ type Type struct {
 }
 
 // RawResponse is a internal struct to pass the transport's response with header and content-type around.
-type RawResponse = Response[*bytes.Buffer]
+type RawResponse = Response[io.Reader]
 
 // Response will be returned by CallWithResponse.
 type Response[T any] struct {
@@ -269,7 +271,7 @@ func ProvideClient(
 	cfg := NewConfig(opts...)
 
 	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, configs, cfg); err != nil {
+	if err := config.Parse(sections, configs, &cfg); err != nil {
 		return Type{}, err
 	}
 
@@ -280,9 +282,9 @@ func ProvideClient(
 
 	logger.Debug("Client", "plugin", cfg.Plugin)
 
-	provider, err := plugins.Get(cfg.Plugin)
-	if err != nil {
-		return Type{}, fmt.Errorf("client plugin (%s) not found, did you register it: %w", cfg.Plugin, err)
+	provider, ok := plugins.Get(cfg.Plugin)
+	if !ok {
+		return Type{}, fmt.Errorf("client plugin (%s) not found, did you register it?", cfg.Plugin)
 	}
 
 	// Configure the logger.

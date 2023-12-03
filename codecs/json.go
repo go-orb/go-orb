@@ -1,7 +1,6 @@
 package codecs
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
 )
@@ -18,19 +17,18 @@ type CodecJSON struct{}
 // Encode marshals any object into json bytes.
 // Param v should be a pointer type.
 func (j *CodecJSON) Encode(v any) ([]byte, error) {
-	b := []byte{}
-	buf := bytes.NewBuffer(b)
-	err := j.NewEncoder(buf).Encode(v)
-
-	return buf.Bytes(), err
+	switch vt := v.(type) {
+	case string:
+		return []byte(vt), nil
+	default:
+		return json.Marshal(v)
+	}
 }
 
 // Decode decodes json bytes into object v.
 // Param v should be a pointer type.
-func (j *CodecJSON) Decode(b []byte, v any) error {
-	buf := bytes.NewBuffer(b)
-
-	return j.NewDecoder(buf).Decode(v)
+func (j *CodecJSON) Decode(data []byte, v any) error {
+	return json.Unmarshal(data, v)
 }
 
 type wrapEncoder struct {

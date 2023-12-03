@@ -1,15 +1,10 @@
 package log
 
-import (
-	"log/slog"
-)
-
 //
 //nolint:gochecknoglobals
 var (
-	// DefaultLevel is trace, easier for tests.
-	// TODO(jochumdev): might have to adjust this.
-	DefaultLevel = LevelTrace
+	// DefaultLevel is info.
+	DefaultLevel = LevelInfo.String()
 	// DefaultPlugin is "slog", it support's json and text output to Stdout/Stderr and file.
 	DefaultPlugin = "slog"
 	// DefaultSetDefault set's the "log" and slog default logger when true.
@@ -35,7 +30,7 @@ type Config struct {
 	// Make sure to register the plugin by importing it.
 	Plugin string `json:"plugin,omitempty" yaml:"plugin,omitempty"`
 	// Level sets the log level to use.
-	Level slog.Level `json:"level,omitempty" yaml:"level,omitempty"`
+	Level string `json:"level,omitempty" yaml:"level,omitempty"`
 	// SetDefault indicates if this logger should be set as default logger.
 	SetDefault bool
 }
@@ -62,7 +57,7 @@ func NewConfig(opts ...Option) Config {
 // WithLevel sets the log level to user.
 // TODO: would love to take in something like (	slog.Level | string | constraints.Integer) here,
 // but not sure how that would work.
-func WithLevel(n slog.Level) Option {
+func WithLevel(n string) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
 		c.Level = n

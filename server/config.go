@@ -39,18 +39,18 @@ type Config struct {
 // NewConfig creates a new server config with default values as starting point,
 // after which all the functional options are applied.
 func NewConfig(options ...Option) Config {
-	plugins := NewDefaults.All()
-
 	cfg := Config{
-		Enabled:   make(map[string]bool, len(plugins)),
-		Defaults:  make(map[string]EntrypointConfig, len(plugins)),
+		Enabled:   make(map[string]bool, NewDefaults.Len()),
+		Defaults:  make(map[string]EntrypointConfig, NewDefaults.Len()),
 		Templates: make(map[string]EntrypointTemplate),
 	}
 
-	for name, newConfig := range plugins {
+	NewDefaults.Range(func(name string, newConfig NewDefault) bool {
 		cfg.Enabled[name] = true
 		cfg.Defaults[name] = newConfig()
-	}
+
+		return true
+	})
 
 	// Apply options.
 	for _, o := range options {
@@ -99,7 +99,7 @@ var (
 // that directly relates to the entrypoint.
 func (c *Config) parseEntrypointConfig(dataMap map[string]any) error { //nolint:gocognit
 	for serverType, d := range dataMap {
-		if _, ok := Plugins.All()[serverType]; !ok {
+		if _, ok := Plugins.Get(serverType); !ok {
 			return fmt.Errorf("server plugin %s does not exist, did you regiser it?", serverType)
 		}
 

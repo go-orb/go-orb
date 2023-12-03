@@ -16,7 +16,7 @@ var (
 	// DefaultContentType is the default Content-Type for calls.
 	DefaultContentType = "application/x-protobuf"
 	// DefaultPreferredTransports set's in which order a transport will be selected.
-	DefaultPreferredTransports = []string{"grpc", "h2c", "http", "http2", "http3", "https"}
+	DefaultPreferredTransports = []string{"http", "grpc", "h2c", "http2", "http3", "https"}
 
 	// DefaultPoolHosts set the number of hosts in a pool.
 	DefaultPoolHosts = 16
@@ -47,6 +47,20 @@ var (
 	// DefaultReturnHeaders indicates if you want to copy resulting headers to the Response.
 	DefaultReturnHeaders = false
 )
+
+// TODO(jochumdev): Uncommenting this sorts preferred Transports.
+// func init() {
+// 	err := cli.Flags.Add(cli.NewFlag(
+// 		"preferred_transports",
+// 		DefaultPreferredTransports,
+// 		cli.ConfigPathSlice([]string{"client", "preferredTransports"}),
+// 		cli.Usage("Transports in theier preferred order"),
+// 		cli.EnvVars("PREFERRED_TRANSPORTS"),
+// 	))
+// 	if err != nil && !errors.Is(err, cli.ErrFlagExists) {
+// 		panic(err)
+// 	}
+// }
 
 var _ (ConfigType) = (*Config)(nil)
 

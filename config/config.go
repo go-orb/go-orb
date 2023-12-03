@@ -192,10 +192,9 @@ func HasKey(sections []string, key string, configs types.ConfigData) bool {
 
 // Dump is a helper function to dump configDatas to the console.
 func Dump(configs types.ConfigData) error {
-	codec, err := codecs.Plugins.Get("json")
-	if err != nil {
-		err = fmt.Errorf("getting the json codec: %w", err)
-		return err
+	codec, ok := codecs.Plugins.Get("json")
+	if !ok {
+		return errors.New("JSON codec was not found, did you register it by importing?")
 	}
 
 	for _, config := range configs {
@@ -212,9 +211,9 @@ func Dump(configs types.ConfigData) error {
 func ParseStruct[TParse any](sections []string, toParse TParse) (source.Data, error) {
 	result := source.Data{Data: make(map[string]any)}
 
-	codec, err := codecs.Plugins.Get("json")
-	if err != nil {
-		result.Error = fmt.Errorf("getting the json codec: %w", err)
+	codec, ok := codecs.Plugins.Get("json")
+	if !ok {
+		result.Error = errors.New("JSON codec was not found, did you register it by importing?")
 		return result, result.Error
 	}
 

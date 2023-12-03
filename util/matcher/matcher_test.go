@@ -57,7 +57,7 @@ func TestMatcher(t *testing.T) {
 }
 
 func TestMatcherDuplication(t *testing.T) {
-	plugins := container.NewMap[string]()
+	plugins := container.NewMap[string, string]()
 	plugins.Set("one", "itemOne")
 	plugins.Set("two", "itemTwo")
 
@@ -91,7 +91,7 @@ func TestMatcherDuplication(t *testing.T) {
 }
 
 func TestMatcherJson(t *testing.T) {
-	plugins := container.NewMap[string]()
+	plugins := container.NewMap[string, string]()
 	plugins.Set("abc", "abc")
 	plugins.Set("def", "def")
 
@@ -112,7 +112,7 @@ func TestMatcherJson(t *testing.T) {
 }
 
 func TestMatcherYaml(t *testing.T) {
-	plugins := container.NewMap[string]()
+	plugins := container.NewMap[string, string]()
 	plugins.Set("abc", "abc")
 	plugins.Set("def", "def")
 

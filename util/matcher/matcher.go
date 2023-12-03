@@ -34,12 +34,12 @@ type itemContainer[T any] struct {
 // de-duplocated with a name key, to make sure each item is only added once.
 type Matcher[T any] struct {
 	globals   []itemContainer[T]
-	plugins   *container.Map[T]
+	plugins   *container.Map[string, T]
 	selectors map[selectorKey][]itemContainer[T]
 }
 
 // NewMatcher creates a new matcher object.
-func NewMatcher[T any](plugins *container.Map[T]) Matcher[T] {
+func NewMatcher[T any](plugins *container.Map[string, T]) Matcher[T] {
 	return Matcher[T]{
 		plugins:   plugins,
 		selectors: make(map[selectorKey][]itemContainer[T]),
@@ -57,8 +57,8 @@ func (m *Matcher[T]) Use(name string, item T) {
 
 // AddPlugin will add plugin item, with a selector.
 func (m *Matcher[T]) AddPlugin(selector, plugin string) error {
-	item, err := m.plugins.Get(plugin)
-	if err != nil {
+	item, ok := m.plugins.Get(plugin)
+	if !ok {
 		return fmt.Errorf("plugin not found '%s'", plugin)
 	}
 

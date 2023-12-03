@@ -7,15 +7,13 @@ import (
 	"math/big"
 
 	"github.com/go-orb/go-orb/registry"
-	"github.com/go-orb/go-orb/util/container"
-	"golang.org/x/exp/slices"
 )
 
 // SelectorFunc get's executed by client.SelectNode which get it's info's from client.ResolveService.
 type SelectorFunc func(
 	ctx context.Context,
 	service string,
-	nodes *container.Map[[]*registry.Node],
+	nodes NodeMap,
 	preferredTransports []string,
 	anyTransport bool,
 ) (*registry.Node, error)
@@ -25,33 +23,29 @@ type SelectorFunc func(
 func SelectRandomNode(
 	_ context.Context,
 	_ string,
-	nodes *container.Map[[]*registry.Node],
+	nodes NodeMap,
 	preferredTransports []string,
 	anyTransport bool,
 ) (*registry.Node, error) {
-	foundTransports := nodes.Keys()
-
+	// try preferredTransports
 	for _, pt := range preferredTransports {
-		if slices.Contains(foundTransports, pt) {
-			tNodes, err := nodes.Get(pt)
-			if err != nil {
-				// This should never happen.
-				return nil, err
-			}
-
-			rInt, err := rand.Int(rand.Reader, big.NewInt(int64(len(tNodes))))
-			if err != nil {
-				return nil, err
-			}
-
-			return tNodes[rInt.Int64()], nil
+		tNodes, ok := nodes[pt]
+		if !ok {
+			continue
 		}
+
+		rInt, err := rand.Int(rand.Reader, big.NewInt(int64(len(tNodes))))
+		if err != nil {
+			return nil, err
+		}
+
+		return tNodes[rInt.Int64()], nil
 	}
 
 	// Return random
 	if anyTransport {
 		aNodes := []*registry.Node{}
-		for _, v := range nodes.Values() {
+		for _, v := range nodes {
 			aNodes = append(aNodes, v...)
 		}
 

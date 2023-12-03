@@ -34,7 +34,7 @@ type ProviderFunc func(section []string, configs types.ConfigData, opts ...Optio
 var plugins = container.NewPlugins[ProviderFunc]() //nolint:gochecknoglobals
 
 // PluginsCache contains plugin's already loaded and started.
-var pluginsCache = container.NewSafeMap[ProviderType]() //nolint:gochecknoglobals
+var pluginsCache = container.NewSafeMap[string, ProviderType]() //nolint:gochecknoglobals
 
 // Register makes a plugin available by the provided name.
 // If Register is called twice with the same name, it panics.

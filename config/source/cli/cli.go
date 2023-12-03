@@ -81,12 +81,11 @@ func (s *Source) Read(u *url.URL) source.Data {
 	config.Version = u.Query().Get("version")
 
 	// parseFunc is the subplugin of source/cli.
-	parseFunc, err := Plugins.Get(pName)
-	if err != nil {
+	parseFunc, ok := Plugins.Get(pName)
+	if !ok {
 		result.Error = fmt.Errorf(
-			"failed to get the plugin '%s'. Did you register the plugin by importing it?, error was: %w",
+			"failed to get the plugin '%s'. Did you register the plugin by importing it?",
 			pName,
-			err,
 		)
 
 		return result
@@ -100,12 +99,12 @@ func (s *Source) Read(u *url.URL) source.Data {
 	// Parse all Flags into map[string]any.
 	parseFlags(&result, Flags.List())
 
-	mJSON, err := codecs.Plugins.Get("json")
-	if err != nil {
-		result.Error = fmt.Errorf("JSON codec was not found, did you register it by importing?: %w", err)
+	mJSON, ok := codecs.Plugins.Get("json")
+	if !ok {
+		result.Error = errors.New("JSON codec was not found, did you register it by importing?")
+	} else {
+		result.Marshaler = mJSON
 	}
-
-	result.Marshaler = mJSON
 
 	return result
 }

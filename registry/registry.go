@@ -3,6 +3,7 @@ package registry
 
 import (
 	"errors"
+	"fmt"
 
 	"log/slog"
 
@@ -110,9 +111,9 @@ func ProvideRegistry(
 
 	logger.Debug("Registry", "plugin", cfg.Plugin)
 
-	provider, err := Plugins.Get(cfg.Plugin)
-	if err != nil {
-		return Type{}, err
+	provider, ok := Plugins.Get(cfg.Plugin)
+	if !ok {
+		return Type{}, fmt.Errorf("Registry '%s' not found, did you import it?", cfg.Plugin)
 	}
 
 	// Configure the logger.

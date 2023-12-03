@@ -53,8 +53,8 @@ func (m HandlerRegistrations) UnmarshalYAML(data *yaml.Node) error {
 
 func (m HandlerRegistrations) set(handlers []string) error {
 	for _, name := range handlers {
-		handler, err := Handlers.Get(name)
-		if err != nil {
+		handler, ok := Handlers.Get(name)
+		if !ok {
 			return fmt.Errorf("handler '%s' not found, did you register it?", name)
 		}
 

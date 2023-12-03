@@ -18,5 +18,5 @@ var (
 	// You need to register your handlers with a registration function to use it.
 	// Example:
 	//     Handlers.Register("myHandler", RegisterEchoHandler)
-	Handlers = container.NewMap[RegistrationFunc]()
+	Handlers = container.NewMap[string, RegistrationFunc]()
 )

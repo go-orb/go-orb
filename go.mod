@@ -3,6 +3,7 @@ module github.com/go-orb/go-orb
 go 1.20
 
 require (
+	github.com/cornelk/hashmap v1.0.8
 	github.com/google/wire v0.5.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/sanity-io/litter v1.5.5
