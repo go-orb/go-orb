@@ -27,7 +27,11 @@ type NodeMap map[string][]*registry.Node
 type Client interface {
 	types.Component
 
-	Config() *Config
+	// Config returns the internal config, this is for tests.
+	Config() Config
+
+	// With closes all transports and configures the client with the given options.
+	With(opts ...Option) error
 
 	ResolveService(ctx context.Context, service string, preferredTransports ...string) (NodeMap, error)
 
