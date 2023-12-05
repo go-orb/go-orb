@@ -39,7 +39,7 @@ func (c *Config) config() *Config {
 	return c
 }
 
-// NewConfig creates a new config with the defaults.
+// NewConfig creates a new config with the defaults and applys opts on top.
 func NewConfig(opts ...Option) Config {
 	cfg := Config{
 		Level:  DefaultLevel,

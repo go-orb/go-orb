@@ -302,6 +302,7 @@ type CallOptions struct {
 	PoolTTL time.Duration
 
 	AnyTransport bool
+
 	// Selector is the node selector.
 	Selector SelectorFunc
 	// Backoff func
@@ -367,6 +368,13 @@ func WithPoolSize(n int) CallOption {
 func WithPoolTTL(n time.Duration) CallOption {
 	return func(o *CallOptions) {
 		o.PoolTTL = n
+	}
+}
+
+// WithAnyTransport enables unconfigured (any) transports.
+func WithAnyTransport() CallOption {
+	return func(o *CallOptions) {
+		o.AnyTransport = true
 	}
 }
 
