@@ -39,6 +39,10 @@ func (e *Error) Wrap(err error) *Error {
 
 // Unwrap returns the wrapped error.
 func (e *Error) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+
 	return e.Wrapped
 }
 
@@ -71,12 +75,18 @@ func NewHTTP(code int) *Error {
 
 // From converts an error to orberrors.Error.
 func From(err error) *Error {
+	// nil input = nil output.
+	if err == nil {
+		return nil
+	}
+
+	// Already an orberror?
 	var orbErr *Error
 	if errors.As(err, &orbErr) {
 		return orbErr
 	}
 
-	// Make copy.
+	// Else make a copy.
 	return &Error{
 		Code:    http.StatusInternalServerError,
 		Message: err.Error(),

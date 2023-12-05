@@ -191,7 +191,7 @@ func overlayEntrypointConfig(cfg EntrypointConfig, entrypointList []any, name st
 			}
 
 			// Make sure we keep static address across inheritance if no manual
-			// addrss is specified in config
+			// address is specified in config
 			if _, ok := entrypoint["address"]; !ok {
 				entrypoint["address"] = cfg.GetAddress()
 			}
