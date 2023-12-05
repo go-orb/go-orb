@@ -12,7 +12,7 @@ import (
 	"github.com/go-orb/go-orb/types"
 )
 
-// ComponentType is the registry component type name.
+// ComponentType is the components name.
 const ComponentType = "registry"
 
 var (
@@ -89,8 +89,8 @@ type Value struct {
 }
 
 // ProvideRegistry is the registry provider for wire.
-// It parses the config from "data", fetches the "Plugin" from the config and
-// then forwards all it's arguments to the provider which it get's from "Plugins".
+// It parses the config from "configs", fetches the "Plugin" from the config and
+// then forwards all it's arguments to the factory which it get's from "Plugins".
 func ProvideRegistry(
 	name types.ServiceName,
 	version types.ServiceVersion,
@@ -113,7 +113,7 @@ func ProvideRegistry(
 
 	provider, ok := Plugins.Get(cfg.Plugin)
 	if !ok {
-		return Type{}, fmt.Errorf("Registry '%s' not found, did you import it?", cfg.Plugin)
+		return Type{}, fmt.Errorf("Registry plugin '%s' not found, did you import it?", cfg.Plugin)
 	}
 
 	// Configure the logger.
