@@ -49,17 +49,17 @@ func TestReadString(t *testing.T) {
 	data := testData(t)
 
 	// Must return the correct value.
-	str, err := Get(data, "string", "x")
+	str, err := SingleGet(data, "string", "x")
 	require.NoError(t, err)
 	assert.Equal(t, "value", str)
 
 	// Must return default if type don't match
-	i, err := Get(data, "string", 10)
+	i, err := SingleGet(data, "string", 10)
 	require.ErrorIs(t, err, ErrTypesDontMatch)
 	assert.Equal(t, 10, i)
 
 	// Must return default
-	str, err = Get(data, "string2", "x")
+	str, err = SingleGet(data, "string2", "x")
 	require.ErrorIs(t, err, ErrNotExistent)
 	assert.Equal(t, "x", str)
 }
@@ -68,16 +68,16 @@ func TestReadStringSlice(t *testing.T) {
 	data := testData(t)
 
 	// Must return the correct value.
-	strs, err := Get(data, "stringslice", []string{})
+	strs, err := SingleGet(data, "stringslice", []string{})
 	require.NoError(t, err)
 	assert.Equal(t, []string{"value1", "value2", "0", "true"}, strs)
 
 	// Must return error if not a slice
-	_, err = Get(data, "string", []string{})
+	_, err = SingleGet(data, "string", []string{})
 	require.ErrorIs(t, err, ErrTypesDontMatch)
 
 	// Must return default
-	strs, err = Get(data, "stringslice2", []string{"a", "b"})
+	strs, err = SingleGet(data, "stringslice2", []string{"a", "b"})
 	require.ErrorIs(t, err, ErrNotExistent)
 	assert.Equal(t, []string{"a", "b"}, strs)
 }
@@ -86,12 +86,12 @@ func TestReadMixedSlice(t *testing.T) {
 	data := testData(t)
 
 	// Must return the correct value.
-	anys, err := Get(data, "mixedslice", []any{})
+	anys, err := SingleGet(data, "mixedslice", []any{})
 	require.NoError(t, err)
 	assert.Equal(t, []any{"value1", float64(0), float64(1), float64(2)}, anys)
 
 	// Must return error if not a slice
-	_, err = Get(data, "string", []any{})
+	_, err = SingleGet(data, "string", []any{})
 	require.ErrorIs(t, err, ErrTypesDontMatch)
 }
 
@@ -99,12 +99,12 @@ func TestReadMixedMap(t *testing.T) {
 	data := testData(t)
 
 	// Must return the correct value.
-	mapa, err := Get(data, "stringmap", map[string]any{})
+	mapa, err := SingleGet(data, "stringmap", map[string]any{})
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"key1": "value1", "key2": "value2", "key3": float64(1), "key4": true}, mapa)
 
 	// Must return error if not a slice
-	_, err = Get(data, "string", map[string]any{})
+	_, err = SingleGet(data, "string", map[string]any{})
 	require.ErrorIs(t, err, ErrTypesDontMatch)
 }
 
@@ -112,11 +112,11 @@ func TestReadSliceMap(t *testing.T) {
 	data := testData(t)
 
 	// Must return the correct value.
-	mapa, err := Get(data, "slicemap", []any{})
+	mapa, err := SingleGet(data, "slicemap", []any{})
 	require.NoError(t, err)
 	assert.Equal(t, []any{map[string]any{"name": "0", "key": "value0"}, map[string]any{"name": "1", "key": "value1"}}, mapa)
 
 	// Must return error if not a slice
-	_, err = Get(data, "string", []any{})
+	_, err = SingleGet(data, "string", []any{})
 	require.ErrorIs(t, err, ErrTypesDontMatch)
 }

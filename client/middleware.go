@@ -8,6 +8,9 @@ import (
 	"github.com/go-orb/go-orb/util/container"
 )
 
+// MiddlewareComponentType is returned when you call SomeMiddleware.Type().
+const MiddlewareComponentType = "middleware"
+
 // MiddlewareConfig is the basic config for every middleware.
 type MiddlewareConfig struct {
 	Name string `json:"name" yaml:"name"`
@@ -21,8 +24,7 @@ type MiddlewareCallNoCodecHandler func(ctx context.Context, req *Request[any, an
 
 // Middleware is the middleware for clients.
 type Middleware interface {
-	// String returns the name of this middleware.
-	String()
+	types.Component
 
 	Call(
 		next MiddlewareCallHandler,

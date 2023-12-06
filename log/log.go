@@ -153,7 +153,7 @@ func (l Logger) WithLevel(level string) Logger {
 // WithConfig returns a new logger if there's a config for it in configs else the current one.
 // It adds the fields from the current logger.
 func (l Logger) WithConfig(sections []string, configs types.ConfigData, opts ...Option) (Logger, error) {
-	if !config.HasKey(append(sections, DefaultConfigSection), "plugin", configs) {
+	if !config.HasKey[string](append(sections, DefaultConfigSection), "plugin", configs) {
 		return l, nil
 	}
 

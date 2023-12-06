@@ -26,16 +26,22 @@ func isAlphaNumeric(s string) bool {
 func walkMap(sections []string, in map[string]any) (map[string]any, error) {
 	data := in
 
-	for _, section := range sections {
-		if isAlphaNumeric(section) {
-			snum, err := strconv.ParseInt(section, 10, 64)
+	for i := 0; i < len(sections); i++ {
+		section := sections[i]
+
+		if i+1 < len(sections) && isAlphaNumeric(sections[i+1]) {
+			snum, err := strconv.ParseInt(sections[i+1], 10, 64)
 			if err != nil {
 				return data, fmt.Errorf("while parsing the section number: %w", err)
 			}
 
-			sliceData, err := Get(data, section, []any{})
+			sliceData, err := SingleGet(data, section, []any{})
 			if err != nil {
 				return data, err
+			}
+
+			if int64(len(sliceData)) <= snum {
+				return data, ErrNotExistent
 			}
 
 			tmpData, ok := sliceData[snum].(map[string]any)
@@ -44,10 +50,13 @@ func walkMap(sections []string, in map[string]any) (map[string]any, error) {
 			}
 
 			data = tmpData
+			i++
+
+			continue
 		}
 
 		var err error
-		if data, err = Get(data, section, map[string]any{}); err != nil {
+		if data, err = SingleGet(data, section, map[string]any{}); err != nil {
 			return data, err
 		}
 	}
@@ -157,7 +166,9 @@ func Parse(sections []string, configs types.ConfigData, target any) error {
 }
 
 // HasKey returns a boolean which indidcates if the given sections and key exists in the configs.
-func HasKey(sections []string, key string, configs types.ConfigData) bool {
+func HasKey[T any](sections []string, key string, configs types.ConfigData) bool {
+	var tmp T
+
 	for _, configData := range []source.Data(configs) {
 		if configData.Error != nil {
 			continue
@@ -175,7 +186,7 @@ func HasKey(sections []string, key string, configs types.ConfigData) bool {
 			return false
 		}
 
-		if _, err := Get(data, key, ""); err != nil {
+		if _, err := SingleGet(data, key, tmp); err != nil {
 			// Ignore unknown configSection in config.
 			if errors.Is(err, ErrNotExistent) {
 				continue
