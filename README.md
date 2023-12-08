@@ -23,7 +23,7 @@ we have been working hard on removing all usage of reflect.
 
 ### Multiple Entrypoints
 
-Orb allows you to listen on multiple port's with different protocols: gRPC, HTTP, HTTP2, H2C, HTTP3.
+Orb allows you to listen on multiple port's with different protocols: gRPC, HTTP, HTTPS, DRPC, HTTP2, H2C, HTTP3.
 See the config system entry on howto configure it.
 
 ### Advanced [config system](config)
