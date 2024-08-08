@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// TODO: investigate all the contexts in the options, are they really needed?
+// TODO(davincible): investigate all the contexts in the options, are they really needed?
 //       maybe there is a better more idomatic way to achieve the same thing.
 
 // RegisterOptions are the options used to register services.

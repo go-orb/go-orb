@@ -55,7 +55,7 @@ func NewConfig(opts ...Option) Config {
 }
 
 // WithLevel sets the log level to user.
-// TODO: would love to take in something like (	slog.Level | string | constraints.Integer) here,
+// TODO(davincible): would love to take in something like (	slog.Level | string | constraints.Integer) here,
 // but not sure how that would work.
 func WithLevel(n string) Option {
 	return func(cfg ConfigType) {

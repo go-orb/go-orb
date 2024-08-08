@@ -8,7 +8,7 @@ import (
 )
 
 // Names for common Levels.
-// TODO:  Something like this would be nice
+// TODO(jochumdev):  Something like this would be nice
 //
 //	type LevelT interface {
 //		slog.Level | string | constraints.Integer

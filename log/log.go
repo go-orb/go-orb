@@ -45,6 +45,7 @@ func New(opts ...Option) (Logger, error) {
 
 // NewConfigDatas will create a new logger with the given configs,
 // as well as this logger's fields.
+// TODO(jochumdev): Simplify this.
 func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option) (Logger, error) {
 	var cfg Config
 	if configs == nil {

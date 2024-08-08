@@ -54,7 +54,7 @@ type Entrypoint interface {
 // Once this issue is solved, this interface should be replaced in favor of
 // which ever new semantics get introduced.
 type EntrypointConfig interface {
-	// TODO: as long as https://github.com/golang/go/issues/48522 is open, we need
+	// TODO(davincible): as long as https://github.com/golang/go/issues/48522 is open, we need
 	// this interface. But should be removed after in favor of some generic
 	// constraint to identify entrypoint configs and access common fields.
 	GetAddress() string
@@ -94,7 +94,7 @@ type EntrypointTemplate struct {
 	//
 	// By default, a random port will be chosen for the entrypoint to listen on,
 	// defined as ":0". For all options not specified, default values will be used.
-	// TODO: do we really use :0 as address, or the v4 code to identify an interface?
+	// TODO(davincible): do we really use :0 as address, or the v4 code to identify an interface?
 	Config EntrypointConfig
 }
 
