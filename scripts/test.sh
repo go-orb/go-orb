@@ -126,7 +126,7 @@ function run_linter() {
 		pushd "${dir}" >/dev/null || exit
 		print_msg "Running linter on ${dir}"
 
-		golangci-lint run --out-format github-actions -c "${cwd}/.golangci.yaml"
+		golangci-lint run -c "${cwd}/.golangci.yaml"
 
 		# Keep track of exit code of linter
 		if [[ $? -ne 0 ]]; then

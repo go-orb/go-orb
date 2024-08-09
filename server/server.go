@@ -129,6 +129,7 @@ func (s *Server) Start() error {
 			_ = s.Stop(ctx) //nolint:errcheck
 
 			gErr = fmt.Errorf("start entrypoint (%s): %w", addr, err)
+
 			return false
 		}
 

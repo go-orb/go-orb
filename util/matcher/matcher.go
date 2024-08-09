@@ -107,7 +107,7 @@ func (m *Matcher[T]) Add(selector, name string, item T) {
 	// Create a new selector
 	re, err := regexp.Compile(selector)
 	if err != nil {
-		slog.Error(fmt.Sprintf("failed to compile selector as regexp '%s'", selector), err)
+		slog.Error(fmt.Sprintf("failed to compile selector as regexp '%s'", selector), slog.Any("err", err))
 		return
 	}
 

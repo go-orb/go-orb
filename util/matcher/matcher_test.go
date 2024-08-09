@@ -51,7 +51,7 @@ func TestMatcher(t *testing.T) {
 		// Verify test cases.
 		res := m.Match(test.selector)
 		for _, i := range test.expected {
-			assert.EqualValues(t, true, slicemap.In(res, i), test.selector)
+			assert.True(t, slicemap.In(res, i), test.selector)
 		}
 	}
 }

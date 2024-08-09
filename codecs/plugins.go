@@ -30,6 +30,7 @@ func updateMimeMap() {
 			} else {
 				// We already know that mime-type, see if we know the encoder.
 				found := false
+
 				for _, ve := range v {
 					if encoder.String() == ve.String() {
 						found = true

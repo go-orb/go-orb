@@ -39,7 +39,8 @@ output:
   # Example: "checkstyle:report.json,colored-line-number"
   #
   # Default: colored-line-number
-  format: colored-line-number
+  formats:
+    - format: colored-line-number
   # Print lines of code with issue.
   # Default: true
   print-issued-lines: true
@@ -173,16 +174,6 @@ linters:
   disable-all: false
   fast: false
   disable:
-    - golint
-    - varcheck
-    - ifshort
-    - structcheck
-    - deadcode
-    - nosnakecase # Deprecated by the owner.
-    - interfacer
-    - maligned
-    - scopelint
-    - exhaustivestruct
     - testpackage
     - promlinter
     - nonamedreturns
@@ -199,7 +190,7 @@ linters:
     - paralleltest
     - ireturn
     - gomnd
-    - goerr113
+    - err113
     - exhaustruct
     - containedctx
     - godox
@@ -211,6 +202,13 @@ linters:
 
     # Not configured yet
     - depguard
+
+    - execinquery
+    - copyloopvar # go 1.22
+    - intrange # go 1.22
+
+    # Magic number
+    - mnd
 
 issues:
   # List of regexps of issue texts to exclude, empty list by default.
