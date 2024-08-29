@@ -25,11 +25,19 @@ func (e *Error) Error() string {
 // Toerror converts the "Error" to "error",
 // same as doing <variableWithTypeError>.(error).
 func (e *Error) Toerror() error {
+	if e == nil {
+		return nil
+	}
+
 	return e
 }
 
 // Wrap wraps another error into a copy.
 func (e *Error) Wrap(err error) *Error {
+	if e == nil {
+		return nil
+	}
+
 	return &Error{
 		Code:    e.Code,
 		Message: e.Message,
@@ -58,7 +66,7 @@ func (e *Error) Is(err error) bool {
 }
 
 // New creates a new orb error with the given parameters.
-func New(code int, message string) *Error {
+func New(code int, message string) error {
 	return &Error{
 		Code:    code,
 		Message: message,
@@ -66,7 +74,7 @@ func New(code int, message string) *Error {
 }
 
 // NewHTTP creates an orb error with the given status code and a static message.
-func NewHTTP(code int) *Error {
+func NewHTTP(code int) error {
 	return &Error{
 		Code:    code,
 		Message: http.StatusText(code),
@@ -74,7 +82,7 @@ func NewHTTP(code int) *Error {
 }
 
 // From converts an error to orberrors.Error.
-func From(err error) *Error {
+func From(err error) error {
 	// nil input = nil output.
 	if err == nil {
 		return nil
@@ -94,8 +102,20 @@ func From(err error) *Error {
 	}
 }
 
+// As tries to convert an `error` into an `*orberrors.Error`.
+func As(err error) (*Error, bool) {
+	var orbe *Error
+
+	if errors.As(err, &orbe) {
+		return orbe, true
+	}
+
+	return orbe, false
+}
+
 // A list of default errors.
 var (
+	ErrUnimplemented       = New(http.StatusInternalServerError, "Unimplemented")
 	ErrInternalServerError = NewHTTP(http.StatusInternalServerError)
 	ErrUnauthorized        = NewHTTP(http.StatusUnauthorized)
 	ErrRequestTimeout      = NewHTTP(http.StatusRequestTimeout)

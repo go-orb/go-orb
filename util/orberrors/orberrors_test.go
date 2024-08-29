@@ -2,6 +2,7 @@ package orberrors
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,7 +15,7 @@ func TestError(t *testing.T) {
 }
 
 func TestWrappedError(t *testing.T) {
-	msg := ErrInternalServerError.Wrap(errors.New("testing")).Error()
+	msg := fmt.Errorf("%w: %w", ErrInternalServerError, errors.New("testing")).Error()
 	expected := "500 Internal Server Error: testing"
 	require.Equal(t, expected, msg)
 }
