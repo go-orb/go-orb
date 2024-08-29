@@ -68,7 +68,7 @@ func filterMime(mime string) string {
 func GetMime(mime string) (Marshaler, error) {
 	codec, ok := mimeMap.Get(filterMime(mime))
 	if !ok {
-		return nil, fmt.Errorf("%w for %s", ErrUnknownMimeType, mime)
+		return nil, fmt.Errorf("%w for %s, did you import the codec plugin?", ErrUnknownMimeType, mime)
 	}
 
 	return codec[0], nil
@@ -78,7 +78,7 @@ func GetMime(mime string) (Marshaler, error) {
 func GetEncoder(mime string, v any) (Marshaler, error) {
 	codecs, ok := mimeMap.Get(filterMime(mime))
 	if !ok {
-		return nil, fmt.Errorf("%w for %s", ErrUnknownMimeType, mime)
+		return nil, fmt.Errorf("%w for %s, did you import the codec plugin?", ErrUnknownMimeType, mime)
 	}
 
 	for _, codec := range codecs {
@@ -87,7 +87,7 @@ func GetEncoder(mime string, v any) (Marshaler, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("%w for '%s'", ErrUnknownMimeType, mime)
+	return nil, fmt.Errorf("%w for %s, did you import the codec plugin?", ErrUnknownMimeType, mime)
 }
 
 // GetDecoder returns a decoder codec for a mime and golang type.
@@ -103,5 +103,5 @@ func GetDecoder(mime string, v any) (Marshaler, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("%w for '%s'", ErrUnknownMimeType, mime)
+	return nil, fmt.Errorf("%w for %s, did you import the codec plugin?", ErrUnknownMimeType, mime)
 }
