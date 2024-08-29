@@ -44,8 +44,6 @@ var (
 	DefaultStreamTimeout = time.Duration(0)
 	// DefaultConnClose indicates whetever to close the connection after each request.
 	DefaultConnClose = false
-	// DefaultReturnHeaders indicates if you want to copy resulting headers to the Response.
-	DefaultReturnHeaders = false
 )
 
 // TODO(jochumdev): Uncommenting this sorts preferred Transports.
@@ -73,19 +71,6 @@ type Option func(ConfigType)
 // done in v4. This is possible because plugins will nest the registry.Config
 // type, and thus inherit the interface that is used to identify the registry
 // config.
-//
-// Plugin specific option example:
-//
-//		 // WithLogger option located in the MDNS registry package.
-//			func WithLogger(logger log.Logger) registry.Option {
-//			 	return func(c registry.ConfigType) {
-//	        // The config type used here is *mdns.Config
-//			 	   cfg, ok := c.(*Config)
-//			 	   if ok {
-//			 	    	cfg.Logger = logger
-//			 	   }
-//			 	}
-//			}
 type ConfigType interface {
 	config() *Config
 }
@@ -129,8 +114,6 @@ type Config struct {
 	RequestTimeout time.Duration `json:"requestTimeout" yaml:"requestTimeout"`
 	// Stream timeout for the stream
 	StreamTimeout time.Duration `json:"streamTimeout" yaml:"streamTimeout"`
-	// ReturnHeaders set to true will add Headers to the response
-	ReturnHeaders bool `json:"returnHeaders" yaml:"returnHeaders"`
 	// TLS config.
 	TLSConfig *tls.Config
 }
@@ -274,7 +257,6 @@ func NewConfig(opts ...Option) Config {
 		ConnectionTimeout:   DefaultConnectionTimeout,
 		RequestTimeout:      DefaultRequestTimeout,
 		StreamTimeout:       DefaultStreamTimeout,
-		ReturnHeaders:       DefaultReturnHeaders,
 		Selector:            DefaultSelector,
 	}
 
@@ -322,8 +304,6 @@ type CallOptions struct {
 	StreamTimeout time.Duration
 	// ConnClose sets the Connection: close header.
 	ConnClose bool
-	// Headers copies all headers into the RawResponse.
-	Headers bool
 	// URL bypasses the registry when set. This is mainly for tests.
 	// Only <scheme>://<host:port> will be used from it.
 	URL string
@@ -436,13 +416,6 @@ func WithStreamTimeout(d time.Duration) CallOption {
 func WithDialTimeout(d time.Duration) CallOption {
 	return func(o *CallOptions) {
 		o.DialTimeout = d
-	}
-}
-
-// WithHeaders copies all headers into the metadata of the context.
-func WithHeaders() CallOption {
-	return func(o *CallOptions) {
-		o.Headers = true
 	}
 }
 

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-orb/go-orb/util/orberrors"
 )
@@ -21,13 +22,19 @@ func RetryOnTimeoutError(_ context.Context, _ Request[any, any], _ int, err erro
 		return false, nil
 	}
 
-	orbe := orberrors.From(err)
-	switch orbe.Code {
-	// Retry on timeout, not on 500 internal server error, as that is a business
-	// logic error that should be handled by the user.
-	case 408:
-		return true, nil
-	default:
-		return false, nil
+	var orbe *orberrors.Error
+
+	err = orberrors.From(err)
+	if errors.As(err, &orbe) {
+		switch orbe.Code {
+		// Retry on timeout, not on 500 internal server error, as that is a business
+		// logic error that should be handled by the user.
+		case 408:
+			return true, nil
+		default:
+			return false, nil
+		}
 	}
+
+	return false, nil
 }

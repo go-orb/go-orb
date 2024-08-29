@@ -14,6 +14,7 @@ import (
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/registry"
 	"github.com/go-orb/go-orb/types"
+	"github.com/go-orb/go-orb/util/metadata"
 	"github.com/go-orb/go-orb/util/orberrors"
 )
 
@@ -35,9 +36,14 @@ type Client interface {
 
 	ResolveService(ctx context.Context, service string, preferredTransports ...string) (NodeMap, error)
 
+	// NeedsCodec has to do node resolving and then selects the right transport for that node,
+	// it then has to return whatever the selected transport needs a codec or if it does encoding internaly.
 	NeedsCodec(ctx context.Context, req *Request[any, any], opts ...CallOption) bool
 
+	// Call with encoding on client side.
 	Call(ctx context.Context, req *Request[any, any], result any, opts ...CallOption) (*RawResponse, error)
+
+	// CallNoCodec is the same as Call but without encoding.
 	CallNoCodec(ctx context.Context, req *Request[any, any], result any, opts ...CallOption) error
 }
 
@@ -47,14 +53,13 @@ type Type struct {
 	Client
 }
 
-// RawResponse is a internal struct to pass the transport's response with header and content-type around.
+// RawResponse is a internal struct to pass the transport's response with metadata and content-type around.
 type RawResponse = Response[io.Reader]
 
 // Response will be returned by CallWithResponse.
 type Response[T any] struct {
 	ContentType string
-	URL         string
-	Headers     map[string][]string
+	Metadata    metadata.Metadata
 	Body        T
 }
 
@@ -95,7 +100,7 @@ func (r *Request[TResp, TReq]) Node(ctx context.Context, opts *CallOptions) (*re
 	if opts.URL != "" {
 		myU1rl, err := url.Parse(opts.URL)
 		if err != nil {
-			return nil, orberrors.ErrBadRequest.Wrap(err)
+			return nil, fmt.Errorf("%w: %w", orberrors.ErrBadRequest, err)
 		}
 
 		node := &registry.Node{
@@ -131,7 +136,7 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 
 	var result = new(TResp)
 
-	// Create a copy of Request to forward it.
+	// Create a [any, any] copy of Request to forward it.
 	// TODO(jochumdev): see if there's a better way to do this.
 	fwReq := &Request[any, any]{
 		service:  r.service,
@@ -149,12 +154,12 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 
 		codec, err := codecs.GetDecoder(cresp.ContentType, result)
 		if err != nil {
-			return result, orberrors.ErrBadRequest.Wrap(err)
+			return result, fmt.Errorf("%w: %w", orberrors.ErrBadRequest, err)
 		}
 
 		err = codec.NewDecoder(cresp.Body).Decode(result)
 		if err != nil {
-			return result, orberrors.ErrBadRequest.Wrap(err)
+			return result, fmt.Errorf("%w: %w", orberrors.ErrBadRequest, err)
 		}
 
 		return result, nil
@@ -174,7 +179,7 @@ func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, 
 		resultVar = new(TResp)
 	)
 
-	// Create a copy of Request to forward it.
+	// Create a [any, any] copy of Request to forward it.
 	// TODO(jochumdev): see if there's a better way to do this.
 	fwReq := &Request[any, any]{
 		service:  r.service,
@@ -191,16 +196,16 @@ func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, 
 		}
 
 		result.ContentType = cresp.ContentType
-		result.Headers = cresp.Headers
+		result.Metadata = cresp.Metadata
 
 		codec, err := codecs.GetDecoder(cresp.ContentType, result)
 		if err != nil {
-			return result, orberrors.ErrBadRequest.Wrap(err)
+			return result, fmt.Errorf("%w: %w", orberrors.ErrBadRequest, err)
 		}
 
 		err = codec.NewDecoder(cresp.Body).Decode(result)
 		if err != nil {
-			return result, orberrors.ErrBadRequest.Wrap(err)
+			return result, fmt.Errorf("%w: %w", orberrors.ErrBadRequest, err)
 		}
 
 		return result, nil
@@ -237,7 +242,7 @@ func NewRequest[TResp any, TReq any](
 // Call makes a call with the client, it's a shortcut for NewRequest(...).Call(...)
 // Example:
 //
-// resp , err := client.Call[FooResponse](context.Background(), someClient, "service1", "Say.Hello", fooRequest)
+// resp , err := client.Call[FooResponse](context.Background(), clientWire, "service1", "Say.Hello", fooRequest)
 //
 // Response will be of type *FooResponse.
 func Call[TResp any, TReq any](
@@ -254,6 +259,7 @@ func Call[TResp any, TReq any](
 // CallResponse makes a call with the client, it's a shortcut for NewRequest(...).CallResponse(...),
 //
 // it is the same as Call with the difference that it returns a Response[*TResp] instead of *TResp.
+// Response[*TResp] contains Metadata, that's the main reason for this.
 func CallResponse[TResp any, TReq any](
 	ctx context.Context,
 	client Client,
@@ -283,8 +289,6 @@ func ProvideClient(
 		logger.Warn("empty client plugin, using the default", "default", DefaultClientPlugin)
 		cfg.Plugin = DefaultClientPlugin
 	}
-
-	logger.Debug("Client", "plugin", cfg.Plugin)
 
 	provider, ok := plugins.Get(cfg.Plugin)
 	if !ok {
