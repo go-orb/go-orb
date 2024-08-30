@@ -51,13 +51,13 @@ type Call[TReq any, TResp any] struct {
 	Err error
 
 	// ReplyHelper contains the internal helper to answer on exact that topic and request.
-	replyFunc func(ctx context.Context, result TResp, err error) error
+	replyFunc func(ctx context.Context, result TResp, err error)
 
 	client Events
 }
 
 // SetReplyFunc sets the internal reply func (for example nats.Msg) for the client.
-func (e *Call[TReq, TResp]) SetReplyFunc(h func(ctx context.Context, result TResp, err error) error) {
+func (e *Call[TReq, TResp]) SetReplyFunc(h func(ctx context.Context, result TResp, err error)) {
 	e.replyFunc = h
 }
 
@@ -144,35 +144,35 @@ func HandleRequest[TReq any, TResp any](
 			select {
 			case <-ctx.Done():
 				return
-			case e := <-inChan:
+			case myEvent := <-inChan:
 				rv := new(TReq)
 
 				// Add metadata to the context.
-				md := e.Metadata
-				md.Set("Content-Type", e.ContentType)
+				md := myEvent.Metadata
+				md.Set("Content-Type", myEvent.ContentType)
 				hCtx := md.To(ctx)
 
-				codec, err := codecs.GetMime(e.ContentType)
+				codec, err := codecs.GetMime(myEvent.ContentType)
 				if err != nil {
-					e.replyFunc(hCtx, nil, err)
+					myEvent.replyFunc(hCtx, nil, err)
 				}
 
-				err = codec.Decode(e.Data, rv)
+				err = codec.Decode(myEvent.Data, rv)
 				if err != nil {
-					e.replyFunc(hCtx, nil, err)
+					myEvent.replyFunc(hCtx, nil, err)
 				}
 
 				// Run the handler.
 				result, err := handler(hCtx, rv)
 				if err != nil {
-					e.replyFunc(hCtx, nil, err)
+					myEvent.replyFunc(hCtx, nil, err)
 				}
 
 				// Encode the result and send it back to the plugin.
 				d, err := codec.Encode(result)
 
 				// Send the result.
-				e.replyFunc(hCtx, d, err)
+				myEvent.replyFunc(hCtx, d, err)
 			}
 		}
 	}(ctx, inChan)
