@@ -51,19 +51,14 @@ type Call[TReq any, TResp any] struct {
 	Err error
 
 	// ReplyHelper contains the internal helper to answer on exact that topic and request.
-	replyFunc func(result TResp, err *orberrors.Error) error
+	replyFunc func(ctx context.Context, result TResp, err error) error
 
 	client Events
 }
 
 // SetReplyFunc sets the internal reply func (for example nats.Msg) for the client.
-func (e *Call[TReq, TResp]) SetReplyFunc(h func(result TResp, err *orberrors.Error) error) {
+func (e *Call[TReq, TResp]) SetReplyFunc(h func(ctx context.Context, result TResp, err error) error) {
 	e.replyFunc = h
-}
-
-// Reply replies on a request.
-func (e *Call[TReq, TResp]) Reply(result TResp, err *orberrors.Error) error {
-	return e.replyFunc(result, err)
 }
 
 // Request runs a REST like call on the events topic.
@@ -133,19 +128,18 @@ func HandleRequest[TReq any, TResp any](
 	ctx context.Context,
 	eventsWire Events,
 	topic string,
-) (<-chan Call[*TReq, *TResp], context.CancelFunc, error) {
+	handler func(ctx context.Context, req *TReq) (*TResp, error),
+) (context.CancelFunc, error) {
 	ctx, cancelFunc := context.WithCancel(ctx)
 
 	inChan, err := eventsWire.HandleRequest(ctx, topic)
 	if err != nil {
 		cancelFunc()
-		return nil, nil, fmt.Errorf("%w: %w", orberrors.ErrInternalServerError, err)
+		return nil, fmt.Errorf("%w: %w", orberrors.ErrInternalServerError, err)
 	}
 
-	outChan := make(chan Call[*TReq, *TResp])
-
 	// This go routine transforms the encoded request from inChan into a decoded request to outChan.
-	go func(ctx context.Context, inChan <-chan Call[[]byte, []byte], outChan chan Call[*TReq, *TResp]) {
+	go func(ctx context.Context, inChan <-chan Call[[]byte, []byte]) {
 		for {
 			select {
 			case <-ctx.Done():
@@ -153,38 +147,37 @@ func HandleRequest[TReq any, TResp any](
 			case e := <-inChan:
 				rv := new(TReq)
 
-				// The err here will be copied into the result.
+				// Add metadata to the context.
+				md := e.Metadata
+				md.Set("Content-Type", e.ContentType)
+				hCtx := md.To(ctx)
+
 				codec, err := codecs.GetMime(e.ContentType)
-				if err == nil {
-					// The err here will be copied into the result.
-					err = codec.Decode(e.Data, rv)
+				if err != nil {
+					e.replyFunc(hCtx, nil, err)
 				}
 
-				// This converts from the clients []byte to the wanted value.
-				convertReply := func(result *TResp, inErr *orberrors.Error) error {
-					d, err := codec.Encode(result)
-					if err != nil {
-						return orberrors.From(err)
-					}
-
-					return e.replyFunc(d, inErr)
+				err = codec.Decode(e.Data, rv)
+				if err != nil {
+					e.replyFunc(hCtx, nil, err)
 				}
 
-				result := Call[*TReq, *TResp]{
-					ContentType: e.ContentType,
-					Metadata:    e.Metadata,
-					Data:        rv,
-					Err:         orberrors.From(err),
-					replyFunc:   convertReply,
-					client:      e.client,
+				// Run the handler.
+				result, err := handler(hCtx, rv)
+				if err != nil {
+					e.replyFunc(hCtx, nil, err)
 				}
 
-				outChan <- result
+				// Encode the result and send it back to the plugin.
+				d, err := codec.Encode(result)
+
+				// Send the result.
+				e.replyFunc(hCtx, d, err)
 			}
 		}
-	}(ctx, inChan, outChan)
+	}(ctx, inChan)
 
-	return outChan, cancelFunc, nil
+	return cancelFunc, nil
 }
 
 // Provide creates a new client instance with the implementation from cfg.Plugin.
