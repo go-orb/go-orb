@@ -1,6 +1,8 @@
 module github.com/go-orb/go-orb
 
-go 1.21
+go 1.23
+
+toolchain go1.23.0
 
 require (
 	github.com/cornelk/hashmap v1.0.8
