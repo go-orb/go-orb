@@ -210,6 +210,9 @@ linters:
     # Magic number
     - mnd
 
+    # Deprecated
+    - exportloopref
+
 issues:
   # List of regexps of issue texts to exclude, empty list by default.
   # But independently from this option we use default exclude patterns,

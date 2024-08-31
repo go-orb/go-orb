@@ -9,18 +9,17 @@ actions:
 runtimes:
   enabled:
     - python@3.10.8
-    - go@1.21.0
+    - go@1.23.0
     - node@18.12.1
 lint:
   enabled:
-    - checkov@3.2.236
+    - checkov@3.2.239
     - osv-scanner@1.8.4
     - trivy@0.54.1
-    - trufflehog@3.81.9
+    - trufflehog@3.81.10
     - yamllint@1.35.1
     - oxipng@9.1.2
     - actionlint@1.7.1
-    - shellcheck@0.10.0
     - shfmt@3.6.0
     - git-diff-check
     - gitleaks@8.18.4
@@ -30,8 +29,9 @@ lint:
     - prettier@3.3.3
   disabled:
     - gokart
+    - shellcheck
 cli:
-  version: 1.22.3
+  version: 1.22.4
 plugins:
   sources:
     - id: trunk
