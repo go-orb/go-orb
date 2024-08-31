@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v3
         with:
-          go-version: "1.21"
+          go-version: "1.23"
           check-latest: true
       - name: Run Linters
         run: ./scripts/test.sh lint all
@@ -30,7 +30,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v3
         with:
-          go-version: "1.21"
+          go-version: "1.23"
           check-latest: true
       - name: Run Unit Tests
         run: ./scripts/test.sh test all
@@ -45,7 +45,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v3
         with:
-          go-version: "1.21"
+          go-version: "1.23"
           check-latest: true
       - name: Create Summary
         run: ./scripts/test.sh summary all
