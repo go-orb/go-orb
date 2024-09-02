@@ -155,17 +155,20 @@ func HandleRequest[TReq any, TResp any](
 				codec, err := codecs.GetMime(myEvent.ContentType)
 				if err != nil {
 					myEvent.replyFunc(hCtx, nil, err)
+					continue
 				}
 
 				err = codec.Decode(myEvent.Data, rv)
 				if err != nil {
 					myEvent.replyFunc(hCtx, nil, err)
+					continue
 				}
 
 				// Run the handler.
 				result, err := handler(hCtx, rv)
 				if err != nil {
 					myEvent.replyFunc(hCtx, nil, err)
+					continue
 				}
 
 				// Encode the result and send it back to the plugin.
