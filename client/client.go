@@ -100,7 +100,7 @@ func (r *Request[TResp, TReq]) Node(ctx context.Context, opts *CallOptions) (*re
 	if opts.URL != "" {
 		myU1rl, err := url.Parse(opts.URL)
 		if err != nil {
-			return nil, fmt.Errorf("%w: %w", orberrors.ErrBadRequest, err)
+			return nil, orberrors.ErrBadRequest.Wrap(err)
 		}
 
 		node := &registry.Node{
@@ -154,12 +154,12 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 
 		codec, err := codecs.GetDecoder(cresp.ContentType, result)
 		if err != nil {
-			return result, fmt.Errorf("%w: %w", orberrors.ErrBadRequest, err)
+			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
 
 		err = codec.NewDecoder(cresp.Body).Decode(result)
 		if err != nil {
-			return result, fmt.Errorf("%w: %w", orberrors.ErrBadRequest, err)
+			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
 
 		return result, nil
@@ -200,12 +200,12 @@ func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, 
 
 		codec, err := codecs.GetDecoder(cresp.ContentType, result)
 		if err != nil {
-			return result, fmt.Errorf("%w: %w", orberrors.ErrBadRequest, err)
+			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
 
 		err = codec.NewDecoder(cresp.Body).Decode(result)
 		if err != nil {
-			return result, fmt.Errorf("%w: %w", orberrors.ErrBadRequest, err)
+			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
 
 		return result, nil

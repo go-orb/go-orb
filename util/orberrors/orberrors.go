@@ -66,7 +66,7 @@ func (e *Error) Is(err error) bool {
 }
 
 // New creates a new orb error with the given parameters.
-func New(code int, message string) error {
+func New(code int, message string) *Error {
 	return &Error{
 		Code:    code,
 		Message: message,
@@ -74,7 +74,7 @@ func New(code int, message string) error {
 }
 
 // NewHTTP creates an orb error with the given status code and a static message.
-func NewHTTP(code int) error {
+func NewHTTP(code int) *Error {
 	return &Error{
 		Code:    code,
 		Message: http.StatusText(code),
@@ -82,7 +82,7 @@ func NewHTTP(code int) error {
 }
 
 // From converts an error to orberrors.Error.
-func From(err error) error {
+func From(err error) *Error {
 	// nil input = nil output.
 	if err == nil {
 		return nil

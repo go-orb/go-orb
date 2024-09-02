@@ -135,7 +135,7 @@ func HandleRequest[TReq any, TResp any](
 	inChan, err := eventsWire.HandleRequest(ctx, topic)
 	if err != nil {
 		cancelFunc()
-		return nil, fmt.Errorf("%w: %w", orberrors.ErrInternalServerError, err)
+		return nil, orberrors.ErrInternalServerError.Wrap(err)
 	}
 
 	// This go routine transforms the encoded request from inChan into a decoded request to outChan.
