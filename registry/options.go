@@ -11,9 +11,6 @@ import (
 // RegisterOptions are the options used to register services.
 type RegisterOptions struct {
 	TTL time.Duration
-	// Other options for implementations of the interface
-	// can be stored in a context
-	Context context.Context
 }
 
 // WatchOptions are the options used by the registry watcher.
@@ -21,9 +18,6 @@ type WatchOptions struct {
 	// Specify a service to watch
 	// If blank, the watch is for all services
 	Service string
-	// Other options for implementations of the interface
-	// can be stored in a context
-	Context context.Context
 }
 
 // RegisterOption is functional option type for the register config.
@@ -63,44 +57,9 @@ func RegisterTTL(t time.Duration) RegisterOption {
 	}
 }
 
-// RegisterContext sets the context that is used when registering a service.
-func RegisterContext(ctx context.Context) RegisterOption {
-	return func(o *RegisterOptions) {
-		o.Context = ctx
-	}
-}
-
 // WatchService sets a service name to watch.
 func WatchService(name string) WatchOption {
 	return func(o *WatchOptions) {
 		o.Service = name
-	}
-}
-
-// WatchContext sets a context that is used to watch.
-func WatchContext(ctx context.Context) WatchOption {
-	return func(o *WatchOptions) {
-		o.Context = ctx
-	}
-}
-
-// DeregisterContext is the context used to deregister a service.
-func DeregisterContext(ctx context.Context) DeregisterOption {
-	return func(o *DeregisterOptions) {
-		o.Context = ctx
-	}
-}
-
-// GetContext is the context used when fetching a service.
-func GetContext(ctx context.Context) GetOption {
-	return func(o *GetOptions) {
-		o.Context = ctx
-	}
-}
-
-// ListContext is the context used when listing a service.
-func ListContext(ctx context.Context) ListOption {
-	return func(o *ListOptions) {
-		o.Context = ctx
 	}
 }

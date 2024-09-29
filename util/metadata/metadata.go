@@ -5,7 +5,10 @@ import (
 	"context"
 )
 
+// Service is the key for the RPC Service.
 const Service = "Service"
+
+// Method is the key for the RPC Method.
 const Method = "Method"
 
 type incomingKey struct{}
@@ -45,7 +48,8 @@ func EnsureOutgoing(ctx context.Context) context.Context {
 	return context.WithValue(ctx, outgoingKey{}, make(map[string]string))
 }
 
-func ContextWithOutgoing(ctx context.Context) (context.Context, map[string]string) {
+// WithOutgoing sets metadata as value to the context and returns context as well as the new context.
+func WithOutgoing(ctx context.Context) (context.Context, map[string]string) {
 	if md, ok := ctx.Value(outgoingKey{}).(map[string]string); ok {
 		return ctx, md
 	}
