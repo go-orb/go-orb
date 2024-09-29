@@ -43,7 +43,7 @@ type Type struct {
 // Call contains all data for a request call.
 type Call[TReq any, TResp any] struct {
 	ContentType string            `json:"contentType"`
-	Metadata    metadata.Metadata `json:"metadata"`
+	Metadata    map[string]string `json:"metadata"`
 
 	// The Data of type TReq
 	Data TReq `json:"data" yaml:"data"`
@@ -148,26 +148,27 @@ func HandleRequest[TReq any, TResp any](
 				rv := new(TReq)
 
 				// Add metadata to the context.
-				md := myEvent.Metadata
-				md.Set("Content-Type", myEvent.ContentType)
-				hCtx := md.To(ctx)
+				ctx = metadata.EnsureOutgoing(ctx)
+				md, _ := metadata.OutgoingFrom(ctx)
+
+				md["Content-Type"] = myEvent.ContentType
 
 				codec, err := codecs.GetMime(myEvent.ContentType)
 				if err != nil {
-					myEvent.replyFunc(hCtx, nil, err)
+					myEvent.replyFunc(ctx, nil, err)
 					continue
 				}
 
 				err = codec.Decode(myEvent.Data, rv)
 				if err != nil {
-					myEvent.replyFunc(hCtx, nil, err)
+					myEvent.replyFunc(ctx, nil, err)
 					continue
 				}
 
 				// Run the handler.
-				result, err := handler(hCtx, rv)
+				result, err := handler(ctx, rv)
 				if err != nil {
-					myEvent.replyFunc(hCtx, nil, err)
+					myEvent.replyFunc(ctx, nil, err)
 					continue
 				}
 
@@ -175,7 +176,7 @@ func HandleRequest[TReq any, TResp any](
 				d, err := codec.Encode(result)
 
 				// Send the result.
-				myEvent.replyFunc(hCtx, d, err)
+				myEvent.replyFunc(ctx, d, err)
 			}
 		}
 	}(ctx, inChan)

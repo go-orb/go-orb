@@ -2,8 +2,6 @@ package event
 
 import (
 	"time"
-
-	"github.com/go-orb/go-orb/util/metadata"
 )
 
 //nolint:gochecknoglobals
@@ -73,7 +71,7 @@ type CallOptions struct {
 	// ContentType for transporting the message.
 	ContentType string
 	// Metadata contains any keys which can be used to query the data, for example a customer id
-	Metadata metadata.Metadata
+	Metadata map[string]string
 
 	// RequestTimeout defines how long to wait for the server to reply on a request.
 	RequestTimeout time.Duration
@@ -90,7 +88,7 @@ func WithCallContentType(ct string) RequestOption {
 }
 
 // WithCallMetadata sets the Metadata field on CallOptions.
-func WithCallMetadata(md metadata.Metadata) RequestOption {
+func WithCallMetadata(md map[string]string) RequestOption {
 	return func(o *CallOptions) {
 		o.Metadata = md
 	}
@@ -107,7 +105,7 @@ func WithCallRequestTimeout(t time.Duration) RequestOption {
 func NewCallOptions(opts ...RequestOption) CallOptions {
 	cfg := CallOptions{
 		ContentType:    DefaultContentType,
-		Metadata:       metadata.Metadata{},
+		Metadata:       make(map[string]string),
 		RequestTimeout: DefaultRequestTimeout,
 	}
 
