@@ -110,9 +110,9 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 	return r, nil
 }
 
-// ProvideLogger provides a new logger.
+// Provide provides a new logger.
 // It will set the slog.Logger as package wide default logger.
-func ProvideLogger(
+func Provide(
 	serviceName types.ServiceName,
 	configs types.ConfigData,
 	opts ...Option,

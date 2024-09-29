@@ -88,10 +88,10 @@ type Value struct {
 	Values []*Value `json:"values"`
 }
 
-// ProvideRegistry is the registry provider for wire.
+// Provide is the registry provider for wire.
 // It parses the config from "configs", fetches the "Plugin" from the config and
 // then forwards all it's arguments to the factory which it get's from "Plugins".
-func ProvideRegistry(
+func Provide(
 	name types.ServiceName,
 	version types.ServiceVersion,
 	configs types.ConfigData,

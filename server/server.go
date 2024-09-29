@@ -81,8 +81,8 @@ type Server struct {
 	entrypoints *container.SafeMap[string, Entrypoint]
 }
 
-// ProvideServer creates a new server.
-func ProvideServer(
+// Provide creates a new server.
+func Provide(
 	name types.ServiceName,
 	configs types.ConfigData,
 	logger log.Logger,

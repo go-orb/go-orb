@@ -32,7 +32,7 @@ type Config struct {
 	// Level sets the log level to use.
 	Level string `json:"level,omitempty" yaml:"level,omitempty"`
 	// SetDefault indicates if this logger should be set as default logger.
-	SetDefault bool
+	SetDefault bool `json:"setDefault,omitempty" yaml:"setDefault,omitempty"`
 }
 
 func (c *Config) config() *Config {
