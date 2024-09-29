@@ -14,7 +14,6 @@ import (
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/registry"
 	"github.com/go-orb/go-orb/types"
-	"github.com/go-orb/go-orb/util/metadata"
 	"github.com/go-orb/go-orb/util/orberrors"
 )
 
@@ -59,7 +58,6 @@ type RawResponse = Response[io.Reader]
 // Response will be returned by CallWithResponse.
 type Response[T any] struct {
 	ContentType string
-	Metadata    metadata.Metadata
 	Body        T
 }
 
@@ -152,7 +150,7 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 			return result, cerr
 		}
 
-		codec, err := codecs.GetDecoder(cresp.ContentType, result)
+		codec, err := codecs.GetMime(cresp.ContentType)
 		if err != nil {
 			return result, orberrors.ErrBadRequest.Wrap(err)
 		}
@@ -166,53 +164,6 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 	}
 
 	cerr := r.client.CallNoCodec(ctx, fwReq, result, opts...)
-
-	return result, cerr
-}
-
-// CallResponse is the same as Call with the difference that it returns a Response[*TResp] instead of *TResp.
-func (r *Request[TResp, TReq]) CallResponse(ctx context.Context, client Client, opts ...CallOption) (resp Response[*TResp], err error) {
-	r.client = client
-
-	var (
-		result    = Response[*TResp]{}
-		resultVar = new(TResp)
-	)
-
-	// Create a [any, any] copy of Request to forward it.
-	// TODO(jochumdev): see if there's a better way to do this.
-	fwReq := &Request[any, any]{
-		service:  r.service,
-		endpoint: r.endpoint,
-		request:  r.request,
-		client:   r.client,
-		node:     r.node,
-	}
-
-	if r.client.NeedsCodec(ctx, fwReq, opts...) {
-		cresp, cerr := r.client.Call(ctx, fwReq, result, opts...)
-		if cerr != nil {
-			return result, cerr
-		}
-
-		result.ContentType = cresp.ContentType
-		result.Metadata = cresp.Metadata
-
-		codec, err := codecs.GetDecoder(cresp.ContentType, result)
-		if err != nil {
-			return result, orberrors.ErrBadRequest.Wrap(err)
-		}
-
-		err = codec.NewDecoder(cresp.Body).Decode(result)
-		if err != nil {
-			return result, orberrors.ErrBadRequest.Wrap(err)
-		}
-
-		return result, nil
-	}
-
-	cerr := r.client.CallNoCodec(ctx, fwReq, resultVar, opts...)
-	result.Body = resultVar
 
 	return result, cerr
 }
@@ -256,23 +207,8 @@ func Call[TResp any, TReq any](
 	return NewRequest[TResp](service, endpoint, req).Call(ctx, client, opts...)
 }
 
-// CallResponse makes a call with the client, it's a shortcut for NewRequest(...).CallResponse(...),
-//
-// it is the same as Call with the difference that it returns a Response[*TResp] instead of *TResp.
-// Response[*TResp] contains Metadata, that's the main reason for this.
-func CallResponse[TResp any, TReq any](
-	ctx context.Context,
-	client Client,
-	service string,
-	endpoint string,
-	req TReq,
-	opts ...CallOption,
-) (Response[*TResp], error) {
-	return NewRequest[TResp](service, endpoint, req).CallResponse(ctx, client, opts...)
-}
-
-// ProvideClient creates a new client instance with the implementation from cfg.Plugin.
-func ProvideClient(
+// Provide creates a new client instance with the implementation from cfg.Plugin.
+func Provide(
 	name types.ServiceName,
 	configs types.ConfigData,
 	logger log.Logger,
