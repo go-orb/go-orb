@@ -35,17 +35,15 @@ With orb you can configure your plugins with a config file or environment option
 ```yaml
 service1:
   server:
-    http:
-      gzip: true
-      handlers:
-        - Streams
-      # middleware:
-      #   - middleware-1
-      entrypoints:
-        - name: ep1
-          address: :4512
-          insecure: true
-          h2c: true
+    handlers:
+      - Streams
+    middlewares:
+      - middleware-1
+    entrypoints:
+      - name: grpc
+        plugin: grpc
+        insecure: true
+        reflection: false
   registry:
     enabled: true
     plugin: mdns
@@ -56,29 +54,31 @@ service1:
 ```yaml
 service1:
   server:
-    grpc:
-      insecure: true
-      handlers:
-        - Streams
-      # middleware:
-      #   - middleware-1
-      # streamMiddleware:
-      #   - middleware-S1
-      entrypoints:
-        - name: ep1
-          address: :4512
-          health: false
-          reflection: false
-          # handlers:
-          #   - handler-1
-          #   - handler-2
-          # middleware:
-          #   - middleware-1
-          #   - middleware-4
+    handlers:
+      - Streams
+    middlewares:
+      - middleware-1
+      - middleware-2
+    entrypoints:
+      - name: hertzhttp
+        plugin: hertz
+        http2: false
+        insecure: true
+
+      - name: grpc
+        plugin: grpc
+        insecure: true
+        reflection: false
+
+      - name: http
+        plugin: http
+        insecure: true
+
+      - name: drpc
+        plugin: drpc
   registry:
-    plugin: nats
-    address: nats://10.0.0.1:4222
-    quorum: false
+    plugin: consul
+    address: consul:8500
 ```
 
 These 2 config's with different options will both work, we first parse the config, get the "plugin" from it and pass a `map[any]any` with all config data to the plugin.

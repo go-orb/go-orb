@@ -7,10 +7,11 @@ import (
 //nolint:gochecknoglobals
 var (
 	// Plugins is the plugins container for registry.
-	Plugins = container.NewPlugins[ProviderFunc]()
+	Plugins = container.NewMap[string, EntrypointProvider]()
 
-	// NewDefaults is the factory container for defaults.
-	NewDefaults = container.NewPlugins[NewDefault]()
+	// PluginsNew holds the New function of Entrypoints, it's here
+	// to create entrypoints from given configs.
+	PluginsNew = container.NewMap[string, EntrypointNew]()
 
 	// Handlers is a container of registration functions that can be used to
 	// dynamically configure entrypoints.

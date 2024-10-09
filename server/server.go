@@ -1,52 +1,13 @@
-// Package server provides the go-micro server. It is responsible for managing
+// Package server provides the go-orb server. It is responsible for managing
 // entrypoints.
-//
-// # Entrypoints
-//
-// Entrypoints are the actual servers used that listen for incoming requests.
-// Various entrypoint plugins are provided by default, but it is straight forward
-// to create your own entrypoint implementation. Entrypoints are configured
-// through functional options, and your config file. Entrypionts can be
-// dynamically added, modified, or disabled through your config files.
-//
-// # Handler registrations
-//
-// Entrypoints can be used in any number of combinations. The handlers are
-// registered by providing registration functions to the entrypoint config.
-// A handler registration function takes care of registering the handler in
-// the server specific way. While internal project handlers are designed such
-// that they can be used with any type of server out of the box, the way
-// they are registered usually differs per server type. Registration functions
-// take care of this by switching on the server type. This also allows you to
-// create server specific handlers if necessary.
-//
-// # Internal handlers
-//
-// The server has been architected with protobuf service definitions as primary
-// handler types. Thus registration of these has been made as easy as possible.
-// For proto services defined within your go-micro project, registration
-// functions will be automatically generated for you, and you only need to
-// provide the handler implementation, everything beyond is taken care of.
-//
-// # External handlers
-//
-// You may wish to register either external proto service handlers, or server
-// specific handlers such as any existing HTTP handlers. THis is also possible.
-// External proto services can be registered with the help of the
-// NewRegistrationFunc type, which utliizes the power of generics to allow you
-// to convert any gRPC registration into an entrypoint registration function.
-// It is also possible to manually define your own registration functions. These
-// must take one parameter of type any and convert it into the required server
-// type, such as the go-micro HTTP server, or the go-micro gRPC server.
 package server
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
-
-	"log/slog"
 
 	"github.com/hashicorp/go-multierror"
 
@@ -62,49 +23,109 @@ var _ types.Component = (*Server)(nil)
 // ComponentType is the server component type name.
 const ComponentType = "server"
 
-// Errors.
-var (
-	ErrEntrypointNotFound = errors.New("requested entrypoint not found")
-)
-
-// Server is repsponsible for managing entrypoints. Entrypoints are the actual
+// Server is responsible for managing entrypoints. Entrypoints are the actual
 // servers that bind to a port and accept connections. Entrypoints can be dynamically configured.
 //
 // For more info look at the entrypoint types.
 type Server struct {
-	Logger   log.Logger
-	Config   Config
-	Registry registry.Type
-
-	// entrypoints are all created entrypoints. All of the entrypoints in this
-	// map will be started upon the call of Start method.
-	entrypoints *container.SafeMap[string, Entrypoint]
+	// entrypoints are all created entrypoints.
+	// All entrypoints will be started upon call of the Start method.
+	entrypoints *container.Map[string, Entrypoint]
 }
 
 // Provide creates a new server.
+//
+//nolint:funlen,gocyclo
 func Provide(
 	name types.ServiceName,
 	configs types.ConfigData,
 	logger log.Logger,
 	reg registry.Type,
-	opts ...Option,
+	opts ...ConfigOption,
 ) (Server, error) {
-	cfg := NewConfig(opts...)
-
-	srv := Server{
-		Config:      cfg,
-		Logger:      logger,
-		Registry:    reg,
-		entrypoints: container.NewSafeMap[string, Entrypoint](),
+	cfg := Config{}
+	for _, o := range opts {
+		o(&cfg)
 	}
 
 	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, configs, &srv.Config); err != nil {
-		return srv, err
+	if err := config.Parse(sections, configs, &cfg); err != nil {
+		return Server{}, err
 	}
 
-	if err := srv.createEntrypoints(name); err != nil {
-		return srv, err
+	// Configure Middlewares.
+	mws := []Middleware{}
+
+	for idx, cfgMw := range cfg.Middlewares {
+		pFunc, ok := Middlewares.Get(cfgMw.Plugin)
+		if !ok {
+			return Server{}, fmt.Errorf("%w: '%s', did you register it?", ErrUnknownMiddleware, cfgMw.Plugin)
+		}
+
+		mw, err := pFunc(append(sections, "middlewares", strconv.Itoa(idx)), configs, logger)
+		if err != nil {
+			return Server{}, err
+		}
+
+		mws = append(mws, mw)
+	}
+
+	// Get handlers.
+	handlers := []RegistrationFunc{}
+
+	for _, k := range cfg.Handlers {
+		h, ok := Handlers.Get(k)
+		if !ok {
+			return Server{}, fmt.Errorf("%w: '%s', did you register it?", ErrUnknownHandler, k)
+		}
+
+		handlers = append(handlers, h)
+	}
+
+	// Configure entrypoints.
+	eps := container.NewMap[string, Entrypoint]()
+
+	for _, cfgNewEp := range cfg.functionalEntrypoints {
+		newFunc, ok := PluginsNew.Get(cfgNewEp.config().Plugin)
+		if !ok {
+			return Server{}, fmt.Errorf("%w: '%s', did you register it?", ErrUnknownEntrypoint, cfgNewEp.config().Plugin)
+		}
+
+		ep, err := newFunc(cfgNewEp, logger, reg)
+		if err != nil {
+			return Server{}, err
+		}
+
+		if !ep.Enabled() {
+			continue
+		}
+
+		eps.Set(ep.Name(), ep)
+	}
+
+	for idx, cfgEp := range cfg.Entrypoints {
+		pFunc, ok := Plugins.Get(cfgEp.Plugin)
+		if !ok {
+			return Server{}, fmt.Errorf("%w: '%s', did you register it?", ErrUnknownEntrypoint, cfgEp.Plugin)
+		}
+
+		mSections := sections
+		mSections = append(mSections, "entrypoints", strconv.Itoa(idx))
+
+		ep, err := pFunc(mSections, configs, logger, reg, WithMiddlewares(mws...), WithHandlers(handlers...))
+		if err != nil {
+			return Server{}, err
+		}
+
+		if !ep.Enabled() {
+			continue
+		}
+
+		eps.Set(ep.Name(), ep)
+	}
+
+	srv := Server{
+		entrypoints: eps,
 	}
 
 	return srv, nil
@@ -116,7 +137,6 @@ func (s *Server) Start() error {
 		return errors.New("failed to create server can't start")
 	}
 
-	// TODO(davincible): catch startup errors better from blocking go-routines
 	var gErr error
 
 	s.entrypoints.Range(func(addr string, entrypoint Entrypoint) bool {
@@ -128,7 +148,7 @@ func (s *Server) Start() error {
 
 			_ = s.Stop(ctx) //nolint:errcheck
 
-			gErr = fmt.Errorf("start entrypoint (%s): %w", addr, err)
+			gErr = multierror.Append(err, fmt.Errorf("start entrypoint (%s): %w", addr, err))
 
 			return false
 		}
@@ -171,13 +191,13 @@ func (s *Server) Stop(ctx context.Context) error {
 func (s *Server) GetEntrypoint(name string) (Entrypoint, error) {
 	e, ok := s.entrypoints.Get(name)
 	if !ok {
-		return nil, ErrEntrypointNotFound
+		return nil, errors.New("requested entrypoint was not found")
 	}
 
 	return e, nil
 }
 
-// Type returns the micro component type.
+// Type returns the orb component type.
 func (s *Server) Type() string {
 	return ComponentType
 }
@@ -185,33 +205,4 @@ func (s *Server) Type() string {
 // String is no-op.
 func (s *Server) String() string {
 	return ""
-}
-
-func (s *Server) createEntrypoints(service types.ServiceName) error {
-	for name, template := range s.Config.Templates {
-		// If a plugin or specific entrypoint has been globally disabled in config, skip.
-		if enabled, ok := s.Config.Enabled[template.Type]; (ok && !enabled) || !template.Enabled {
-			continue
-		}
-
-		provider, ok := Plugins.Get(template.Type)
-		if !ok {
-			return fmt.Errorf("entrypoint provider for %s not found, did you register it by importing the package?", template.Type)
-		}
-
-		if template.Config == nil {
-			return fmt.Errorf("template config for %s is nil", name)
-		}
-
-		pluginLogger := s.Logger.With(slog.String("component", ComponentType), slog.String("plugin", template.Type))
-
-		entrypoint, err := provider(service, pluginLogger, s.Registry, template.Config)
-		if err != nil {
-			return fmt.Errorf("create entrypoint %s (%s): %w", name, template.Type, err)
-		}
-
-		s.entrypoints.Set(name, entrypoint)
-	}
-
-	return nil
 }
