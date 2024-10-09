@@ -28,7 +28,10 @@ var (
 type Registry interface {
 	types.Component
 
+	// ServiceName returns types.ServiceName that has been provided to Provide().
 	ServiceName() string
+
+	// ServiceVersion returns types.ServiceVersion that has been provided to Provide().
 	ServiceVersion() string
 
 	// Register registers a service within the registry.

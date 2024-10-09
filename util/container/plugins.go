@@ -6,7 +6,7 @@ type Plugins[T any] struct {
 }
 
 // NewPlugins creates a new plugins container of any type.
-// Not concurency safe.
+// This is not concurrent safe.
 func NewPlugins[T any]() *Plugins[T] {
 	return &Plugins[T]{
 		NewMap[string, T](),
@@ -14,7 +14,6 @@ func NewPlugins[T any]() *Plugins[T] {
 }
 
 // Register a plugin.
-// If Register is called twice with the same name, it panics.
 func (p *Plugins[T]) Register(name string, element T) bool {
 	return p.Add(name, element)
 }

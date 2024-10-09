@@ -6,7 +6,7 @@ type Map[K Hashable, T any] struct {
 }
 
 // NewMap creates a new map of any type.
-// Not concurency safe.
+// This is not concurrent safe.
 func NewMap[K Hashable, T any]() *Map[K, T] {
 	return &Map[K, T]{
 		elements: make(map[K]T),

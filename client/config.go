@@ -309,8 +309,8 @@ type CallOptions struct {
 	URL string
 	// TLS config.
 	TLSConfig *tls.Config
-	// Headers will be written into `Headers` when given.
-	Headers map[string]string
+	// ResponseMetadata will be written into `ResponseMetadata` when given.
+	ResponseMetadata map[string]string
 }
 
 // CallOption used by Call or Stream.
@@ -437,9 +437,9 @@ func WithTLSConfig(n *tls.Config) CallOption {
 	}
 }
 
-// Headers will be written into the value when giving.
-func Headers(n map[string]string) CallOption {
+// WithResponseMetadata will be written into the value when giving.
+func WithResponseMetadata(n map[string]string) CallOption {
 	return func(o *CallOptions) {
-		o.Headers = n
+		o.ResponseMetadata = n
 	}
 }
