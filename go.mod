@@ -28,5 +28,4 @@ require (
 )
 
 // Fixing ambiguous import: found package google.golang.org/genproto/googleapis/api/annotations in multiple modules.
-//nolint:gomoddirectives
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20240924160255-9d4c2d233b61
