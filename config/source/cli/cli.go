@@ -99,9 +99,9 @@ func (s *Source) Read(u *url.URL) source.Data {
 	// Parse all Flags into map[string]any.
 	parseFlags(&result, Flags.List())
 
-	mJSON, ok := codecs.Plugins.Get("json")
-	if !ok {
-		result.Error = errors.New("JSON codec was not found, did you register it by importing?")
+	mJSON, err := codecs.GetMime("application/json")
+	if err != nil {
+		result.Error = err
 	} else {
 		result.Marshaler = mJSON
 	}

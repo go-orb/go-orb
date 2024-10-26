@@ -14,7 +14,7 @@ var (
 	DefaultConfigSection = "client"
 
 	// DefaultContentType is the default Content-Type for calls.
-	DefaultContentType = "application/x-protobuf"
+	DefaultContentType = "application/protobuf"
 	// DefaultPreferredTransports set's in which order a transport will be selected.
 	DefaultPreferredTransports = []string{"http", "grpc", "h2c", "http2", "http3", "https"}
 
