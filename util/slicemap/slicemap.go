@@ -1,14 +1,30 @@
 // Package slicemap provides simple slice & map utility functions.
 package slicemap
 
-import (
-	"errors"
+import "errors"
 
-	"golang.org/x/exp/constraints"
-)
+type Unsigned interface {
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
+}
+
+type Signed interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64
+}
+
+type Integer interface {
+	Signed | Unsigned
+}
+
+type Float interface {
+	~float32 | ~float64
+}
+
+type Ordered interface {
+	Integer | Float | ~string
+}
 
 // In check if query is an element of the list.
-func In[T constraints.Ordered](s []T, query T) bool {
+func In[T Ordered](s []T, query T) bool {
 	for _, element := range s {
 		if element == query {
 			return true

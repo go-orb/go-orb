@@ -10,7 +10,6 @@ import (
 var Plugins = container.NewPlugins[Marshaler]() //nolint:gochecknoglobals
 
 // Register makes a plugin available by the provided name.
-// If Register is called twice with the same name, it panics.
 func Register(name string, codec Marshaler) bool {
 	Plugins.Register(name, codec)
 	updateMimeMap()

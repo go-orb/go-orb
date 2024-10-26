@@ -142,7 +142,7 @@ func Extract(addr string) (string, error) {
 	addrs = append(addrs, loAddrs...)
 
 	// Try to find private IP in list, public IP otherwise
-	ip, err := findIP(addrs)
+	ip, err := FindIP(addrs)
 	if err != nil {
 		return "", err
 	}
@@ -185,10 +185,10 @@ func IPs() []string {
 	return ipAddrs
 }
 
-// findIP will return the first private IP available in the list.
+// FindIP will return the first private IP available in the list.
 // If no private IP is available it will return the first public IP, if present.
 // If no public IP is available, it will return the first loopback IP, if present.
-func findIP(addresses []net.Addr) (net.IP, error) {
+func FindIP(addresses []net.Addr) (net.IP, error) {
 	var (
 		publicIP net.IP
 		localIP  net.IP
