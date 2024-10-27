@@ -3,22 +3,27 @@ package slicemap
 
 import "errors"
 
+// Unsigned contains a list of unsigned types.
 type Unsigned interface {
 	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
 }
 
+// Signed contains a list of signed types.
 type Signed interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64
 }
 
+// Integer contains a list of integer types.
 type Integer interface {
 	Signed | Unsigned
 }
 
+// Float contains a list of float types.
 type Float interface {
 	~float32 | ~float64
 }
 
+// Ordered contains a list of ordered types.
 type Ordered interface {
 	Integer | Float | ~string
 }

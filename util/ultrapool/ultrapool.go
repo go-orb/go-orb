@@ -2,13 +2,12 @@
 // spawning of new workers and cleanup of idle workers
 // It was modeled after valyala/fasthttp's worker pool which is one of the
 // best worker pools I've seen in the Go world.
-
+//
 // Copyright 2019-2022 Moritz Fain
 // Moritz Fain <moritz@fain.io>
 //
 // Source available at github.com/maurice2k/ultrapool,
 // licensed under the MIT license (see LICENSE file).
-
 package ultrapool
 
 import (
@@ -20,9 +19,13 @@ import (
 	"unsafe"
 )
 
+// Task is the type for a single task.
 type Task interface{}
+
+// TaskHandlerFunc is the handler for a task.
 type TaskHandlerFunc func(task Task)
 
+// WorkerPool defines the ultrapool.
 type WorkerPool struct {
 	handlerFunc        TaskHandlerFunc
 	idleWorkerLifetime time.Duration
@@ -60,7 +63,7 @@ type poolShard struct {
 const defaultIdleWorkerLifetime = time.Second
 const maxShards = 128
 
-// Creates a new workerInstance pool with the given task handling function
+// NewWorkerPool creates a new workerInstance pool with the given task handling function.
 func NewWorkerPool(handlerFunc TaskHandlerFunc) *WorkerPool {
 	wp := &WorkerPool{
 		handlerFunc:        handlerFunc,
@@ -69,10 +72,11 @@ func NewWorkerPool(handlerFunc TaskHandlerFunc) *WorkerPool {
 	}
 
 	wp.SetNumShards(runtime.GOMAXPROCS(0))
+
 	return wp
 }
 
-// Sets number of shards (default is GOMAXPROCS shards)
+// SetNumShards sets number of shards (default is GOMAXPROCS shards).
 func (wp *WorkerPool) SetNumShards(numShards int) {
 	if numShards <= 1 {
 		numShards = 1
@@ -85,17 +89,17 @@ func (wp *WorkerPool) SetNumShards(numShards int) {
 	wp.numShards = numShards
 }
 
-// Sets the time after which idling workers are shut down (default is 15 seconds)
+// SetIdleWorkerLifetime sets the time after which idling workers are shut down (default is 15 seconds).
 func (wp *WorkerPool) SetIdleWorkerLifetime(d time.Duration) {
 	wp.idleWorkerLifetime = d
 }
 
-// Returns the number of currently spawned workers
-func (wp *WorkerPool) GetSpawnedWorkers() int {
-	return int(atomic.LoadUint64(&wp.spawnedWorkers))
+// GetSpawnedWorkers returns the number of currently spawned workers.
+func (wp *WorkerPool) GetSpawnedWorkers() uint64 {
+	return atomic.LoadUint64(&wp.spawnedWorkers)
 }
 
-// Starts the worker pool
+// Start starts the worker pool.
 func (wp *WorkerPool) Start() {
 	wp.mutex.Lock()
 	if !wp.started {
@@ -105,7 +109,7 @@ func (wp *WorkerPool) Start() {
 				workerCache: sync.Pool{
 					New: func() interface{} {
 						return &workerInstance{
-							taskChan: make(chan Task, 0),
+							taskChan: make(chan Task),
 						}
 					},
 				},
@@ -122,7 +126,7 @@ func (wp *WorkerPool) Start() {
 	go wp.cleanup()
 }
 
-// Stops the worker pool.
+// Stop stops the worker pool.
 // All tasks that have been added will be processed before shutdown.
 func (wp *WorkerPool) Stop() {
 	wp.mutex.Lock()
@@ -132,11 +136,11 @@ func (wp *WorkerPool) Stop() {
 	}
 
 	if !wp.stopped {
-
 		for i := 0; i < wp.numShards; i++ {
 			shard := wp.shards[i]
 			shard.mutex.Lock()
 			shard.stopped = true
+
 			for j := 0; j < len(shard.idleWorkerList); j++ {
 				if !shard.idleWorkerList[j].isDeleted {
 					shard.idleWorkerList[j].isDeleted = true
@@ -146,11 +150,12 @@ func (wp *WorkerPool) Stop() {
 			shard.mutex.Unlock()
 		}
 	}
+
 	wp.stopped = true
 	wp.mutex.Unlock()
 }
 
-// Adds a new task
+// AddTask adds a new task.
 func (wp *WorkerPool) AddTask(task Task) error {
 	if !wp.started {
 		return errors.New("worker pool must be started first")
@@ -162,7 +167,7 @@ func (wp *WorkerPool) AddTask(task Task) error {
 	return nil
 }
 
-// Adds a new task
+// AddTaskForShard adds a new task for a specific shard.
 func (wp *WorkerPool) AddTaskForShard(task Task, shardIdx int) error {
 	if !wp.started {
 		return errors.New("worker pool must be started first")
@@ -174,21 +179,24 @@ func (wp *WorkerPool) AddTaskForShard(task Task, shardIdx int) error {
 	return nil
 }
 
-// Returns next free worker or spawns a new worker
-func (shard *poolShard) getWorker(task Task) (worker *workerInstance) {
-	worker = shard.idleWorker1
+// Returns next free worker or spawns a new worker.
+func (shard *poolShard) getWorker(task Task) {
+	worker := shard.idleWorker1
+	//nolint:gosec
 	if worker != nil && atomic.CompareAndSwapPointer((*unsafe.Pointer)(unsafe.Pointer(&shard.idleWorker1)), unsafe.Pointer(worker), nil) {
 		worker.taskChan <- task
-		return worker
+		return
 	}
 
 	worker = shard.idleWorker2
+	//nolint:gosec
 	if worker != nil && atomic.CompareAndSwapPointer((*unsafe.Pointer)(unsafe.Pointer(&shard.idleWorker2)), unsafe.Pointer(worker), nil) {
 		worker.taskChan <- task
-		return worker
+		return
 	}
 
 	shard.mutex.Lock()
+
 	iws := len(shard.idleWorkerList)
 	if iws > 0 {
 		worker = shard.idleWorkerList[iws-1]
@@ -196,19 +204,20 @@ func (shard *poolShard) getWorker(task Task) (worker *workerInstance) {
 		shard.idleWorkerList = shard.idleWorkerList[0 : iws-1]
 		shard.mutex.Unlock()
 		worker.taskChan <- task
-		return worker
+
+		return
 	}
 	shard.mutex.Unlock()
 
-	worker = shard.workerCache.Get().(*workerInstance)
+	worker = shard.workerCache.Get().(*workerInstance) //nolint:errcheck
 	worker.shard = shard
+
 	go worker.run()
 
 	worker.taskChan <- task
-	return worker
 }
 
-// Main worker runner
+// Main worker runner.
 func (worker *workerInstance) run() {
 	shard := worker.shard
 	wp := shard.wp
@@ -218,25 +227,30 @@ func (worker *workerInstance) run() {
 		if task == nil {
 			break
 		}
+
 		wp.handlerFunc(task)
+
 		if !shard.setWorkerIdle(worker) {
 			break
 		}
-
 	}
 
 	atomic.AddUint64(&wp.spawnedWorkers, ^uint64(0))
 	shard.workerCache.Put(worker)
 }
 
-// Mark worker as idle
+// Mark worker as idle.
 func (shard *poolShard) setWorkerIdle(worker *workerInstance) bool {
 	worker.lastUsed = time.Now()
 
-	if shard.idleWorker2 == nil && atomic.CompareAndSwapPointer((*unsafe.Pointer)(unsafe.Pointer(&shard.idleWorker2)), nil, unsafe.Pointer(worker)) {
+	//nolint:gosec
+	if shard.idleWorker2 == nil &&
+		atomic.CompareAndSwapPointer((*unsafe.Pointer)(unsafe.Pointer(&shard.idleWorker2)), nil, unsafe.Pointer(worker)) {
 		return true
 	}
-	if shard.idleWorker1 == nil && atomic.CompareAndSwapPointer((*unsafe.Pointer)(unsafe.Pointer(&shard.idleWorker1)), nil, unsafe.Pointer(worker)) {
+	//nolint:gosec
+	if shard.idleWorker1 == nil &&
+		atomic.CompareAndSwapPointer((*unsafe.Pointer)(unsafe.Pointer(&shard.idleWorker1)), nil, unsafe.Pointer(worker)) {
 		return true
 	}
 
@@ -245,32 +259,36 @@ func (shard *poolShard) setWorkerIdle(worker *workerInstance) bool {
 		worker.shard.idleWorkerList = append(worker.shard.idleWorkerList, worker)
 	}
 	worker.shard.mutex.Unlock()
+
 	return !worker.shard.stopped
 }
 
-// Worker cleanup
-func (wp *WorkerPool) cleanup() {
+// Worker cleanup.
+func (wp *WorkerPool) cleanup() { //nolint:gocognit
 	var toBeCleaned []*workerInstance
+
 	for {
 		time.Sleep(wp.idleWorkerLifetime)
+
 		if wp.stopped {
 			return
 		}
 
 		now := time.Now()
+
 		for i := 0; i < wp.numShards; i++ {
 			shard := wp.shards[i]
 
 			shard.mutex.Lock()
 			idleWorkerList := shard.idleWorkerList
 			iws := len(idleWorkerList)
-			j := 0
+			j := 0 //nolint:varnamelen
 			s := 0
 
 			if iws > 400 {
 				s = (iws - 1) / 2
 				for s > 0 && now.Sub(idleWorkerList[s].lastUsed) < wp.idleWorkerLifetime {
-					s = s / 2
+					s /= 2
 				}
 
 				if s == 0 {
@@ -293,9 +311,11 @@ func (wp *WorkerPool) cleanup() {
 			toBeCleaned = append(toBeCleaned[:0], idleWorkerList[0:j]...)
 
 			numMoved := copy(idleWorkerList, idleWorkerList[j:])
+
 			for j = numMoved; j < iws; j++ {
 				idleWorkerList[j] = nil
 			}
+
 			shard.idleWorkerList = idleWorkerList[:numMoved]
 			shard.mutex.Unlock()
 
@@ -303,13 +323,14 @@ func (wp *WorkerPool) cleanup() {
 				if !toBeCleaned[j].shard.stopped {
 					toBeCleaned[j].taskChan <- nil
 				}
+
 				toBeCleaned[j] = nil
 			}
 		}
 	}
 }
 
-// Spin locker
+// Spin locker.
 type spinLocker struct {
 	lock uint64
 }
@@ -320,6 +341,7 @@ func (s *spinLocker) Lock() {
 		for i := 0; i < schedulerRuns; i++ {
 			runtime.Gosched()
 		}
+
 		if schedulerRuns < 32 {
 			schedulerRuns <<= 1
 		}
@@ -330,32 +352,32 @@ func (s *spinLocker) Unlock() {
 	atomic.StoreUint64(&s.lock, 0)
 }
 
-// SplitMix64 style random pseudo number generator
+// SplitMix64 style random pseudo number generator.
 type splitMix64 struct {
 	state uint64
 }
 
-// Initialize SplitMix64
+// Initialize SplitMix64.
 func (sm64 *splitMix64) Init(seed int64) {
-	sm64.state = uint64(seed)
+	sm64.state = uint64(seed) //nolint:gosec
 }
 
-// Uint64 returns the next SplitMix64 pseudo-random number as a uint64
+// Uint64 returns the next SplitMix64 pseudo-random number as a uint64.
 func (sm64 *splitMix64) Uint64() uint64 {
-	sm64.state = sm64.state + uint64(0x9E3779B97F4A7C15)
+	sm64.state += uint64(0x9E3779B97F4A7C15)
 	z := sm64.state
 	z = (z ^ (z >> 30)) * uint64(0xBF58476D1CE4E5B9)
 	z = (z ^ (z >> 27)) * uint64(0x94D049BB133111EB)
+
 	return z ^ (z >> 31)
-
 }
 
-// Int63 returns a non-negative pseudo-random 63-bit integer as an int64
+// Int63 returns a non-negative pseudo-random 63-bit integer as an int64.
 func (sm64 *splitMix64) Int63() int64 {
-	return int64(sm64.Uint64() & (1<<63 - 1))
+	return int64(sm64.Uint64() & (1<<63 - 1)) //nolint:gosec
 }
 
-var splitMix64Pool sync.Pool = sync.Pool{
+var splitMix64Pool = sync.Pool{ //nolint:gochecknoglobals
 	New: func() interface{} {
 		sm64 := &splitMix64{}
 		sm64.Init(time.Now().UnixNano())
@@ -364,8 +386,9 @@ var splitMix64Pool sync.Pool = sync.Pool{
 }
 
 func randInt() (r int) {
-	sm64 := splitMix64Pool.Get().(*splitMix64)
+	sm64 := splitMix64Pool.Get().(*splitMix64) //nolint:errcheck
 	r = int(sm64.Int63())
 	splitMix64Pool.Put(sm64)
+
 	return
 }
