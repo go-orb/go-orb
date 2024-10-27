@@ -33,7 +33,7 @@ type WorkerPool struct {
 	shards             []*poolShard
 	mutex              spinLocker
 	started            bool
-	stopped            bool
+	stopped            atomic.Bool
 	_                  [56]byte
 	spawnedWorkers     uint64
 }
@@ -57,7 +57,7 @@ type poolShard struct {
 	_              [56]byte
 	mutex          spinLocker
 	_              [56]byte
-	stopped        bool
+	stopped        atomic.Bool
 }
 
 const defaultIdleWorkerLifetime = time.Second
@@ -135,11 +135,11 @@ func (wp *WorkerPool) Stop() {
 		return
 	}
 
-	if !wp.stopped {
+	if !wp.stopped.Load() {
 		for i := 0; i < wp.numShards; i++ {
 			shard := wp.shards[i]
 			shard.mutex.Lock()
-			shard.stopped = true
+			shard.stopped.Store(true)
 
 			for j := 0; j < len(shard.idleWorkerList); j++ {
 				if !shard.idleWorkerList[j].isDeleted {
@@ -151,7 +151,7 @@ func (wp *WorkerPool) Stop() {
 		}
 	}
 
-	wp.stopped = true
+	wp.stopped.Store(true)
 	wp.mutex.Unlock()
 }
 
@@ -188,10 +188,10 @@ func (shard *poolShard) getWorker(task Task) {
 		return
 	}
 
-	worker = shard.idleWorker2
+	worker2 := shard.idleWorker2
 	//nolint:gosec
-	if worker != nil && atomic.CompareAndSwapPointer((*unsafe.Pointer)(unsafe.Pointer(&shard.idleWorker2)), unsafe.Pointer(worker), nil) {
-		worker.taskChan <- task
+	if worker2 != nil && atomic.CompareAndSwapPointer((*unsafe.Pointer)(unsafe.Pointer(&shard.idleWorker2)), unsafe.Pointer(worker2), nil) {
+		worker2.taskChan <- task
 		return
 	}
 
@@ -255,12 +255,12 @@ func (shard *poolShard) setWorkerIdle(worker *workerInstance) bool {
 	}
 
 	worker.shard.mutex.Lock()
-	if !worker.shard.stopped {
+	if !worker.shard.stopped.Load() {
 		worker.shard.idleWorkerList = append(worker.shard.idleWorkerList, worker)
 	}
 	worker.shard.mutex.Unlock()
 
-	return !worker.shard.stopped
+	return !worker.shard.stopped.Load()
 }
 
 // Worker cleanup.
@@ -270,7 +270,7 @@ func (wp *WorkerPool) cleanup() { //nolint:gocognit
 	for {
 		time.Sleep(wp.idleWorkerLifetime)
 
-		if wp.stopped {
+		if wp.stopped.Load() {
 			return
 		}
 
@@ -320,7 +320,7 @@ func (wp *WorkerPool) cleanup() { //nolint:gocognit
 			shard.mutex.Unlock()
 
 			for j = 0; j < len(toBeCleaned); j++ {
-				if !toBeCleaned[j].shard.stopped {
+				if !toBeCleaned[j].shard.stopped.Load() {
 					toBeCleaned[j].taskChan <- nil
 				}
 
