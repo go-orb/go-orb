@@ -8,7 +8,7 @@ This project is a work in progress, please do not use yet!
 
 We are not far from the releasing the first Alpha, see the [Roadmap](https://github.com/orgs/go-orb/projects/1/views/1).
 
-## :rocket: What's new since v4
+## :rocket: What's new since forking from go-micro v4
 
 ### Use of [wire](https://github.com/google/wire)
 
