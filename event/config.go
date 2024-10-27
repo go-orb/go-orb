@@ -13,7 +13,7 @@ var (
 	DefaultConfigSection = "client"
 
 	// Default Content Type used to transport data around.
-	DefaultContentType = "application/protobuf"
+	DefaultContentType = "application/x-protobuf"
 
 	// DefaultRequestTimeout is the default request timeout.
 	DefaultRequestTimeout = time.Second * 30
