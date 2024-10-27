@@ -12,7 +12,7 @@ type ProviderFunc func(
 	data types.ConfigData,
 	logger log.Logger,
 	opts ...Option,
-) (Type, error)
+) (Handler, error)
 
 // plugins is the container for client implementations.
 //

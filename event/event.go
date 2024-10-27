@@ -17,31 +17,29 @@ import (
 // ComponentType is the client component type name.
 const ComponentType = "event"
 
-// Events is the interface for events plugins.
-type Events interface {
+// Handler is the interface for events plugins.
+type Handler interface {
 	types.Component
 
 	// Request runs a REST like call on the given topic.
-	Request(ctx context.Context, topic string, req *Call[[]byte, any], opts ...RequestOption) ([]byte, error)
+	// This is an internal function, clients MUST use event.Request().
+	Request(ctx context.Context, req *Req[[]byte, any], opts ...RequestOption) ([]byte, error)
 
 	// HandleRequest subscribes to the given topic and handles the requests.
-	HandleRequest(ctx context.Context, topic string) (<-chan Call[[]byte, []byte], error)
+	// This is a blocking operation.
+	// This is an internal function, clients MUST use event.HandleRequest().
+	HandleRequest(ctx context.Context, topic string, cb func(context.Context, *Req[[]byte, []byte]))
 
 	// Publish publishes a Event to the given topic.
-	// Publish(ctx context.Context, ev *Event[[]byte, []byte], opts ...PublishOption) error
+	// Publish(ctx context.Context, event any) error
 
 	// Subscribe lets you subscribe to the given topic.
 	// Subscribe(ctx context.Context, topic string, opts ...SubscribeOption) (<-chan CallRequest[[]byte, []byte], error)
 }
 
-// Type is the client type it is returned when you use ProvideClient
-// which selects a client to use based on the plugin configuration.
-type Type struct {
-	Events
-}
-
-// Call contains all data for a request call.
-type Call[TReq any, TResp any] struct {
+// Req contains all data for a request call.
+type Req[TReq any, TResp any] struct {
+	Topic       string            `json:"topic"`
 	ContentType string            `json:"contentType"`
 	Metadata    map[string]string `json:"metadata"`
 
@@ -53,17 +51,17 @@ type Call[TReq any, TResp any] struct {
 	// ReplyHelper contains the internal helper to answer on exact that topic and request.
 	replyFunc func(ctx context.Context, result TResp, err error)
 
-	client Events
+	handler Handler
 }
 
 // SetReplyFunc sets the internal reply func (for example nats.Msg) for the client.
-func (e *Call[TReq, TResp]) SetReplyFunc(h func(ctx context.Context, result TResp, err error)) {
+func (e *Req[TReq, TResp]) SetReplyFunc(h func(ctx context.Context, result TResp, err error)) {
 	e.replyFunc = h
 }
 
 // Request runs a REST like call on the events topic.
-func (e *Call[TReq, TResp]) Request(ctx context.Context, client Events, topic string, opts ...RequestOption) (*TResp, error) {
-	e.client = client
+func (e *Req[TReq, TResp]) Request(ctx context.Context, handler Handler, topic string, opts ...RequestOption) (*TResp, error) {
+	e.handler = handler
 
 	options := NewCallOptions(opts...)
 	e.ContentType = options.ContentType
@@ -77,17 +75,18 @@ func (e *Call[TReq, TResp]) Request(ctx context.Context, client Events, topic st
 		d, err = codec.Encode(e.Data)
 	}
 
-	bEv := &Call[[]byte, any]{
+	bEv := &Req[[]byte, any]{
+		Topic:       topic,
 		ContentType: e.ContentType,
 		Metadata:    e.Metadata,
 		Data:        d,
-		Err:         orberrors.From(err),
-		client:      client,
+		Err:         err,
+		handler:     handler,
 	}
 
 	result := new(TResp)
 
-	reply, err := client.Request(ctx, topic, bEv, opts...)
+	reply, err := handler.Request(ctx, bEv, opts...)
 	if err != nil {
 		return result, orberrors.From(err)
 	}
@@ -101,8 +100,8 @@ func (e *Call[TReq, TResp]) Request(ctx context.Context, client Events, topic st
 }
 
 // NewRequest creates a event for the given topic.
-func NewRequest[TResp, TReq any](req TReq) *Call[TReq, TResp] {
-	return &Call[TReq, TResp]{
+func NewRequest[TResp, TReq any](req TReq) *Req[TReq, TResp] {
+	return &Req[TReq, TResp]{
 		Data: req,
 	}
 }
@@ -110,77 +109,61 @@ func NewRequest[TResp, TReq any](req TReq) *Call[TReq, TResp] {
 // Request makes a request with using events, it's a shortcut for NewRequest(...).Request(...)
 // Example:
 //
-// resp , err := events.Request[FooResponse](context.Background(), eventsWire, "user.new", fooRequest)
+// resp , err := events.Request[FooResponse](context.Background(), eventsHandler, "user.new", fooRequest)
 //
 // Response will be of type *FooResponse.
 func Request[TResp any, TReq any](
 	ctx context.Context,
-	eventsWire Events,
+	handler Handler,
 	topic string,
 	req TReq,
 	opts ...RequestOption,
 ) (*TResp, error) {
-	return NewRequest[TResp](req).Request(ctx, eventsWire, topic, opts...)
+	return NewRequest[TResp](req).Request(ctx, handler, topic, opts...)
 }
 
 // HandleRequest subscribes to the given topic and handles the requests.
 func HandleRequest[TReq any, TResp any](
 	ctx context.Context,
-	eventsWire Events,
+	handler Handler,
 	topic string,
-	handler func(ctx context.Context, req *TReq) (*TResp, error),
-) (context.CancelFunc, error) {
-	ctx, cancelFunc := context.WithCancel(ctx)
+	cb func(ctx context.Context, req *TReq) (*TResp, error),
+) {
+	myCb := func(ctx context.Context, ev *Req[[]byte, []byte]) {
+		rv := new(TReq)
 
-	inChan, err := eventsWire.HandleRequest(ctx, topic)
-	if err != nil {
-		cancelFunc()
-		return nil, orberrors.ErrInternalServerError.Wrap(err)
+		// Add metadata to the context.
+		myCtx, md := metadata.WithOutgoing(context.Background())
+
+		md["Content-Type"] = ev.ContentType
+
+		codec, err := codecs.GetMime(ev.ContentType)
+		if err != nil {
+			ev.replyFunc(myCtx, nil, err)
+			return
+		}
+
+		err = codec.Decode(ev.Data, rv)
+		if err != nil {
+			ev.replyFunc(myCtx, nil, err)
+			return
+		}
+
+		// Run the handler.
+		result, err := cb(myCtx, rv)
+		if err != nil {
+			ev.replyFunc(myCtx, nil, err)
+			return
+		}
+
+		// Encode the result and send it back to the plugin.
+		d, err := codec.Encode(result)
+
+		// Send the result.
+		ev.replyFunc(myCtx, d, err)
 	}
 
-	// This go routine transforms the encoded request from inChan into a decoded request to outChan.
-	go func(ctx context.Context, inChan <-chan Call[[]byte, []byte]) {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case myEvent := <-inChan:
-				rv := new(TReq)
-
-				// Add metadata to the context.
-				myCtx, md := metadata.WithOutgoing(context.Background())
-
-				md["Content-Type"] = myEvent.ContentType
-
-				codec, err := codecs.GetMime(myEvent.ContentType)
-				if err != nil {
-					myEvent.replyFunc(myCtx, nil, err)
-					continue
-				}
-
-				err = codec.Decode(myEvent.Data, rv)
-				if err != nil {
-					myEvent.replyFunc(myCtx, nil, err)
-					continue
-				}
-
-				// Run the handler.
-				result, err := handler(myCtx, rv)
-				if err != nil {
-					myEvent.replyFunc(myCtx, nil, err)
-					continue
-				}
-
-				// Encode the result and send it back to the plugin.
-				d, err := codec.Encode(result)
-
-				// Send the result.
-				myEvent.replyFunc(myCtx, d, err)
-			}
-		}
-	}(ctx, inChan)
-
-	return cancelFunc, nil
+	go handler.HandleRequest(ctx, topic, myCb)
 }
 
 // Provide creates a new client instance with the implementation from cfg.Plugin.
@@ -188,12 +171,12 @@ func Provide(
 	name types.ServiceName,
 	configs types.ConfigData,
 	logger log.Logger,
-	opts ...Option) (Type, error) {
+	opts ...Option) (Handler, error) {
 	cfg := NewConfig(opts...)
 
 	sections := append(types.SplitServiceName(name), DefaultConfigSection)
 	if err := config.Parse(sections, configs, &cfg); err != nil {
-		return Type{}, err
+		return nil, err
 	}
 
 	if cfg.Plugin == "" {
@@ -203,13 +186,13 @@ func Provide(
 
 	provider, ok := plugins.Get(cfg.Plugin)
 	if !ok {
-		return Type{}, fmt.Errorf("event plugin (%s) not found, did you register it?", cfg.Plugin)
+		return nil, fmt.Errorf("event plugin (%s) not found, did you register it?", cfg.Plugin)
 	}
 
 	// Configure the logger.
 	cLogger, err := logger.WithConfig(sections, configs)
 	if err != nil {
-		return Type{}, err
+		return nil, err
 	}
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
