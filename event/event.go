@@ -133,7 +133,7 @@ func HandleRequest[TReq any, TResp any](
 		rv := new(TReq)
 
 		// Add metadata to the context.
-		myCtx, md := metadata.WithOutgoing(context.Background())
+		myCtx, md := metadata.WithOutgoing(ctx)
 
 		md["Content-Type"] = ev.ContentType
 
