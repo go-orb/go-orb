@@ -16,10 +16,10 @@ type Error struct {
 
 func (e *Error) Error() string {
 	if e.Wrapped == nil {
-		return fmt.Sprintf("%d %s", e.Code, e.Message)
+		return e.Message
 	}
 
-	return fmt.Errorf("%d %s: %w", e.Code, e.Message, e.Wrapped).Error()
+	return fmt.Sprintf("%s: %s", e.Message, e.Wrapped.Error())
 }
 
 // Toerror converts the "Error" to "error",
@@ -81,7 +81,7 @@ func NewHTTP(code int) *Error {
 	}
 }
 
-// From converts an error to orberrors.Error.
+// From wraps an error into orberrors.Error.
 func From(err error) *Error {
 	// nil input = nil output.
 	if err == nil {
@@ -97,8 +97,8 @@ func From(err error) *Error {
 	// Else make a copy.
 	return &Error{
 		Code:    http.StatusInternalServerError,
-		Message: err.Error(),
-		Wrapped: errors.Unwrap(err),
+		Message: "internal server error",
+		Wrapped: err,
 	}
 }
 
