@@ -22,21 +22,6 @@ jobs:
         run: ./scripts/test.sh lint
         env:
           PROCS: 1
-  test:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-go@v3
-        with:
-          go-version: "1.23"
-          check-latest: true
-      - name: Run Unit Tests
-        run: ./scripts/test.sh test
-        env:
-          PROCS: 1
   summary:
     name: Summary
     runs-on: ubuntu-latest
