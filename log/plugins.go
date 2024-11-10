@@ -31,7 +31,7 @@ type ProviderType struct {
 type ProviderFunc func(section []string, configs types.ConfigData, opts ...Option) (ProviderType, error)
 
 // Plugins is the registry for Logger plugins.
-var plugins = container.NewPlugins[ProviderFunc]() //nolint:gochecknoglobals
+var plugins = container.NewMap[string, ProviderFunc]() //nolint:gochecknoglobals
 
 // PluginsCache contains plugin's already loaded and started.
 var pluginsCache = container.NewSafeMap[string, ProviderType]() //nolint:gochecknoglobals
@@ -39,6 +39,6 @@ var pluginsCache = container.NewSafeMap[string, ProviderType]() //nolint:gocheck
 // Register makes a plugin available by the provided name.
 // If Register is called twice with the same name, it panics.
 func Register(name string, pFunc ProviderFunc) bool {
-	plugins.Register(name, pFunc)
+	plugins.Add(name, pFunc)
 	return true
 }

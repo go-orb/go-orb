@@ -16,7 +16,7 @@ var (
 //nolint:gochecknoglobals
 var (
 	// Plugins contains source/cli subplugins, for example urfave, pflag, cobra.
-	Plugins = container.NewPlugins[ParseFunc]()
+	Plugins = container.NewMap[string, ParseFunc]()
 	// Flags is the global flag container where you have to register flags with.
 	Flags = container.NewList[*Flag]()
 )

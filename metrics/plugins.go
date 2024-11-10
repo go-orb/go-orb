@@ -18,4 +18,4 @@ type ProviderFunc func(
 // Plugins is the plugins container for registries.
 //
 //nolint:gochecknoglobals
-var Plugins = container.NewPlugins[ProviderFunc]()
+var Plugins = container.NewMap[string, ProviderFunc]()

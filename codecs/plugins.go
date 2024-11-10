@@ -7,11 +7,11 @@ import (
 )
 
 // Plugins is the registry for codec plugins.
-var Plugins = container.NewPlugins[Marshaler]() //nolint:gochecknoglobals
+var Plugins = container.NewMap[string, Marshaler]() //nolint:gochecknoglobals
 
 // Register makes a plugin available by the provided name.
 func Register(name string, codec Marshaler) bool {
-	Plugins.Register(name, codec)
+	Plugins.Add(name, codec)
 	updateMimeMap()
 
 	return true

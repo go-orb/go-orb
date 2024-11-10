@@ -19,11 +19,11 @@ type ProviderFunc func(
 // plugins is the container for client implementations.
 //
 //nolint:gochecknoglobals
-var plugins = container.NewPlugins[ProviderFunc]()
+var plugins = container.NewMap[string, ProviderFunc]()
 
 // Register makes a plugin available by the provided name.
 // If Register is called twice with the same name, it panics.
 func Register(name string, factory ProviderFunc) bool {
-	plugins.Register(name, factory)
+	plugins.Add(name, factory)
 	return true
 }

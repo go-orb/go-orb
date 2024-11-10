@@ -41,4 +41,4 @@ type MiddlewareFactory func(configSection []string, configs types.ConfigData, cl
 // Middlewares contains a map of all available middlewares.
 //
 //nolint:gochecknoglobals
-var Middlewares = container.NewPlugins[MiddlewareFactory]()
+var Middlewares = container.NewMap[string, MiddlewareFactory]()
