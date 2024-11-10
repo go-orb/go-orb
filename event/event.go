@@ -129,30 +129,30 @@ func HandleRequest[TReq any, TResp any](
 	topic string,
 	cb func(ctx context.Context, req *TReq) (*TResp, error),
 ) {
-	myCb := func(ctx context.Context, ev *Req[[]byte, []byte]) {
+	myCb := func(ctx context.Context, event *Req[[]byte, []byte]) {
 		rv := new(TReq)
 
 		// Add metadata to the context.
 		myCtx, md := metadata.WithOutgoing(ctx)
 
-		md["Content-Type"] = ev.ContentType
+		md["Content-Type"] = event.ContentType
 
-		codec, err := codecs.GetMime(ev.ContentType)
+		codec, err := codecs.GetMime(event.ContentType)
 		if err != nil {
-			ev.replyFunc(myCtx, nil, err)
+			event.replyFunc(myCtx, nil, err)
 			return
 		}
 
-		err = codec.Decode(ev.Data, rv)
+		err = codec.Decode(event.Data, rv)
 		if err != nil {
-			ev.replyFunc(myCtx, nil, err)
+			event.replyFunc(myCtx, nil, err)
 			return
 		}
 
 		// Run the handler.
 		result, err := cb(myCtx, rv)
 		if err != nil {
-			ev.replyFunc(myCtx, nil, err)
+			event.replyFunc(myCtx, nil, err)
 			return
 		}
 
@@ -160,7 +160,7 @@ func HandleRequest[TReq any, TResp any](
 		d, err := codec.Encode(result)
 
 		// Send the result.
-		ev.replyFunc(myCtx, d, err)
+		event.replyFunc(myCtx, d, err)
 	}
 
 	go handler.HandleRequest(ctx, topic, myCb)
