@@ -16,11 +16,15 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	if e.Wrapped == nil {
-		return e.Message
+	if e == nil {
+		return ""
 	}
 
-	return fmt.Sprintf("%s: %s", e.Message, e.Wrapped.Error())
+	if e.Wrapped != nil {
+		return fmt.Sprintf("%s: %s", e.Message, e.Wrapped.Error())
+	}
+
+	return e.Message
 }
 
 // Toerror converts the "Error" to "error",
@@ -33,17 +37,15 @@ func (e *Error) Toerror() error {
 	return e
 }
 
-// Wrap wraps another error into a copy.
+// Wrap wraps another error.
 func (e *Error) Wrap(err error) *Error {
 	if e == nil {
 		return nil
 	}
 
-	return &Error{
-		Code:    e.Code,
-		Message: e.Message,
-		Wrapped: err,
-	}
+	e.Wrapped = err
+
+	return e
 }
 
 // Unwrap returns the wrapped error.
@@ -74,11 +76,27 @@ func New(code int, message string) *Error {
 	}
 }
 
-// NewHTTP creates an orb error with the given status code and a static message.
+// NewHTTP creates the HTTP error from the given code.
 func NewHTTP(code int) *Error {
 	return &Error{
 		Code:    code,
 		Message: strings.ToLower(http.StatusText(code)),
+	}
+}
+
+// HTTP returns an orb error with the given status code and a static message.
+func HTTP(code int) *Error {
+	switch code {
+	case 500:
+		return ErrInternalServerError
+	case 401:
+		return ErrUnauthorized
+	case 408:
+		return ErrRequestTimeout
+	case 400:
+		return ErrBadRequest
+	default:
+		return NewHTTP(code)
 	}
 }
 
