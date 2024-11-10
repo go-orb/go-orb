@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 // Error is the orb error, it contain's a "Code" additional to the Message.
@@ -77,7 +78,7 @@ func New(code int, message string) *Error {
 func NewHTTP(code int) *Error {
 	return &Error{
 		Code:    code,
-		Message: http.StatusText(code),
+		Message: strings.ToLower(http.StatusText(code)),
 	}
 }
 
