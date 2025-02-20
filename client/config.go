@@ -7,7 +7,7 @@ import (
 
 //nolint:gochecknoglobals
 var (
-	// DefaultClient is the default client implementation to use.
+	// DefaultClientPlugin is the default client implementation to use.
 	DefaultClientPlugin = "orb"
 
 	// DefaultConfigSection is the default config section for the client.

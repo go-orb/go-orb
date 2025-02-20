@@ -6,13 +6,13 @@ import (
 
 //nolint:gochecknoglobals
 var (
-	// DefaultClient is the default client implementation to use.
+	// DefaultEventPlugin is the default client implementation to use.
 	DefaultEventPlugin = "natsjs"
 
 	// DefaultConfigSection is the default config section for the client.
 	DefaultConfigSection = "client"
 
-	// Default Content Type used to transport data around.
+	// DefaultContentType is the default content type used to transport data around.
 	DefaultContentType = "application/x-protobuf"
 
 	// DefaultRequestTimeout is the default request timeout.

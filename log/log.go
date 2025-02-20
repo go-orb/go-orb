@@ -233,11 +233,11 @@ func (l Logger) Level() slog.Level {
 }
 
 // Trace logs at TraceLevel.
-func (l *Logger) Trace(msg string, args ...any) {
+func (l Logger) Trace(msg string, args ...any) {
 	l.Log(context.Background(), LevelTrace, msg, args...)
 }
 
 // TraceContext logs with context.Context.
-func (l *Logger) TraceContext(ctx context.Context, msg string, args ...any) {
+func (l Logger) TraceContext(ctx context.Context, msg string, args ...any) {
 	l.Log(ctx, LevelTrace, msg, args...)
 }

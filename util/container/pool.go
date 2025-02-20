@@ -20,7 +20,7 @@ func NewPool[T any](fn func() T) Pool[T] {
 
 // Get is a generic wrapper around sync.Pool's Get method.
 func (p *Pool[T]) Get() T {
-	return p.pool.Get().(T)
+	return p.pool.Get().(T) //nolint:errcheck
 }
 
 // Put is a generic wrapper around sync.Pool's Put method.

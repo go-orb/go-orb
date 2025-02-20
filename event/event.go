@@ -30,6 +30,8 @@ type Handler interface {
 	// This is an internal function, clients MUST use event.HandleRequest().
 	HandleRequest(ctx context.Context, topic string, cb func(context.Context, *Req[[]byte, []byte]))
 
+	Clone() Handler
+
 	// Publish publishes a Event to the given topic.
 	// Publish(ctx context.Context, event any) error
 

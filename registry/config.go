@@ -8,10 +8,14 @@ import (
 
 //nolint:gochecknoglobals
 var (
+	// DefaultConfigSection is the section in the config to use.
 	DefaultConfigSection = "registry"
 
+	// DefaultRegistry is the default registry to use.
 	DefaultRegistry = "mdns"
-	DefaultTimeout  = 100
+
+	// DefaultTimeout is the default timeout for the registry.
+	DefaultTimeout = 100
 )
 
 var _ (ConfigType) = (*Config)(nil)

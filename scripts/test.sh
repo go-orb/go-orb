@@ -114,7 +114,7 @@ function get_dirs() {
 
 # Run GoLangCi Linters.
 function run_linter() {
-	curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" | sh -s -- -b $(go env GOPATH)/bin
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.5
 
 	echo
 	golangci-lint --version

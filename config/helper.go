@@ -28,21 +28,21 @@ func SingleGet[T any](data map[string]any, key string, def T) (T, error) {
 				res = append(res, fmt.Sprintf("%v", v))
 			}
 
-			return any(res).(T), nil
+			return any(res).(T), nil //nolint:errcheck
 		default:
 			return def, fmt.Errorf("%w: []string", ErrTypesDontMatch)
 		}
 	case []any:
 		switch value.(type) {
 		case []any:
-			return value.(T), nil
+			return value.(T), nil //nolint:errcheck
 		default:
 			return def, fmt.Errorf("%w: []any", ErrTypesDontMatch)
 		}
 	case map[string]any:
 		switch value.(type) {
 		case map[string]any:
-			return value.(T), nil
+			return value.(T), nil //nolint:errcheck
 		default:
 			return def, fmt.Errorf("%w: map[string]any", ErrTypesDontMatch)
 		}

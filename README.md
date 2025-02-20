@@ -150,6 +150,15 @@ Chat with us on [Discord](https://discord.gg/sggGS389qb).
 
 ## Development
 
+### golangci-lint
+
+We use version v1.64.5 of golangci-lint.
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.5
+golangci-lint run --config .golangci.yaml
+```
+
 ### Quirks
 
 #### No go-orb/plugins imports here

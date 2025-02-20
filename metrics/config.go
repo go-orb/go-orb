@@ -10,8 +10,10 @@ import (
 //
 //nolint:gochecknoglobals
 var (
+	// DefaultMetricsPlugin is the default metrics plugin to use.
 	DefaultMetricsPlugin = "memory"
-	DefaultConfigSection = "metrics" // DefaultConfigSection is the section key used in config files used to configure the metrics options.
+	// DefaultConfigSection is the section key used in config files used to configure the metrics options.
+	DefaultConfigSection = "metrics"
 )
 
 var _ (ConfigType) = (*Config)(nil)
