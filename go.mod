@@ -1,15 +1,11 @@
 module github.com/go-orb/go-orb
 
-go 1.23
-
-toolchain go1.23.0
+go 1.23.0
 
 require (
 	github.com/cornelk/hashmap v1.0.8
-	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.6.0
 	github.com/hashicorp/go-multierror v1.1.1
-	google.golang.org/protobuf v1.35.1
 )
 
 require (
