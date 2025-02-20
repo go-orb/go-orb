@@ -19,8 +19,6 @@ jobs:
           check-latest: true
       - name: Run Linters
         run: ./scripts/test.sh lint all
-        env:
-          PROCS: 1
   summary:
     name: Summary
     runs-on: ubuntu-latest
@@ -34,5 +32,3 @@ jobs:
           check-latest: true
       - name: Create Summary
         run: ./scripts/test.sh summary all
-        env:
-          PROCS: 1

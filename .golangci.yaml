@@ -189,7 +189,6 @@ linters:
     - wrapcheck
     - paralleltest
     - ireturn
-    - gomnd
     - err113
     - exhaustruct
     - containedctx
@@ -203,7 +202,6 @@ linters:
     # Not configured yet
     - depguard
 
-    - execinquery
     - copyloopvar # go 1.22
     - intrange # go 1.22
 
@@ -218,7 +216,6 @@ linters:
 
     # Atm. we need a replace
     - gomoddirectives
-
 issues:
   # List of regexps of issue texts to exclude, empty list by default.
   # But independently from this option we use default exclude patterns,
