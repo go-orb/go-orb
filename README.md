@@ -2,11 +2,9 @@
 
 Orb is a framework for distributed systems development, it can be seen as the successor of [go-micro.dev/v4](https://github.com/go-micro/go-micro).
 
-## :warning: WIP
+## Examples
 
-This project is a work in progress, please do not use yet!
-
-We are not far from the releasing the first Alpha, see the [Roadmap](https://github.com/orgs/go-orb/projects/1/views/1).
+Please see the [examples](https://github.com/go-orb/examples) repo.
 
 ## :rocket: What's new since forking from go-micro v4
 
