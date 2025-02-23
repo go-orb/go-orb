@@ -243,6 +243,14 @@ func WithClientTLSConfig(n *tls.Config) Option {
 	}
 }
 
+// WithClientMiddleware appends a middleware to the client.
+func WithClientMiddleware(m MiddlewareConfig) Option {
+	return func(cfg ConfigType) {
+		c := cfg.config()
+		c.Middleware = append(c.Middleware, m)
+	}
+}
+
 // NewConfig generates a new config with all the defaults.
 func NewConfig(opts ...Option) Config {
 	cfg := Config{
