@@ -49,11 +49,11 @@ var (
 // TODO(jochumdev): Uncommenting this sorts preferred Transports.
 // func init() {
 // 	err := cli.Flags.Add(cli.NewFlag(
-// 		"preferred_transports",
+// 		"client_transports",
 // 		DefaultPreferredTransports,
 // 		cli.ConfigPathSlice([]string{"client", "preferredTransports"}),
 // 		cli.Usage("Transports in theier preferred order"),
-// 		cli.EnvVars("PREFERRED_TRANSPORTS"),
+// 		cli.EnvVars("CLIENT_TRANSPORTS"),
 // 	))
 // 	if err != nil && !errors.Is(err, cli.ErrFlagExists) {
 // 		panic(err)

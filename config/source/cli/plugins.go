@@ -26,7 +26,7 @@ func init() {
 		"logger",
 		log.DefaultPlugin,
 		ConfigPathSlice([]string{"logger", "plugin"}),
-		Usage("Default logger to use (e.g. jsonstderr, jsonstdout, textstderr, textsdout)."),
+		Usage("Default logger to use (e.g. slog)."),
 	)
 
 	if err := Flags.Add(flag); err != nil {
