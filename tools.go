@@ -6,5 +6,5 @@
 package orb
 
 import (
-	_ "github.com/google/wire/cmd/wire"
+	_ "github.com/go-orb/wire/cmd/wire"
 )

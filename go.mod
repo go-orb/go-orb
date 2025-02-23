@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/cornelk/hashmap v1.0.8
-	github.com/google/wire v0.6.0
+	github.com/go-orb/wire v0.7.0
 	github.com/hashicorp/go-multierror v1.1.1
 )
 

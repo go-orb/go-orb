@@ -10,7 +10,7 @@ We are not far from the releasing the first Alpha, see the [Roadmap](https://git
 
 ## :rocket: What's new since forking from go-micro v4
 
-### Use of [wire](https://github.com/google/wire)
+### Use of [wire](https://github.com/go-orb/wire)
 
 With wire we gain:
 
