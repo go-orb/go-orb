@@ -89,6 +89,8 @@ func HTTP(code int) *Error {
 	switch code {
 	case 500:
 		return ErrInternalServerError
+	case 499:
+		return ErrCanceled
 	case 401:
 		return ErrUnauthorized
 	case 408:
@@ -139,4 +141,5 @@ var (
 	ErrUnauthorized        = NewHTTP(http.StatusUnauthorized)
 	ErrRequestTimeout      = NewHTTP(http.StatusRequestTimeout)
 	ErrBadRequest          = NewHTTP(http.StatusBadRequest)
+	ErrCanceled            = NewHTTP(499)
 )
