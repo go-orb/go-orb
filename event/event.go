@@ -10,7 +10,6 @@ import (
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/types"
-	"github.com/go-orb/go-orb/util/metadata"
 	"github.com/go-orb/go-orb/util/orberrors"
 )
 
@@ -30,6 +29,7 @@ type Handler interface {
 	// This is an internal function, clients MUST use event.HandleRequest().
 	HandleRequest(ctx context.Context, topic string, cb func(context.Context, *Req[[]byte, []byte]))
 
+	// Clone creates a clone of the handler, this is useful for parallel requests.
 	Clone() Handler
 
 	// Publish publishes a Event to the given topic.
@@ -41,9 +41,8 @@ type Handler interface {
 
 // Req contains all data for a request call.
 type Req[TReq any, TResp any] struct {
-	Topic       string            `json:"topic"`
-	ContentType string            `json:"contentType"`
-	Metadata    map[string]string `json:"metadata"`
+	Topic       string `json:"topic"`
+	ContentType string `json:"contentType"`
 
 	// The Data of type TReq
 	Data TReq `json:"data" yaml:"data"`
@@ -65,9 +64,8 @@ func (e *Req[TReq, TResp]) SetReplyFunc(h func(ctx context.Context, result TResp
 func (e *Req[TReq, TResp]) Request(ctx context.Context, handler Handler, topic string, opts ...RequestOption) (*TResp, error) {
 	e.handler = handler
 
-	options := NewCallOptions(opts...)
+	options := NewRequestOptions(opts...)
 	e.ContentType = options.ContentType
-	e.Metadata = options.Metadata
 
 	d := []byte{}
 	// The err here will be copied into the result.
@@ -80,7 +78,6 @@ func (e *Req[TReq, TResp]) Request(ctx context.Context, handler Handler, topic s
 	bEv := &Req[[]byte, any]{
 		Topic:       topic,
 		ContentType: e.ContentType,
-		Metadata:    e.Metadata,
 		Data:        d,
 		Err:         err,
 		handler:     handler,
@@ -129,32 +126,27 @@ func HandleRequest[TReq any, TResp any](
 	ctx context.Context,
 	handler Handler,
 	topic string,
-	cb func(ctx context.Context, req *TReq) (*TResp, error),
+	callback func(ctx context.Context, req *TReq) (*TResp, error),
 ) {
 	myCb := func(ctx context.Context, event *Req[[]byte, []byte]) {
 		rv := new(TReq)
 
-		// Add metadata to the context.
-		myCtx, md := metadata.WithOutgoing(ctx)
-
-		md["Content-Type"] = event.ContentType
-
 		codec, err := codecs.GetMime(event.ContentType)
 		if err != nil {
-			event.replyFunc(myCtx, nil, err)
+			event.replyFunc(ctx, nil, err)
 			return
 		}
 
 		err = codec.Decode(event.Data, rv)
 		if err != nil {
-			event.replyFunc(myCtx, nil, err)
+			event.replyFunc(ctx, nil, err)
 			return
 		}
 
 		// Run the handler.
-		result, err := cb(myCtx, rv)
+		result, err := callback(ctx, rv)
 		if err != nil {
-			event.replyFunc(myCtx, nil, err)
+			event.replyFunc(ctx, nil, err)
 			return
 		}
 
@@ -162,7 +154,7 @@ func HandleRequest[TReq any, TResp any](
 		d, err := codec.Encode(result)
 
 		// Send the result.
-		event.replyFunc(myCtx, d, err)
+		event.replyFunc(ctx, d, err)
 	}
 
 	go handler.HandleRequest(ctx, topic, myCb)

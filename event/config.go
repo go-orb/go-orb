@@ -66,11 +66,11 @@ func NewConfig(opts ...Option) Config {
 	return cfg
 }
 
-// CallOptions contains options for a call.
-type CallOptions struct {
+// RequestOptions contains options for a call.
+type RequestOptions struct {
 	// ContentType for transporting the message.
 	ContentType string
-	// Metadata contains any keys which can be used to query the data, for example a customer id
+	// Metadata contains keys which can be used to query the data, for example a customer id
 	Metadata map[string]string
 
 	// RequestTimeout defines how long to wait for the server to reply on a request.
@@ -78,32 +78,32 @@ type CallOptions struct {
 }
 
 // RequestOption sets attributes on Calloptions.
-type RequestOption func(o *CallOptions)
+type RequestOption func(o *RequestOptions)
 
-// WithCallContentType sets the ContentType field to use for transporting the message.
-func WithCallContentType(ct string) RequestOption {
-	return func(o *CallOptions) {
+// WithRequestContentType sets the ContentType field to use for transporting the message.
+func WithRequestContentType(ct string) RequestOption {
+	return func(o *RequestOptions) {
 		o.ContentType = ct
 	}
 }
 
-// WithCallMetadata sets the Metadata field on CallOptions.
-func WithCallMetadata(md map[string]string) RequestOption {
-	return func(o *CallOptions) {
+// WithRequestResponseMetadata will write response Metadata into the given map.
+func WithRequestResponseMetadata(md map[string]string) RequestOption {
+	return func(o *RequestOptions) {
 		o.Metadata = md
 	}
 }
 
-// WithCallRequestTimeout sets the timeout for a request.
-func WithCallRequestTimeout(t time.Duration) RequestOption {
-	return func(o *CallOptions) {
+// WithRequestTimeout sets the timeout for a request.
+func WithRequestTimeout(t time.Duration) RequestOption {
+	return func(o *RequestOptions) {
 		o.RequestTimeout = t
 	}
 }
 
-// NewCallOptions generates new calloptions with defaults.
-func NewCallOptions(opts ...RequestOption) CallOptions {
-	cfg := CallOptions{
+// NewRequestOptions generates new calloptions with defaults.
+func NewRequestOptions(opts ...RequestOption) RequestOptions {
+	cfg := RequestOptions{
 		ContentType:    DefaultContentType,
 		Metadata:       make(map[string]string),
 		RequestTimeout: DefaultRequestTimeout,
@@ -116,46 +116,3 @@ func NewCallOptions(opts ...RequestOption) CallOptions {
 
 	return cfg
 }
-
-// // SubscribeOptions contains all the options which can be provided when subscribing to a topic.
-// type SubscribeOptions struct {
-// 	// Offset is the time from which the messages should be consumed from. If not provided then
-// 	// the messages will be consumed starting from the moment the Subscription starts.
-// 	Offset time.Time
-// 	// ConsumerGroup is the name of the consumer group, if two consumers have the same group the events
-// 	// are distributed between them
-// 	ConsumerGroup string
-// 	AckWait       time.Duration
-// 	// AutoAck if true (default true), automatically acknowledges every message so it will not be redelivered.
-// 	// If false specifies that each message need ts to be manually acknowledged by the subscriber.
-// 	// If processing is successful the message should be ack'ed to remove the message from the stream.
-// 	// If processing is unsuccessful the message should be nack'ed (negative acknowledgement) which will mean it will
-// 	// remain on the stream to be processed again.
-// 	AutoAck bool
-// }
-
-// // SubscribeOption sets attributes on SubscribeOptions.
-// type SubscribeOption func(o *SubscribeOptions)
-
-// // WithSubscribeConsumerGroup sets the consumer group to be part of when consuming events.
-// func WithSubscribeConsumerGroup(q string) SubscribeOption {
-// 	return func(o *SubscribeOptions) {
-// 		o.ConsumerGroup = q
-// 	}
-// }
-
-// // WithSubscribeOffset sets the offset time at which to start consuming events.
-// func WithSubscribeOffset(t time.Time) SubscribeOption {
-// 	return func(o *SubscribeOptions) {
-// 		o.Offset = t
-// 	}
-// }
-
-// // WithSubscribeAutoAck sets the AutoAck field on SubscribeOptions and an ackWait duration after which if no ack is received
-// // the message is requeued in case auto ack is turned off.
-// func WithSubscribeAutoAck(ack bool, ackWait time.Duration) SubscribeOption {
-// 	return func(o *SubscribeOptions) {
-// 		o.AutoAck = ack
-// 		o.AckWait = ackWait
-// 	}
-// }
