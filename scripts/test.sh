@@ -1,7 +1,7 @@
 #!/bin/bash
 
 MICRO_VERSION="./"
-GO_TEST_FLAGS="-v -race -cover -bench=."
+GO_TEST_FLAGS="-v -race -cover"
 
 RED='\033[0;31m'
 NC='\033[0m'
@@ -170,7 +170,7 @@ function run_test() {
 		pushd "${dir}" >/dev/null || exit
 
 		# Download all modules.
-		go get -v -t -d ./...
+		go get -v -t ./...
 
 		# Run tests.
 		if ! $(go env GOPATH)/bin/richgo test ./... ${GO_TEST_FLAGS}; then
@@ -208,7 +208,7 @@ function create_summary() {
 		add_summary "\n### ${dir}\n"
 
 		# Download all modules.
-		go get -v -t -d ./...
+		go get -v -t ./...
 
 		go test ./... -json ${GO_TEST_FLAGS} |
 			tparse -notests -format=markdown >>"${GITHUB_STEP_SUMMARY}"
