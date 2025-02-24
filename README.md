@@ -1,6 +1,14 @@
 # ![go-orb Logo](docs/logo-header.png) [![License](https://img.shields.io/:license-apache-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Go.Dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/go-orb/go-orb?tab=doc) [![Go Report Card](https://goreportcard.com/badge/github.com/go-orb/go-orb)](https://goreportcard.com/report/github.com/go-orb/go-orb) [![Discord](https://dcbadge.vercel.app/api/server/sggGS389qb?style=flat-square&theme=default-inverted)](https://discord.gg/sggGS389qb)
 
-Orb is a framework for distributed systems development, it can be seen as the successor of [go-micro.dev/v4](https://github.com/go-micro/go-micro).
+Go Orb is a framework for distributed systems development, it can be seen as the successor of [go-micro.dev/v4](https://github.com/go-micro/go-micro).
+
+The core of go-orb has been completly refactored, to support the removal of reflect and intodruction of wire.
+
+## Overview
+
+Go Orb provides the core requirements for distributed systems development including RPC and Event driven communication.
+The Go Orb philosophy is sane defaults with a pluggable architecture. We provide defaults to get you started quickly
+but everything can be easily swapped out.
 
 ## Features
 
@@ -42,7 +50,7 @@ we have been working hard on removing all usage of reflect.
 Orb allows you to listen on multiple port's with different protocols: gRPC, HTTP, HTTPS, DRPC, HTTP2, H2C, HTTP3.
 See the config system entry on howto configure it.
 
-### Advanced [config system](config)
+### Advanced [config system](https://github.com/go-orb/go-orb/tree/main/config)
 
 With orb you can configure your plugins with a config file or environment options.
 
@@ -50,7 +58,7 @@ With orb you can configure your plugins with a config file or environment option
 service1:
   server:
     handlers:
-      - Streams
+      - UserInfo
     middlewares:
       - middleware-1
     entrypoints:
@@ -69,7 +77,7 @@ service1:
 service1:
   server:
     handlers:
-      - Streams
+      - UserInfo
     middlewares:
       - middleware-1
       - middleware-2
@@ -87,6 +95,7 @@ service1:
           - ImOnlyOnGRPC
         middlewares:
           - ImAGRPCSpecificMiddlware
+
       - name: http
         plugin: http
         insecure: true
