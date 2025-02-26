@@ -126,6 +126,9 @@ func Provide(
 
 	slog.SetDefault(logger.Logger)
 
+	// Register the logger as a component.
+	_ = types.RegisterComponent(logger, types.PriorityLogger) //nolint:errcheck
+
 	return logger, nil
 }
 

@@ -127,5 +127,16 @@ func Provide(
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	return provider(name, version, configs, cLogger, opts...)
+	instance, err := provider(name, version, configs, cLogger, opts...)
+	if err != nil {
+		return Type{}, err
+	}
+
+	// Register the registry as a component.
+	err = types.RegisterComponent(&instance, types.PriorityRegistry)
+	if err != nil {
+		logger.Warn("while registering registry as a component", "error", err)
+	}
+
+	return instance, nil
 }

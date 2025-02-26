@@ -1,6 +1,20 @@
 package types
 
-import "context"
+import (
+	"context"
+
+	"github.com/go-orb/go-orb/util/container"
+)
+
+// Priority constants.
+const (
+	PriorityLogger   = 1000
+	PriorityMetrics  = 1100
+	PriorityRegistry = 1200
+	PriorityEvent    = 1300
+	PriorityServer   = 1400
+	PriorityClient   = 1500
+)
 
 // Component needs to be implemented by every component.
 type Component interface {
@@ -16,4 +30,14 @@ type Component interface {
 
 	// String returns the component plugin name.
 	String() string
+}
+
+// Components is the container for client implementations.
+//
+//nolint:gochecknoglobals
+var Components = container.NewPriorityList[Component]()
+
+// RegisterComponent adds a component to the container.
+func RegisterComponent(component Component, priority int) error {
+	return Components.Add(component, priority)
 }

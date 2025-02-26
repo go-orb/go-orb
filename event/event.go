@@ -191,5 +191,16 @@ func Provide(
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	return provider(name, configs, cLogger, opts...)
+	instance, err := provider(name, configs, cLogger, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Register the event as a component.
+	err = types.RegisterComponent(instance, types.PriorityEvent)
+	if err != nil {
+		logger.Warn("while registering event as a component", "error", err)
+	}
+
+	return instance, nil
 }

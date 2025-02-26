@@ -88,5 +88,16 @@ func Provide(
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	return provider(name, version, configs, cLogger, opts...)
+	instance, err := provider(name, version, configs, cLogger, opts...)
+	if err != nil {
+		return Type{}, err
+	}
+
+	// Register metrics as a component.
+	err = types.RegisterComponent(&instance, types.PriorityMetrics)
+	if err != nil {
+		logger.Warn("while registering metrics as a component", "error", err)
+	}
+
+	return instance, nil
 }

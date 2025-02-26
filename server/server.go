@@ -128,6 +128,12 @@ func Provide(
 		entrypoints: eps,
 	}
 
+	// Register the server as a component.
+	err := types.RegisterComponent(&srv, types.PriorityServer)
+	if err != nil {
+		logger.Warn("while registering server as a component", "error", err)
+	}
+
 	return srv, nil
 }
 
