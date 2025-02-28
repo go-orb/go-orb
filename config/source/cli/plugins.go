@@ -15,21 +15,23 @@ var (
 
 //nolint:gochecknoglobals
 var (
-	// Plugins contains source/cli subplugins, for example urfave, pflag, cobra.
-	Plugins = container.NewMap[string, ParseFunc]()
 	// Flags is the global flag container where you have to register flags with.
 	Flags = container.NewList[*Flag]()
 )
 
 func init() {
-	flag := NewFlag(
+	// Logger can't import config/source/cli thats why this is here.
+	Flags.Set(NewFlag(
 		"logger",
 		log.DefaultPlugin,
 		ConfigPathSlice([]string{"logger", "plugin"}),
-		Usage("Default logger to use (e.g. slog)."),
-	)
+		Usage("Logger to use (e.g. slog)."),
+	))
 
-	if err := Flags.Add(flag); err != nil {
-		panic(err)
-	}
+	Flags.Set(NewFlag(
+		"config",
+		[]string{},
+		ConfigPathSlice([]string{"config"}),
+		Usage("Config file"),
+	))
 }

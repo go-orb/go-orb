@@ -91,3 +91,8 @@ func FlagValue[T any](f *Flag) (T, error) {
 func (f *Flag) String() string {
 	return f.Name
 }
+
+// Clear clears the internal value.
+func (f *Flag) Clear() {
+	f.Value = nil
+}

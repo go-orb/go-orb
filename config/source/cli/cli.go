@@ -2,38 +2,24 @@
 package cli
 
 import (
-	"errors"
-	"fmt"
 	"net/url"
-	"os"
 
-	"github.com/go-orb/go-orb/codecs"
 	"github.com/go-orb/go-orb/config/source"
-	"github.com/go-orb/go-orb/util/container"
 )
 
-var (
-	// DefaultCLIPlugin holds the default CLI plugin.
-	DefaultCLIPlugin = "urfave" //nolint:gochecknoglobals
-)
-
-func init() {
-	if err := source.Plugins.Add(New()); err != nil {
-		panic(err)
-	}
-}
+// ParseFunc is the subplugin of source/cli.
+type ParseFunc func() source.Data
 
 var _ (source.Source) = (*Source)(nil)
 
-// ParseFunc is the subplugin of source/cli.
-type ParseFunc func(config *Config, flags []*Flag, args []string) error
-
 // Source cli reads flags and environment variables into a config struct.
-type Source struct{}
+type Source struct {
+	parser ParseFunc
+}
 
 // New creates a new cli source.
-func New() source.Source {
-	return &Source{}
+func New(parser ParseFunc) source.Source {
+	return &Source{parser: parser}
 }
 
 // Schemes returns the supported schemes by this plugin.
@@ -54,64 +40,13 @@ func (s *Source) String() string {
 
 // Read creates the subplugin for the given url,
 // creates its config after and then executes it.
-func (s *Source) Read(u *url.URL) source.Data {
-	result := source.Data{
-		Data: make(map[string]any),
-	}
-
-	pName := u.Host
-	if pName == "" {
-		pName = DefaultCLIPlugin
-	}
-
-	// Add the config flag.
-	err := Flags.Add(NewFlag(
-		"config",
-		[]string{},
-		ConfigPathSlice([]string{"config"}),
-		Usage("Config file"),
-	))
-	if err != nil && !errors.Is(err, container.ErrExists) {
-		result.Error = err
-		return result
-	}
-
-	config := NewConfig()
-	config.Name = u.Query().Get("name")
-	config.Version = u.Query().Get("version")
-
-	// parseFunc is the subplugin of source/cli.
-	parseFunc, ok := Plugins.Get(pName)
-	if !ok {
-		result.Error = fmt.Errorf(
-			"failed to get the plugin '%s'. Did you register the plugin by importing it?",
-			pName,
-		)
-
-		return result
-	}
-
-	if err = parseFunc(&config, Flags.List(), os.Args); err != nil {
-		result.Error = err
-		return result
-	}
-
-	// Parse all Flags into map[string]any.
-	parseFlags(&result, Flags.List())
-
-	mJSON, err := codecs.GetMime("application/json")
-	if err != nil {
-		result.Error = err
-	} else {
-		result.Marshaler = mJSON
-	}
-
-	return result
+func (s *Source) Read(_ *url.URL) source.Data {
+	return s.parser()
 }
 
-// parseFlags takes the list of flags and parses them into a map[string]any
+// ParseFlags takes the list of flags and parses them into a map[string]any
 // contained inside the result.
-func parseFlags(result *source.Data, flags []*Flag) {
+func ParseFlags(result *source.Data, flags []*Flag) {
 	for _, flag := range flags {
 		// The config flag is a special case, as you can add additional config files.
 		// E.g. `--config cfg-a.yaml --config cfg-b.yaml`, here we keep track of them.
