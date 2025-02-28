@@ -29,6 +29,9 @@ type Entrypoint interface {
 	// Enabled returns if this entrypoint has been enabled in config.
 	Enabled() bool
 
+	// AddHandler adds a handler for registration during startup.
+	AddHandler(fun RegistrationFunc)
+
 	// Register is used to register handlers.
 	//
 	// A registration function takes a pointer to the server, which can then
