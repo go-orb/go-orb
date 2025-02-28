@@ -164,6 +164,7 @@ func HandleRequest[TReq any, TResp any](
 func Provide(
 	name types.ServiceName,
 	configs types.ConfigData,
+	components *types.Components,
 	logger log.Logger,
 	opts ...Option) (Handler, error) {
 	cfg := NewConfig(opts...)
@@ -197,7 +198,7 @@ func Provide(
 	}
 
 	// Register the event as a component.
-	err = types.RegisterComponent(instance, types.PriorityEvent)
+	err = components.Add(instance, types.PriorityEvent)
 	if err != nil {
 		logger.Warn("while registering event as a component", "error", err)
 	}

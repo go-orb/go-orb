@@ -39,6 +39,7 @@ type Server struct {
 func Provide(
 	name types.ServiceName,
 	configs types.ConfigData,
+	components *types.Components,
 	logger log.Logger,
 	reg registry.Type,
 	opts ...ConfigOption,
@@ -129,7 +130,7 @@ func Provide(
 	}
 
 	// Register the server as a component.
-	err := types.RegisterComponent(&srv, types.PriorityServer)
+	err := components.Add(&srv, types.PriorityServer)
 	if err != nil {
 		logger.Warn("while registering server as a component", "error", err)
 	}
@@ -191,6 +192,11 @@ func (s *Server) Stop(ctx context.Context) error {
 	close(errChan)
 
 	return err
+}
+
+// GetEntrypoints returns a map of entrypoints.
+func (s *Server) GetEntrypoints() *container.Map[string, Entrypoint] {
+	return s.entrypoints
 }
 
 // GetEntrypoint returns the requested entrypoint, if present.

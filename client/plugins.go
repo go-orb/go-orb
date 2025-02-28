@@ -11,6 +11,7 @@ import (
 type ProviderFunc func(
 	name types.ServiceName,
 	data types.ConfigData,
+	components *types.Components,
 	logger log.Logger,
 	registry registry.Type,
 	opts ...Option,

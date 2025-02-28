@@ -211,6 +211,7 @@ func Call[TResp any, TReq any](
 func Provide(
 	name types.ServiceName,
 	configs types.ConfigData,
+	components *types.Components,
 	logger log.Logger,
 	reg registry.Type,
 	opts ...Option) (Type, error) {
@@ -239,5 +240,5 @@ func Provide(
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	return provider(name, configs, cLogger, reg, opts...)
+	return provider(name, configs, components, cLogger, reg, opts...)
 }

@@ -115,6 +115,7 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 func Provide(
 	serviceName types.ServiceName,
 	configs types.ConfigData,
+	components *types.Components,
 	opts ...Option,
 ) (Logger, error) {
 	sections := types.SplitServiceName(serviceName)
@@ -127,7 +128,7 @@ func Provide(
 	slog.SetDefault(logger.Logger)
 
 	// Register the logger as a component.
-	_ = types.RegisterComponent(logger, types.PriorityLogger) //nolint:errcheck
+	_ = components.Add(logger, types.PriorityLogger) //nolint:errcheck
 
 	return logger, nil
 }

@@ -32,12 +32,15 @@ type Component interface {
 	String() string
 }
 
-// Components is the container for client implementations.
-//
-//nolint:gochecknoglobals
-var Components = container.NewPriorityList[Component]()
+// Components is the container type for components.
+type Components = container.PriorityList[Component]
 
-// RegisterComponent adds a component to the container.
-func RegisterComponent(component Component, priority int) error {
-	return Components.Add(component, priority)
+// NewComponents returns a new container for components.
+func NewComponents() *Components {
+	return container.NewPriorityList[Component]()
+}
+
+// ProvideComponents is a wire injector for fresh components.
+func ProvideComponents() (*Components, error) {
+	return container.NewPriorityList[Component](), nil
 }

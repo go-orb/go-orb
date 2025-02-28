@@ -58,6 +58,7 @@ func Provide(
 	name types.ServiceName,
 	version types.ServiceVersion,
 	configs types.ConfigData,
+	components *types.Components,
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error) {
@@ -94,7 +95,7 @@ func Provide(
 	}
 
 	// Register metrics as a component.
-	err = types.RegisterComponent(&instance, types.PriorityMetrics)
+	err = components.Add(&instance, types.PriorityMetrics)
 	if err != nil {
 		logger.Warn("while registering metrics as a component", "error", err)
 	}

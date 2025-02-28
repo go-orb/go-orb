@@ -98,6 +98,7 @@ func Provide(
 	name types.ServiceName,
 	version types.ServiceVersion,
 	configs types.ConfigData,
+	components *types.Components,
 	logger log.Logger,
 	opts ...Option) (Type, error) {
 	cfg := NewConfig(opts...)
@@ -133,7 +134,7 @@ func Provide(
 	}
 
 	// Register the registry as a component.
-	err = types.RegisterComponent(&instance, types.PriorityRegistry)
+	err = components.Add(&instance, types.PriorityRegistry)
 	if err != nil {
 		logger.Warn("while registering registry as a component", "error", err)
 	}
