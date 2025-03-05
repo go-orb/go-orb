@@ -30,7 +30,7 @@ var (
 	// DefaultBackoff is the default backoff function for retries.
 	DefaultBackoff = BackoffExponential
 	// DefaultRetry is the default check-for-retry function for retries.
-	DefaultRetry = RetryOnTimeoutError
+	DefaultRetry = RetryOnConnectionError
 	// DefaultRetries is the default number of times a request is tried.
 	DefaultRetries = 5
 
@@ -260,6 +260,7 @@ func NewConfig(opts ...Option) Config {
 		PoolHosts:           DefaultPoolHosts,
 		PoolSize:            DefaultPoolSize,
 		PoolTTL:             DefaultPoolTTL,
+		Retry:               DefaultRetry,
 		Retries:             DefaultRetries,
 		DialTimeout:         DefaultDialTimeout,
 		ConnectionTimeout:   DefaultConnectionTimeout,
