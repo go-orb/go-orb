@@ -14,12 +14,13 @@ const (
 	PriorityEvent    = 1300
 	PriorityServer   = 1400
 	PriorityClient   = 1500
+	PriorityCustom   = 2000
 )
 
 // Component needs to be implemented by every component.
 type Component interface {
 	// Start the component. E.g. connect to the broker.
-	Start() error
+	Start(ctx context.Context) error
 
 	// Stop the component. E.g. disconnect from the broker.
 	// The context will contain a timeout, and cancelation should be respected.

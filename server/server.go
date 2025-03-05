@@ -139,7 +139,7 @@ func Provide(
 }
 
 // Start will start the HTTP servers on all entrypoints.
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 	if s == nil {
 		return errors.New("failed to create server can't start")
 	}
@@ -147,10 +147,10 @@ func (s *Server) Start() error {
 	var gErr error
 
 	s.entrypoints.Range(func(addr string, entrypoint Entrypoint) bool {
-		if err := entrypoint.Start(); err != nil {
+		if err := entrypoint.Start(ctx); err != nil {
 			// Stop any started entrypoints before returning error to give them a chance
 			// to free up resources.
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 			defer cancel()
 
 			_ = s.Stop(ctx) //nolint:errcheck
