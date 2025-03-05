@@ -100,11 +100,20 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 		return Logger{}, err
 	}
 
+	fields := []any{}
+	for k, v := range cfg.Fields {
+		fields = append(fields, slog.Any(k, v))
+	}
+
 	r := Logger{
 		Logger:         slog.New(lvlHandler),
 		pluginProvider: cachedProvider,
 		config:         cfg,
-		fields:         []any{},
+		fields:         fields,
+	}
+
+	if len(fields) > 0 {
+		r.Logger = r.Logger.With(fields...)
 	}
 
 	return r, nil
@@ -195,7 +204,7 @@ func (l Logger) With(args ...any) Logger {
 }
 
 // Start no-op.
-func (l Logger) Start() error {
+func (l Logger) Start(_ context.Context) error {
 	return nil
 }
 

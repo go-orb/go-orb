@@ -33,6 +33,8 @@ type Config struct {
 	Level string `json:"level,omitempty" yaml:"level,omitempty"`
 	// SetDefault indicates if this logger should be set as default logger.
 	SetDefault bool `json:"setDefault,omitempty" yaml:"setDefault,omitempty"`
+	// Fields are additional fields to add to the log.
+	Fields map[string]any `json:"fields,omitempty" yaml:"fields,omitempty"`
 }
 
 func (c *Config) config() *Config {
@@ -81,5 +83,13 @@ func WithSetDefault() Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
 		c.SetDefault = true
+	}
+}
+
+// WithFields adds additional fields to the log.
+func WithFields(n map[string]any) Option {
+	return func(cfg ConfigType) {
+		c := cfg.config()
+		c.Fields = n
 	}
 }
