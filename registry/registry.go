@@ -141,3 +141,14 @@ func Provide(
 
 	return instance, nil
 }
+
+// ProvideNoOpts is the registry provider for wire without options.
+func ProvideNoOpts(
+	name types.ServiceName,
+	version types.ServiceVersion,
+	configs types.ConfigData,
+	components *types.Components,
+	logger log.Logger,
+) (Type, error) {
+	return Provide(name, version, configs, components, logger)
+}

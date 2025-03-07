@@ -76,8 +76,8 @@ func New(code int, message string) *Error {
 	}
 }
 
-// NewHTTP creates the HTTP error from the given code.
-func NewHTTP(code int) *Error {
+// newHTTP creates the HTTP error from the given code.
+func newHTTP(code int) *Error {
 	return &Error{
 		Code:    code,
 		Message: strings.ToLower(http.StatusText(code)),
@@ -87,6 +87,8 @@ func NewHTTP(code int) *Error {
 // HTTP returns an orb error with the given status code and a static message.
 func HTTP(code int) *Error {
 	switch code {
+	case 503:
+		return ErrUnavailable
 	case 500:
 		return ErrInternalServerError
 	case 499:
@@ -98,7 +100,7 @@ func HTTP(code int) *Error {
 	case 400:
 		return ErrBadRequest
 	default:
-		return NewHTTP(code)
+		return newHTTP(code)
 	}
 }
 
@@ -137,9 +139,10 @@ func As(err error) (*Error, bool) {
 // A list of default errors.
 var (
 	ErrUnimplemented       = New(http.StatusInternalServerError, "Unimplemented")
-	ErrInternalServerError = NewHTTP(http.StatusInternalServerError)
-	ErrUnauthorized        = NewHTTP(http.StatusUnauthorized)
-	ErrRequestTimeout      = NewHTTP(http.StatusRequestTimeout)
-	ErrBadRequest          = NewHTTP(http.StatusBadRequest)
-	ErrCanceled            = NewHTTP(499)
+	ErrUnavailable         = New(http.StatusServiceUnavailable, "Unavailable")
+	ErrInternalServerError = newHTTP(http.StatusInternalServerError)
+	ErrUnauthorized        = newHTTP(http.StatusUnauthorized)
+	ErrRequestTimeout      = newHTTP(http.StatusRequestTimeout)
+	ErrBadRequest          = newHTTP(http.StatusBadRequest)
+	ErrCanceled            = newHTTP(499)
 )

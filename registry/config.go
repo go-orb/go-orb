@@ -1,11 +1,5 @@
 package registry
 
-import (
-	"errors"
-
-	"github.com/go-orb/go-orb/config/source/cli"
-)
-
 //nolint:gochecknoglobals
 var (
 	// DefaultConfigSection is the section in the config to use.
@@ -44,31 +38,6 @@ type Option func(ConfigType)
 //			}
 type ConfigType interface {
 	config() *Config
-}
-
-func init() {
-	// Register registry CLI flags.
-	err := cli.Flags.Add(cli.NewFlag(
-		"registry",
-		DefaultRegistry,
-		cli.ConfigPathSlice([]string{"registry", "plugin"}),
-		cli.Usage("Registry for discovery. etcd, mdns"),
-		cli.EnvVars("REGISTRY"),
-	))
-	if err != nil && !errors.Is(err, cli.ErrFlagExists) {
-		panic(err)
-	}
-
-	err = cli.Flags.Add(cli.NewFlag(
-		"registry_timeout",
-		DefaultTimeout,
-		cli.ConfigPathSlice([]string{"registry", "timeout"}),
-		cli.Usage("Registry timeout in milliseconds."),
-		cli.EnvVars("REGISTRY_TIMEOUT"),
-	))
-	if err != nil && !errors.Is(err, cli.ErrFlagExists) {
-		panic(err)
-	}
 }
 
 // TODO(jochumdev): this config misses things compared to v4, should they be added here?

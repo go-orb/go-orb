@@ -33,6 +33,7 @@ type Client interface {
 	// With closes all transports and configures the client with the given options.
 	With(opts ...Option) error
 
+	// ResolveService resolves a service to a list of nodes.
 	ResolveService(ctx context.Context, service string, preferredTransports ...string) (NodeMap, error)
 
 	// NeedsCodec has to do node resolving and then selects the right transport for that node,
@@ -119,11 +120,12 @@ func (r *Request[TResp, TReq]) Node(ctx context.Context, opts *CallOptions) (*re
 	}
 
 	// Run the configured Selector to get a node from the resolved nodes.
-	r.node, err = opts.Selector(ctx, r.service, nodes, opts.PreferredTransports, opts.AnyTransport)
+	node, err := opts.Selector(ctx, r.service, nodes, opts.PreferredTransports, opts.AnyTransport)
 	if err != nil {
-		r.node = nil
 		return nil, err
 	}
+
+	r.node = node
 
 	return r.node, nil
 }
@@ -241,4 +243,15 @@ func Provide(
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
 	return provider(name, configs, components, cLogger, reg, opts...)
+}
+
+// ProvideNoOpts provides a new client without options.
+func ProvideNoOpts(
+	name types.ServiceName,
+	configs types.ConfigData,
+	components *types.Components,
+	logger log.Logger,
+	reg registry.Type,
+) (Type, error) {
+	return Provide(name, configs, components, logger, reg)
 }

@@ -205,3 +205,12 @@ func Provide(
 
 	return instance, nil
 }
+
+// ProvideNoOpts creates a new client instance with the implementation from cfg.Plugin.
+func ProvideNoOpts(
+	name types.ServiceName,
+	configs types.ConfigData,
+	components *types.Components,
+	logger log.Logger) (Handler, error) {
+	return Provide(name, configs, components, logger)
+}

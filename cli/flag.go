@@ -5,8 +5,13 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 )
+
+// FlagConfigPath is a config path for a flag.
+type FlagConfigPath struct {
+	Path     []string
+	IsGlobal bool
+}
 
 // FlagOption is an option for NewFlag.
 type FlagOption func(*Flag)
@@ -18,7 +23,7 @@ type Flag struct {
 	Usage   string
 
 	// The path in map(\[string\])+any
-	ConfigPath []string
+	ConfigPaths []FlagConfigPath
 
 	Default any
 	Value   any
@@ -42,36 +47,29 @@ func NewFlag[T any](
 	return &options
 }
 
-// ConfigPath sets the ConfigPath for the flag.
-func ConfigPath(n string) FlagOption {
+// FlagConfigPaths appends the config paths for the flag.
+func FlagConfigPaths(n ...FlagConfigPath) FlagOption {
 	return func(o *Flag) {
-		o.ConfigPath = strings.Split(n, ".")
+		o.ConfigPaths = append(o.ConfigPaths, n...)
 	}
 }
 
-// ConfigPathSlice is the same as ConfigPath but it accepts a slice.
-func ConfigPathSlice(n []string) FlagOption {
-	return func(o *Flag) {
-		o.ConfigPath = n
-	}
-}
-
-// EnvVars set's environment variables for the flag.
-func EnvVars(n ...string) FlagOption {
+// FlagEnvVars set's environment variables for the flag.
+func FlagEnvVars(n ...string) FlagOption {
 	return func(o *Flag) {
 		o.EnvVars = n
 	}
 }
 
-// Usage set's the usage string for the flag.
-func Usage(n string) FlagOption {
+// FlagUsage set's the usage string for the flag.
+func FlagUsage(n string) FlagOption {
 	return func(o *Flag) {
 		o.Usage = n
 	}
 }
 
-// Default sets the flags default.
-func Default[T any](n T) FlagOption {
+// FlagDefault sets the flags default.
+func FlagDefault[T any](n T) FlagOption {
 	return func(o *Flag) {
 		o.Default = n
 	}

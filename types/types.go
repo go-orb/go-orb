@@ -35,7 +35,7 @@ type ServiceVersion string
 //	    service:
 //	      ...
 //	```
-func SplitServiceName(serviceName ServiceName) []string {
+func SplitServiceName[T ~string](serviceName T) []string {
 	return strings.Split(string(serviceName), DefaultSeperator)
 }
 

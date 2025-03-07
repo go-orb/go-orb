@@ -68,11 +68,7 @@ func walkMap(sections []string, in map[string]any) (map[string]any, error) {
 //
 // By default it will error out if any of these config URLs fail, but you can
 // ignore errors for a single url by adding "?ignore_error=true".
-//
-// prependSections is for url's that don't support sections (cli for example),
-// their result will be prepended, also you can add sections to a single url
-// with "?add_section=true".
-func Read(urls []*url.URL, prependSections []string) (types.ConfigData, error) {
+func Read(urls []*url.URL) (types.ConfigData, error) {
 	result := types.ConfigData{}
 
 	for _, myURL := range urls {
@@ -91,32 +87,6 @@ func Read(urls []*url.URL, prependSections []string) (types.ConfigData, error) {
 			}
 
 			return result, dResult.Error
-		}
-
-		// Read additional Configs from the config Source if any.
-		if len(dResult.AdditionalConfigs) > 0 {
-			aDatas, aErr := Read(dResult.AdditionalConfigs, prependSections)
-			result = append(result, aDatas...)
-
-			if aErr != nil {
-				return result, aErr
-			}
-		}
-
-		// Prepend the result with sections if required.
-		if len(prependSections) > 0 && (configSource.PrependSections() ||
-			myURL.Query().Get("add_section") == "true") {
-			data := map[string]any{}
-			prependResult := data
-
-			for _, s := range prependSections[:len(prependSections)-1] {
-				tmp := map[string]any{}
-				data[s] = tmp
-				data = tmp
-			}
-
-			data[prependSections[len(prependSections)-1]] = dResult.Data
-			dResult.Data = prependResult
 		}
 
 		result = append(result, dResult)

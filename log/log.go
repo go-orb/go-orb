@@ -142,6 +142,15 @@ func Provide(
 	return logger, nil
 }
 
+// ProvideNoOpts provides a new logger without options.
+func ProvideNoOpts(
+	serviceName types.ServiceName,
+	configs types.ConfigData,
+	components *types.Components,
+) (Logger, error) {
+	return Provide(serviceName, configs, components)
+}
+
 // WithLevel creates a copy of the logger with a new level.
 // It will inherit all the fields and the context from the parent logger.
 func (l Logger) WithLevel(level string) Logger {
