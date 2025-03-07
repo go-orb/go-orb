@@ -16,23 +16,23 @@ type MiddlewareConfig struct {
 	Name string `json:"name" yaml:"name"`
 }
 
-// MiddlewareCallHandler is the middleware handler for client.Call.
-type MiddlewareCallHandler func(ctx context.Context, req *Request[any, any], opts *CallOptions) (*RawResponse, error)
+// MiddlewareRequestHandler is the middleware handler for client.Request.
+type MiddlewareRequestHandler func(ctx context.Context, req *Req[any, any], opts *CallOptions) (*RawResponse, error)
 
-// MiddlewareCallNoCodecHandler is the middleware handler for client.Call without a codec in between.
-type MiddlewareCallNoCodecHandler func(ctx context.Context, req *Request[any, any], result any, opts *CallOptions) error
+// MiddlewareRequestNoCodecHandler is the middleware handler for client.Request without a codec in between.
+type MiddlewareRequestNoCodecHandler func(ctx context.Context, req *Req[any, any], result any, opts *CallOptions) error
 
 // Middleware is the middleware for clients.
 type Middleware interface {
 	types.Component
 
-	Call(
-		next MiddlewareCallHandler,
-	) MiddlewareCallHandler
+	Request(
+		next MiddlewareRequestHandler,
+	) MiddlewareRequestHandler
 
-	CallNoCodec(
-		next MiddlewareCallNoCodecHandler,
-	) MiddlewareCallNoCodecHandler
+	RequestNoCodec(
+		next MiddlewareRequestNoCodecHandler,
+	) MiddlewareRequestNoCodecHandler
 }
 
 // MiddlewareFactory is used to create a new client Middleware.

@@ -38,13 +38,13 @@ type Client interface {
 
 	// NeedsCodec has to do node resolving and then selects the right transport for that node,
 	// it then has to return whatever the selected transport needs a codec or if it does encoding internaly.
-	NeedsCodec(ctx context.Context, req *Request[any, any], opts ...CallOption) bool
+	NeedsCodec(ctx context.Context, req *Req[any, any], opts ...CallOption) bool
 
-	// Call with encoding on client side.
-	Call(ctx context.Context, req *Request[any, any], result any, opts ...CallOption) (*RawResponse, error)
+	// Request with encoding on client side.
+	Request(ctx context.Context, req *Req[any, any], result any, opts ...CallOption) (*RawResponse, error)
 
-	// CallNoCodec is the same as Call but without encoding.
-	CallNoCodec(ctx context.Context, req *Request[any, any], result any, opts ...CallOption) error
+	// RequestNoCodec is the same as Request but without encoding.
+	RequestNoCodec(ctx context.Context, req *Req[any, any], result any, opts ...CallOption) error
 }
 
 // Type is the client type it is returned when you use ProvideClient
@@ -62,8 +62,8 @@ type Response[T any] struct {
 	Body        T
 }
 
-// Request is a request for Client.
-type Request[TResp any, TReq any] struct {
+// Req is a request for Client.
+type Req[TResp any, TReq any] struct {
 	service  string
 	endpoint string
 
@@ -76,22 +76,22 @@ type Request[TResp any, TReq any] struct {
 }
 
 // Service returns the Service from the request.
-func (r *Request[TResp, TReq]) Service() string {
+func (r *Req[TResp, TReq]) Service() string {
 	return r.service
 }
 
 // Endpoint returns the Endpoint from the request.
-func (r *Request[TResp, TReq]) Endpoint() string {
+func (r *Req[TResp, TReq]) Endpoint() string {
 	return r.endpoint
 }
 
-// Request returns the Request.
-func (r *Request[TResp, TReq]) Request() TReq {
+// Req returns the Request.
+func (r *Req[TResp, TReq]) Req() TReq {
 	return r.request
 }
 
 // Node returns the Node.
-func (r *Request[TResp, TReq]) Node(ctx context.Context, opts *CallOptions) (*registry.Node, error) {
+func (r *Req[TResp, TReq]) Node(ctx context.Context, opts *CallOptions) (*registry.Node, error) {
 	if r.node != nil {
 		return r.node, nil
 	}
@@ -130,15 +130,15 @@ func (r *Request[TResp, TReq]) Node(ctx context.Context, opts *CallOptions) (*re
 	return r.node, nil
 }
 
-// Call forward's the Request to Client.Call() and decodes the result into resp with the type TResp.
-func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...CallOption) (resp *TResp, err error) {
+// Request forward's the Request to Client.Request() and decodes the result into resp with the type TResp.
+func (r *Req[TResp, TReq]) Request(ctx context.Context, client Client, opts ...CallOption) (resp *TResp, err error) {
 	r.client = client
 
 	var result = new(TResp)
 
 	// Create a [any, any] copy of Request to forward it.
 	// TODO(jochumdev): see if there's a better way to do this.
-	fwReq := &Request[any, any]{
+	fwReq := &Req[any, any]{
 		service:  r.service,
 		endpoint: r.endpoint,
 		request:  r.request,
@@ -147,7 +147,7 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 	}
 
 	if r.client.NeedsCodec(ctx, fwReq, opts...) {
-		cresp, cerr := r.client.Call(ctx, fwReq, result, opts...)
+		cresp, cerr := r.client.Request(ctx, fwReq, result, opts...)
 		if cerr != nil {
 			return result, cerr
 		}
@@ -165,7 +165,7 @@ func (r *Request[TResp, TReq]) Call(ctx context.Context, client Client, opts ...
 		return result, nil
 	}
 
-	cerr := r.client.CallNoCodec(ctx, fwReq, result, opts...)
+	cerr := r.client.RequestNoCodec(ctx, fwReq, result, opts...)
 
 	return result, cerr
 }
@@ -183,8 +183,8 @@ func NewRequest[TResp any, TReq any](
 	service string,
 	endpoint string,
 	req TReq,
-) *Request[TResp, TReq] {
-	return &Request[TResp, TReq]{
+) *Req[TResp, TReq] {
+	return &Req[TResp, TReq]{
 		service:  service,
 		endpoint: endpoint,
 
@@ -192,13 +192,13 @@ func NewRequest[TResp any, TReq any](
 	}
 }
 
-// Call makes a call with the client, it's a shortcut for NewRequest(...).Call(...)
+// Request makes a request with the client, it's a shortcut for NewRequest(...).Request(...)
 // Example:
 //
-// resp , err := client.Call[FooResponse](context.Background(), clientWire, "service1", "Say.Hello", fooRequest)
+// resp , err := client.Request[FooResponse](context.Background(), clientWire, "service1", "Say.Hello", fooRequest)
 //
 // Response will be of type *FooResponse.
-func Call[TResp any, TReq any](
+func Request[TResp any, TReq any](
 	ctx context.Context,
 	client Client,
 	service string,
@@ -206,7 +206,7 @@ func Call[TResp any, TReq any](
 	req TReq,
 	opts ...CallOption,
 ) (*TResp, error) {
-	return NewRequest[TResp](service, endpoint, req).Call(ctx, client, opts...)
+	return NewRequest[TResp](service, endpoint, req).Request(ctx, client, opts...)
 }
 
 // Provide creates a new client instance with the implementation from cfg.Plugin.
