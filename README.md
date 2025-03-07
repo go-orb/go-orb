@@ -1,4 +1,4 @@
-# ![go-orb Logo](docs/logo-header.png) [![License](https://img.shields.io/:license-apache-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Go.Dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/go-orb/go-orb?tab=doc) [![Go Report Card](https://goreportcard.com/badge/github.com/go-orb/go-orb)](https://goreportcard.com/report/github.com/go-orb/go-orb) [![Discord](https://dcbadge.vercel.app/api/server/sggGS389qb?style=flat-square&theme=default-inverted)](https://discord.gg/sggGS389qb) ![Matrix](https://img.shields.io/matrix/go-orb%3Ajochum.dev?server_fqdn=matrix.jochum.dev&fetchMode=guest&logo=Matrix)
+# ![go-orb Logo](docs/logo-header.png) [![License](https://img.shields.io/:license-apache-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Go.Dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/go-orb/go-orb?tab=doc) [![Go Report Card](https://goreportcard.com/badge/github.com/go-orb/go-orb)](https://goreportcard.com/report/github.com/go-orb/go-orb) [![Discord](https://dcbadge.vercel.app/api/server/sggGS389qb?style=flat-square&theme=default-inverted)](https://discord.gg/4n6E4NYjnR) ![Matrix](https://img.shields.io/matrix/go-orb%3Ajochum.dev?server_fqdn=matrix.jochum.dev&fetchMode=guest&logo=Matrix)
 
 Go Orb is a framework for distributed systems development, it can be seen as the successor of [go-micro.dev/v4](https://github.com/go-micro/go-micro).
 
@@ -176,7 +176,7 @@ Everything is linted and staticaly analyzed by golangci-lint, enforced with CI p
 
 ## Community
 
-Chat with us on [Discord](https://discord.gg/sggGS389qb).
+Chat with us on [Discord](https://discord.gg/4n6E4NYjnR).
 
 ## Development
 
