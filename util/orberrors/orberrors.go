@@ -37,15 +37,17 @@ func (e *Error) Toerror() error {
 	return e
 }
 
-// Wrap wraps another error.
+// Wrap clones this error and wraps another error.
 func (e *Error) Wrap(err error) *Error {
 	if e == nil {
 		return nil
 	}
 
-	e.Wrapped = err
-
-	return e
+	return &Error{
+		Code:    e.Code,
+		Message: e.Message,
+		Wrapped: err,
+	}
 }
 
 // Unwrap returns the wrapped error.
@@ -65,7 +67,7 @@ func (e *Error) Is(err error) bool {
 		return false
 	}
 
-	return orberr.Code == e.Code && orberr.Message == e.Message && errors.Is(orberr.Wrapped, e.Wrapped)
+	return orberr.Code == e.Code && orberr.Message == e.Message
 }
 
 // New creates a new orb error with the given parameters.
