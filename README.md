@@ -31,6 +31,8 @@ Go Orb abstracts away the details of distributed systems. Here are the main feat
 
 - **Pluggable Interfaces** - Go Orb makes use of Go interfaces for each distributed system abstraction. Because of this these interfaces are pluggable and allows Go Orb to be runtime agnostic. You can plugin any underlying technology.
 
+- **Strongly tested and linted** - We use golangci-lint to ensure code quality and we have a comprehensive test suite, all lints and tests are run on CI.
+
 ## Examples
 
 Please see the [examples](https://github.com/go-orb/examples) repo.
@@ -170,7 +172,7 @@ We made sure that go-orb/go-orb (the core) is just a bunch of interfaces as well
 
 #### Linted and analyzed
 
-Everything is linted and staticaly analyzed by golangcli-lint, enforced with CI/CD pipelines on github.
+Everything is linted and staticaly analyzed by golangci-lint, enforced with CI pipelines on github.
 
 ## Community
 
