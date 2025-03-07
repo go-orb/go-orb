@@ -27,6 +27,9 @@ type NodeMap map[string][]*registry.Node
 type Client interface {
 	types.Component
 
+	// Logger returns the logger.
+	Logger() log.Logger
+
 	// Config returns the internal config, this is for tests.
 	Config() Config
 
@@ -116,12 +119,14 @@ func (r *Req[TResp, TReq]) Node(ctx context.Context, opts *CallOptions) (*regist
 	// Resolve the service to a list of nodes in a per transport map.
 	nodes, err := r.client.ResolveService(ctx, r.service, opts.PreferredTransports...)
 	if err != nil {
+		r.client.Logger().Error("Failed to resolve service", "error", err, "service", r.service)
 		return nil, err
 	}
 
 	// Run the configured Selector to get a node from the resolved nodes.
 	node, err := opts.Selector(ctx, r.service, nodes, opts.PreferredTransports, opts.AnyTransport)
 	if err != nil {
+		r.client.Logger().Error("Failed to resolve service", "error", err, "service", r.service)
 		return nil, err
 	}
 

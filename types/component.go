@@ -12,6 +12,7 @@ const (
 	PriorityMetrics  = 1100
 	PriorityRegistry = 1200
 	PriorityEvent    = 1300
+	PriorityHandler  = 1350
 	PriorityServer   = 1400
 	PriorityClient   = 1500
 	PriorityCustom   = 2000

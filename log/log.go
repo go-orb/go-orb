@@ -151,6 +151,15 @@ func ProvideNoOpts(
 	return Provide(serviceName, configs, components)
 }
 
+// ProvideWithServiceNameField provides a new logger with the service name field.
+func ProvideWithServiceNameField(
+	serviceName types.ServiceName,
+	configs types.ConfigData,
+	components *types.Components,
+) (Logger, error) {
+	return Provide(serviceName, configs, components, WithFields(map[string]any{"service": serviceName}))
+}
+
 // WithLevel creates a copy of the logger with a new level.
 // It will inherit all the fields and the context from the parent logger.
 func (l Logger) WithLevel(level string) Logger {

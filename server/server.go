@@ -86,6 +86,10 @@ func Provide(
 	// Configure entrypoints.
 	eps := container.NewMap[string, Entrypoint]()
 
+	if len(cfg.functionalEntrypoints) == 0 && len(cfg.Entrypoints) == 0 {
+		cfg.Entrypoints = append(cfg.Entrypoints, EntrypointConfig{Name: "grpcs", Plugin: "grpc", Enabled: true})
+	}
+
 	for _, cfgNewEp := range cfg.functionalEntrypoints {
 		newFunc, ok := PluginsNew.Get(cfgNewEp.config().Plugin)
 		if !ok {
@@ -136,6 +140,17 @@ func Provide(
 	}
 
 	return srv, nil
+}
+
+// ProvideNoOpts creates a new server without functional options.
+func ProvideNoOpts(
+	name types.ServiceName,
+	configs types.ConfigData,
+	components *types.Components,
+	logger log.Logger,
+	reg registry.Type,
+) (Server, error) {
+	return Provide(name, configs, components, logger, reg)
 }
 
 // Start will start the HTTP servers on all entrypoints.
