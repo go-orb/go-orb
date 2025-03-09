@@ -62,7 +62,7 @@ func flagToMap(globalSections []string, flag *Flag, cliResult map[string]any) {
 func ProvideConfigData(serviceContext *ServiceContext, flags []*Flag) (types.ConfigData, error) {
 	results := types.ConfigData{}
 
-	mJSON, err := codecs.GetMime("application/json")
+	mJSON, err := codecs.GetMime(codecs.MimeJSON)
 	if err != nil {
 		return nil, err
 	}

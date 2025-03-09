@@ -15,6 +15,7 @@ const (
 	PriorityHandler  = 1350
 	PriorityServer   = 1400
 	PriorityClient   = 1500
+	PriorityKVStore  = 1600
 	PriorityCustom   = 2000
 )
 

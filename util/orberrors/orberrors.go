@@ -140,11 +140,12 @@ func As(err error) (*Error, bool) {
 
 // A list of default errors.
 var (
-	ErrUnimplemented       = New(http.StatusInternalServerError, "Unimplemented")
-	ErrUnavailable         = New(http.StatusServiceUnavailable, "Unavailable")
-	ErrInternalServerError = newHTTP(http.StatusInternalServerError)
-	ErrUnauthorized        = newHTTP(http.StatusUnauthorized)
-	ErrRequestTimeout      = newHTTP(http.StatusRequestTimeout)
-	ErrBadRequest          = newHTTP(http.StatusBadRequest)
+	ErrBadRequest          = newHTTP(http.StatusBadRequest)     // 400
+	ErrUnauthorized        = newHTTP(http.StatusUnauthorized)   // 401
+	ErrNotFound            = newHTTP(http.StatusNotFound)       // 404
+	ErrRequestTimeout      = newHTTP(http.StatusRequestTimeout) // 408
 	ErrCanceled            = newHTTP(499)
+	ErrUnimplemented       = newHTTP(http.StatusInternalServerError) // 500
+	ErrUnavailable         = newHTTP(http.StatusServiceUnavailable)  // 503
+	ErrInternalServerError = newHTTP(http.StatusInternalServerError) // 500
 )

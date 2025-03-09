@@ -173,7 +173,7 @@ func HasKey[T any](sections []string, key string, configs types.ConfigData) bool
 
 // Dump is a helper function to dump configDatas to the console.
 func Dump(configs types.ConfigData) error {
-	codec, err := codecs.GetMime("application/json")
+	codec, err := codecs.GetMime(codecs.MimeJSON)
 	if err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func Dump(configs types.ConfigData) error {
 func ParseStruct[TParse any](sections []string, toParse TParse) (source.Data, error) {
 	result := source.Data{Data: make(map[string]any)}
 
-	codec, err := codecs.GetMime("application/json")
+	codec, err := codecs.GetMime(codecs.MimeJSON)
 	if err != nil {
 		result.Error = err
 		return result, result.Error
