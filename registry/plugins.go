@@ -11,6 +11,7 @@ type ProviderFunc func(
 	serviceName types.ServiceName,
 	serviceVersion types.ServiceVersion,
 	data types.ConfigData,
+	components *types.Components,
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error)

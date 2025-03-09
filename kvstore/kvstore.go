@@ -8,10 +8,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/go-orb/go-orb/client"
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
-	"github.com/go-orb/go-orb/registry"
 	"github.com/go-orb/go-orb/types"
 )
 
@@ -76,6 +74,37 @@ type KVStore interface {
 	DropDatabase(database string) error
 }
 
+// WatchOp represents the type of Watch operation (Update, Delete). It is a
+// part of WatchUpdate.
+type WatchOp uint8
+
+// Available WatchOp values.
+const (
+	// WatchOpCreate is a create operation.
+	WatchOpCreate WatchOp = iota
+	// WatchOpUpdate is an update operation.
+	WatchOpUpdate
+	// WatchOpDelete is a delete operation.
+	WatchOpDelete
+)
+
+// WatchEvent is a change to a key-value store.
+type WatchEvent struct {
+	Record
+
+	// Operation is the type of operation that occurred.
+	Operation WatchOp
+}
+
+// A Watcher is a component that can watch for changes to a key-value store.
+// For example a registry component can watch for changes to a database.
+type Watcher interface {
+	// Watch starts a watcher for the given database and table.
+	// Returns a channel of WatchUpdate and a function to stop the watcher.
+	// If an error occurs, it is returned.
+	Watch(ctx context.Context, database, table string, opts ...WatchOption) (<-chan WatchEvent, func() error, error)
+}
+
 // Type is the kvstore type it is returned when you use Provide
 // which selects a kvstore to use based on the plugin configuration.
 type Type struct {
@@ -94,13 +123,10 @@ type Record struct {
 
 // Provide provides a new KVStore.
 func Provide(
-	ctx context.Context,
 	name types.ServiceName,
 	configs types.ConfigData,
 	components *types.Components,
 	logger log.Logger,
-	registry registry.Type,
-	client client.Type,
 	opts ...Option,
 ) (Type, error) {
 	cfg := NewConfig(opts...)
@@ -130,7 +156,7 @@ func Provide(
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	instance, err := provider(ctx, name, configs, cLogger, registry, client, opts...)
+	instance, err := provider(name, configs, cLogger, opts...)
 	if err != nil {
 		return Type{}, err
 	}
@@ -146,13 +172,10 @@ func Provide(
 
 // ProvideNoOpts provides a new KVStore without options.
 func ProvideNoOpts(
-	ctx context.Context,
 	name types.ServiceName,
 	configs types.ConfigData,
 	components *types.Components,
 	logger log.Logger,
-	registry registry.Type,
-	client client.Type,
 ) (Type, error) {
-	return Provide(ctx, name, configs, components, logger, registry, client)
+	return Provide(name, configs, components, logger)
 }

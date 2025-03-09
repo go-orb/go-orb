@@ -128,7 +128,7 @@ func Provide(
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	instance, err := provider(name, version, configs, cLogger, opts...)
+	instance, err := provider(name, version, configs, components, cLogger, opts...)
 	if err != nil {
 		return Type{}, err
 	}

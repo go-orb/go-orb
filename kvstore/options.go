@@ -341,3 +341,56 @@ func ListOffset(o uint) ListOption {
 		l.Offset = o
 	}
 }
+
+// WatchOptions configures an individual Watch operation.
+type WatchOptions struct {
+	// Do not send delete markers to the update channel.
+	IgnoreDeletes bool
+	// Include all history per subject, not just last one.
+	IncludeHistory bool
+	// Include only updates for keys.
+	UpdatesOnly bool
+	// retrieve only the meta data of the entry
+	MetaOnly bool
+}
+
+// NewWatchOptions creates a new WatchOptions with the provided options applied.
+func NewWatchOptions(opts ...WatchOption) WatchOptions {
+	var options WatchOptions
+	for _, o := range opts {
+		o(&options)
+	}
+
+	return options
+}
+
+// WatchOption sets values in WatchOptions.
+type WatchOption func(o *WatchOptions)
+
+// WatchIgnoreDeletes do not send delete markers to the update channel.
+func WatchIgnoreDeletes() WatchOption {
+	return func(o *WatchOptions) {
+		o.IgnoreDeletes = true
+	}
+}
+
+// WatchIncludeHistory include all history per subject, not just last one.
+func WatchIncludeHistory() WatchOption {
+	return func(o *WatchOptions) {
+		o.IncludeHistory = true
+	}
+}
+
+// WatchUpdatesOnly include only updates for keys.
+func WatchUpdatesOnly() WatchOption {
+	return func(o *WatchOptions) {
+		o.UpdatesOnly = true
+	}
+}
+
+// WatchMetaOnly retrieve only the meta data of the entry.
+func WatchMetaOnly() WatchOption {
+	return func(o *WatchOptions) {
+		o.MetaOnly = true
+	}
+}

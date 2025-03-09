@@ -39,6 +39,11 @@ func SplitServiceName[T ~string](serviceName T) []string {
 	return strings.Split(string(serviceName), DefaultSeperator)
 }
 
+// JoinServiceName joins a splitted servicename back together
+func JoinServiceName(sections []string) ServiceName {
+	return ServiceName(strings.Join(sections, DefaultSeperator))
+}
+
 // ConfigData holds a single config file marshaled to map[string]any,
 // this needs to be done to marshal data back into a components config struct.
 //
