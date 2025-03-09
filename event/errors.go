@@ -1,12 +1,13 @@
 package event
 
 import (
-	"net/http"
-
-	"github.com/go-orb/go-orb/util/orberrors"
+	"errors"
 )
 
 var (
 	// ErrMissingTopic happens whenever the user doesnt give a topic.
-	ErrMissingTopic = orberrors.New(http.StatusInternalServerError, "missing topic")
+	ErrMissingTopic = errors.New("missing topic")
+
+	// ErrEncodingMessage is returned from publish if there was an error encoding the message option.
+	ErrEncodingMessage = errors.New("encoding message")
 )

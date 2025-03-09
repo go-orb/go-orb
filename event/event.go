@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/go-orb/go-orb/codecs"
 	"github.com/go-orb/go-orb/config"
@@ -16,8 +17,59 @@ import (
 // ComponentType is the client component type name.
 const ComponentType = "event"
 
-// Handler is the interface for events plugins.
-type Handler interface {
+// AckFunc is the function to call to acknowledge a message.
+type AckFunc func() error
+
+// NackFunc is the function to call to negatively acknowledge a message.
+type NackFunc func() error
+
+// Event is the object returned by the broker when you subscribe to a topic.
+type Event struct {
+	// Handler is a reference to the client.
+	Handler Client
+
+	// Timestamp of the event
+	Timestamp time.Time
+	// Metadata contains the values the event was indexed by
+	Metadata map[string]string
+
+	ackFunc  AckFunc
+	nackFunc NackFunc
+	// ID to uniquely identify the event
+	ID string
+	// Topic of event, e.g. "registry.service.created"
+	Topic string
+	// Payload contains the encoded message
+	Payload []byte
+}
+
+// Unmarshal the events message into an object.
+func (e *Event) Unmarshal(v any) error {
+	return e.Handler.GetPublishCodec().Decode(e.Payload, v)
+}
+
+// Ack acknowledges successful processing of the event in ManualAck mode.
+func (e *Event) Ack() error {
+	return e.ackFunc()
+}
+
+// SetAckFunc sets the AckFunc for the event.
+func (e *Event) SetAckFunc(f AckFunc) {
+	e.ackFunc = f
+}
+
+// Nack negatively acknowledges processing of the event (i.e. failure) in ManualAck mode.
+func (e *Event) Nack() error {
+	return e.nackFunc()
+}
+
+// SetNackFunc sets the NackFunc for the event.
+func (e *Event) SetNackFunc(f NackFunc) {
+	e.nackFunc = f
+}
+
+// Client is the client interface for events plugins.
+type Client interface {
 	types.Component
 
 	// Request runs a REST like call on the given topic.
@@ -30,13 +82,21 @@ type Handler interface {
 	HandleRequest(ctx context.Context, topic string, cb func(context.Context, *Req[[]byte, []byte]))
 
 	// Clone creates a clone of the handler, this is useful for parallel requests.
-	Clone() Handler
+	Clone() Client
+
+	// GetCodec returns the codec used by the handler for publish and subscribe.
+	GetPublishCodec() codecs.Marshaler
 
 	// Publish publishes a Event to the given topic.
-	// Publish(ctx context.Context, event any) error
+	Publish(ctx context.Context, topic string, event any, opts ...PublishOption) error
 
-	// Subscribe lets you subscribe to the given topic.
-	// Subscribe(ctx context.Context, topic string, opts ...SubscribeOption) (<-chan CallRequest[[]byte, []byte], error)
+	// Consume lets you consume events from a given topic.
+	Consume(topic string, opts ...ConsumeOption) (<-chan Event, error)
+}
+
+// Type is the client implementation for events.
+type Type struct {
+	Client
 }
 
 // Req contains all data for a request call.
@@ -52,7 +112,7 @@ type Req[TReq any, TResp any] struct {
 	// ReplyHelper contains the internal helper to answer on exact that topic and request.
 	replyFunc func(ctx context.Context, result TResp, err error)
 
-	handler Handler
+	handler Client
 }
 
 // SetReplyFunc sets the internal reply func (for example nats.Msg) for the client.
@@ -61,7 +121,7 @@ func (e *Req[TReq, TResp]) SetReplyFunc(h func(ctx context.Context, result TResp
 }
 
 // Request runs a REST like call on the events topic.
-func (e *Req[TReq, TResp]) Request(ctx context.Context, handler Handler, topic string, opts ...RequestOption) (*TResp, error) {
+func (e *Req[TReq, TResp]) Request(ctx context.Context, handler Client, topic string, opts ...RequestOption) (*TResp, error) {
 	e.handler = handler
 
 	options := NewRequestOptions(opts...)
@@ -113,7 +173,7 @@ func NewRequest[TResp, TReq any](req TReq) *Req[TReq, TResp] {
 // Response will be of type *FooResponse.
 func Request[TResp any, TReq any](
 	ctx context.Context,
-	handler Handler,
+	handler Client,
 	topic string,
 	req TReq,
 	opts ...RequestOption,
@@ -124,7 +184,7 @@ func Request[TResp any, TReq any](
 // HandleRequest subscribes to the given topic and handles the requests.
 func HandleRequest[TReq any, TResp any](
 	ctx context.Context,
-	handler Handler,
+	handler Client,
 	topic string,
 	callback func(ctx context.Context, req *TReq) (*TResp, error),
 ) {
@@ -166,12 +226,12 @@ func Provide(
 	configs types.ConfigData,
 	components *types.Components,
 	logger log.Logger,
-	opts ...Option) (Handler, error) {
+	opts ...Option) (Type, error) {
 	cfg := NewConfig(opts...)
 
 	sections := append(types.SplitServiceName(name), DefaultConfigSection)
 	if err := config.Parse(sections, configs, &cfg); err != nil {
-		return nil, err
+		return Type{}, err
 	}
 
 	if cfg.Plugin == "" {
@@ -181,20 +241,20 @@ func Provide(
 
 	provider, ok := plugins.Get(cfg.Plugin)
 	if !ok {
-		return nil, fmt.Errorf("event plugin (%s) not found, did you register it?", cfg.Plugin)
+		return Type{}, fmt.Errorf("event plugin (%s) not found, did you register it?", cfg.Plugin)
 	}
 
 	// Configure the logger.
 	cLogger, err := logger.WithConfig(sections, configs)
 	if err != nil {
-		return nil, err
+		return Type{}, err
 	}
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
 	instance, err := provider(name, configs, cLogger, opts...)
 	if err != nil {
-		return nil, err
+		return Type{}, err
 	}
 
 	// Register the event as a component.
@@ -211,6 +271,6 @@ func ProvideNoOpts(
 	name types.ServiceName,
 	configs types.ConfigData,
 	components *types.Components,
-	logger log.Logger) (Handler, error) {
+	logger log.Logger) (Type, error) {
 	return Provide(name, configs, components, logger)
 }
