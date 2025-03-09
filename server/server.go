@@ -87,6 +87,7 @@ func Provide(
 	eps := container.NewMap[string, Entrypoint]()
 
 	if len(cfg.functionalEntrypoints) == 0 && len(cfg.Entrypoints) == 0 {
+		cfg.Entrypoints = append(cfg.Entrypoints, EntrypointConfig{Name: "memory", Plugin: "memory", Enabled: true})
 		cfg.Entrypoints = append(cfg.Entrypoints, EntrypointConfig{Name: "grpcs", Plugin: "grpc", Enabled: true})
 	}
 
