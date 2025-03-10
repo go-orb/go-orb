@@ -39,7 +39,7 @@ func SplitServiceName[T ~string](serviceName T) []string {
 	return strings.Split(string(serviceName), DefaultSeperator)
 }
 
-// JoinServiceName joins a splitted servicename back together
+// JoinServiceName joins a splitted servicename back together.
 func JoinServiceName(sections []string) ServiceName {
 	return ServiceName(strings.Join(sections, DefaultSeperator))
 }
