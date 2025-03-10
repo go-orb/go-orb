@@ -18,12 +18,21 @@ type Map map[string]Marshaler
 
 // Marshaler is able to encode/decode a content type to/from a byte sequence.
 type Marshaler interface {
-	// Encode encodes "v" into byte sequence.
-	Encode(v any) ([]byte, error)
-
-	// Decode decodes "data" into "v".
+	// Marshal encodes "v" into byte sequence.
 	// "v" must be a pointer value.
-	Decode(data []byte, v any) error
+	// Deprecated: Use Marshaler.Marshal
+	Marshal(v any) ([]byte, error)
+
+	// Unmarshal decodes "data" into "v".
+	// "v" must be a pointer value.
+	// Deprecated: Use Marshaler.Unmarshal
+	Unmarshal(data []byte, v any) error
+
+	// Marshals returns if this codec is able to encode the given type.
+	Marshals(v any) bool
+
+	// Unmarshals returns if this codec is able to decode the given type.
+	Unmarshals(v any) bool
 
 	// NewDecoder returns a Decoder which reads byte sequence from "r".
 	NewDecoder(r io.Reader) Decoder
@@ -31,18 +40,12 @@ type Marshaler interface {
 	// NewEncoder returns an Encoder which writes bytes sequence into "w".
 	NewEncoder(w io.Writer) Encoder
 
-	// Encodes returns if this codec is able to encode the given type.
-	Encodes(v any) bool
-
-	// Decodes returns if this codec is able to decode the given type.
-	Decodes(v any) bool
-
 	// ContentTypes returns the list of content types this codec is able to
 	// output.
 	ContentTypes() []string
 
-	// String returns the codec name.
-	String() string
+	// Name returns the codec name.
+	Name() string
 
 	// Exts returns the common file extensions for this encoder.
 	Exts() []string

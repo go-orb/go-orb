@@ -45,7 +45,7 @@ type Event struct {
 
 // Unmarshal the events message into an object.
 func (e *Event) Unmarshal(v any) error {
-	return e.Handler.GetPublishCodec().Decode(e.Payload, v)
+	return e.Handler.GetPublishCodec().Unmarshal(e.Payload, v)
 }
 
 // Ack acknowledges successful processing of the event in ManualAck mode.
@@ -132,7 +132,7 @@ func (e *Req[TReq, TResp]) Request(ctx context.Context, handler Client, topic st
 	codec, err := codecs.GetMime(e.ContentType)
 	if err == nil {
 		// The err here will be copied into the result.
-		d, err = codec.Encode(e.Data)
+		d, err = codec.Marshal(e.Data)
 	}
 
 	bEv := &Req[[]byte, any]{
@@ -150,7 +150,7 @@ func (e *Req[TReq, TResp]) Request(ctx context.Context, handler Client, topic st
 		return result, orberrors.From(err)
 	}
 
-	err = codec.Decode(reply, result)
+	err = codec.Unmarshal(reply, result)
 	if err != nil {
 		return result, orberrors.From(err)
 	}
@@ -197,7 +197,7 @@ func HandleRequest[TReq any, TResp any](
 			return
 		}
 
-		err = codec.Decode(event.Data, rv)
+		err = codec.Unmarshal(event.Data, rv)
 		if err != nil {
 			event.replyFunc(ctx, nil, err)
 			return
@@ -211,7 +211,7 @@ func HandleRequest[TReq any, TResp any](
 		}
 
 		// Encode the result and send it back to the plugin.
-		d, err := codec.Encode(result)
+		d, err := codec.Marshal(result)
 
 		// Send the result.
 		event.replyFunc(ctx, d, err)

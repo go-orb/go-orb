@@ -31,7 +31,7 @@ func updateMimeMap() {
 				found := false
 
 				for _, ve := range v {
-					if encoder.String() == ve.String() {
+					if encoder.Name() == ve.Name() {
 						found = true
 						break
 					}
@@ -81,7 +81,7 @@ func GetEncoder(mime string, v any) (Marshaler, error) {
 	}
 
 	for _, codec := range codecs {
-		if codec.Encodes(v) {
+		if codec.Marshals(v) {
 			return codec, nil
 		}
 	}
@@ -97,7 +97,7 @@ func GetDecoder(mime string, v any) (Marshaler, error) {
 	}
 
 	for _, codec := range codecs {
-		if codec.Decodes(v) {
+		if codec.Unmarshals(v) {
 			return codec, nil
 		}
 	}
