@@ -176,7 +176,7 @@ Everything is linted and staticaly analyzed by golangci-lint, enforced with CI p
 
 ## Community
 
-Chat with us on [Discord](https://discord.gg/4n6E4NYjnR).
+Chat with us on [Discord](https://discord.gg/4n6E4NYjnR) or [Matrix](https://matrix.to/#/#go-orb:jochum.dev).
 
 ## Development
 
