@@ -4,6 +4,7 @@ package registry
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"log/slog"
 
@@ -65,6 +66,17 @@ type Service struct {
 	Nodes     []*Node           `json:"nodes"`
 }
 
+// String returns a string representation of the Service.
+func (s *Service) String() string {
+	nodes := []string{}
+	for _, n := range s.Nodes {
+		nodes = append(nodes, n.String())
+	}
+
+	return fmt.Sprintf("Service{Name: %s, Version: %s, Nodes: (%s), Endpoints: %d}",
+		s.Name, s.Version, strings.Join(nodes, ", "), len(s.Endpoints))
+}
+
 // Node represents a service node in a registry.
 // One service can be comprised of multiple nodes.
 type Node struct {
@@ -76,6 +88,12 @@ type Node struct {
 	Metadata  map[string]string `json:"metadata"`
 }
 
+// String returns a string representation of the Node.
+func (n *Node) String() string {
+	return fmt.Sprintf("Node{ID: %s, Address: %s, Transport: %s}",
+		n.ID, n.Address, n.Transport)
+}
+
 // Endpoint represents a service endpoint in a registry.
 type Endpoint struct {
 	Name     string            `json:"name"`
@@ -84,11 +102,32 @@ type Endpoint struct {
 	Metadata map[string]string `json:"metadata"`
 }
 
+// String returns a string representation of the Endpoint.
+func (e *Endpoint) String() string {
+	var reqName, respName string
+	if e.Request != nil {
+		reqName = e.Request.Name
+	}
+
+	if e.Response != nil {
+		respName = e.Response.Name
+	}
+
+	return fmt.Sprintf("Endpoint{Name: %s, Request: %s, Response: %s}",
+		e.Name, reqName, respName)
+}
+
 // Value is a value container used in the registry.
 type Value struct {
 	Name   string   `json:"name"`
 	Type   string   `json:"type"`
 	Values []*Value `json:"values"`
+}
+
+// String returns a string representation of the Value.
+func (v *Value) String() string {
+	return fmt.Sprintf("Value{Name: %s, Type: %s, Values: %d}",
+		v.Name, v.Type, len(v.Values))
 }
 
 // Provide is the registry provider for wire.
