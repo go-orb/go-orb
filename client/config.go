@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"crypto/tls"
 	"time"
 )
@@ -30,10 +31,6 @@ var (
 	DefaultSelector = SelectRandomNode
 	// DefaultBackoff is the default backoff function for retries.
 	DefaultBackoff = BackoffExponential
-	// DefaultRetry is the default check-for-retry function for retries.
-	DefaultRetry = RetryOnConnectionError
-	// DefaultRetries is the default number of times a request is tried.
-	DefaultRetries = 5
 
 	// DefaultDialTimeout is the default dial timeout.
 	DefaultDialTimeout = time.Second * 5
@@ -45,21 +42,17 @@ var (
 	DefaultStreamTimeout = time.Duration(0)
 	// DefaultConnClose indicates whetever to close the connection after each request.
 	DefaultConnClose = false
+
+	// DefaultCallOptionsRetryFunc is nil, so it uses the middlewares default.
+	DefaultCallOptionsRetryFunc = (RetryFunc)(nil)
+
+	// DefaultCallOptionsRetries is 0, so it uses the middlewares default.
+	DefaultCallOptionsRetries = 0
 )
 
-// TODO(jochumdev): Uncommenting this sorts preferred Transports.
-// func init() {
-// 	err := cli.Flags.Add(cli.NewFlag(
-// 		"client_transports",
-// 		DefaultPreferredTransports,
-// 		cli.ConfigPathSlice([]string{"client", "preferredTransports"}),
-// 		cli.Usage("Transports in theier preferred order"),
-// 		cli.EnvVars("CLIENT_TRANSPORTS"),
-// 	))
-// 	if err != nil && !errors.Is(err, cli.ErrFlagExists) {
-// 		panic(err)
-// 	}
-// }
+// RetryFunc is the type for a retry func.
+// note that returning either false or a non-nil error will result in the call not being retried.
+type RetryFunc func(ctx context.Context, err error, options *CallOptions) (bool, error)
 
 var _ (ConfigType) = (*Config)(nil)
 
@@ -102,10 +95,7 @@ type Config struct {
 
 	// Backoff func
 	Backoff BackoffFunc `json:"-" yaml:"-"`
-	// Check if retriable func
-	Retry RetryFunc `json:"-" yaml:"-"`
-	// Number of Call attempts
-	Retries int `json:"retries" yaml:"retries"`
+
 	// Transport Dial Timeout. Used for initial dial to establish a connection.
 	DialTimeout time.Duration `json:"dialTimeout" yaml:"dialTimeout"`
 	// ConnectionTimeout of one request to the server.
@@ -196,22 +186,6 @@ func WithClientBackoff(n BackoffFunc) Option {
 	}
 }
 
-// WithClientRetry overrides the retry function.
-func WithClientRetry(n RetryFunc) Option {
-	return func(cfg ConfigType) {
-		c := cfg.config()
-		c.Retry = n
-	}
-}
-
-// WithClientRetries overrides the number of retries to make.
-func WithClientRetries(n int) Option {
-	return func(cfg ConfigType) {
-		c := cfg.config()
-		c.Retries = n
-	}
-}
-
 // WithClientDialTimeout overrides the dial timeout.
 func WithClientDialTimeout(n time.Duration) Option {
 	return func(cfg ConfigType) {
@@ -269,8 +243,6 @@ func NewConfig(opts ...Option) Config {
 		PoolHosts:           DefaultPoolHosts,
 		PoolSize:            DefaultPoolSize,
 		PoolTTL:             DefaultPoolTTL,
-		Retry:               DefaultRetry,
-		Retries:             DefaultRetries,
 		DialTimeout:         DefaultDialTimeout,
 		ConnectionTimeout:   DefaultConnectionTimeout,
 		RequestTimeout:      DefaultRequestTimeout,
@@ -301,7 +273,7 @@ type CallOptions struct {
 	// Backoff func
 	Backoff BackoffFunc
 	// Check if retriable func
-	Retry RetryFunc
+	RetryFunc RetryFunc
 	// Number of Call attempts
 	Retries int
 	// Transport Dial Timeout. Used for initial dial to establish a connection.
@@ -365,11 +337,10 @@ func WithBackoff(fn BackoffFunc) CallOption {
 	}
 }
 
-// WithRetry is a CallOption which overrides that which
-// set in Options.CallOptions.
-func WithRetry(fn RetryFunc) CallOption {
+// WithRetryFunc is a CallOption which overrides the retry function.
+func WithRetryFunc(fn RetryFunc) CallOption {
 	return func(o *CallOptions) {
-		o.Retry = fn
+		o.RetryFunc = fn
 	}
 }
 
