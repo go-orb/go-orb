@@ -32,6 +32,8 @@ func RetryOnTimeoutError(ctx context.Context, err error, options *CallOptions) (
 		// logic error that should be handled by the user.
 		case 408:
 			return true, nil
+		case 504:
+			fallthrough
 		// Retry on connection error: Service Unavailable
 		case 503:
 			timeout := time.After(options.DialTimeout)
@@ -60,6 +62,8 @@ func RetryOnConnectionError(ctx context.Context, err error, options *CallOptions
 	err = orberrors.From(err)
 	if errors.As(err, &orbe) {
 		switch orbe.Code {
+		case 504:
+			fallthrough
 		// Retry on connection error: Service Unavailable
 		case 503:
 			timeout := time.After(options.DialTimeout)
