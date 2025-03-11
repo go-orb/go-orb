@@ -4,12 +4,10 @@ package client
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/url"
 
 	"log/slog"
 
-	"github.com/go-orb/go-orb/codecs"
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/registry"
@@ -39,15 +37,8 @@ type Client interface {
 	// ResolveService resolves a service to a list of nodes.
 	ResolveService(ctx context.Context, service string, preferredTransports ...string) (NodeMap, error)
 
-	// NeedsCodec has to do node resolving and then selects the right transport for that node,
-	// it then has to return whatever the selected transport needs a codec or if it does encoding internaly.
-	NeedsCodec(ctx context.Context, req *Req[any, any], opts ...CallOption) bool
-
-	// Request with encoding on client side.
-	Request(ctx context.Context, req *Req[any, any], result any, opts ...CallOption) (*RawResponse, error)
-
-	// RequestNoCodec is the same as Request but without encoding.
-	RequestNoCodec(ctx context.Context, req *Req[any, any], result any, opts ...CallOption) error
+	// Request does the actual call.
+	Request(ctx context.Context, req *Req[any, any], result any, opts ...CallOption) error
 }
 
 // Type is the client type it is returned when you use ProvideClient
@@ -55,9 +46,6 @@ type Client interface {
 type Type struct {
 	Client
 }
-
-// RawResponse is a internal struct to pass the transport's response with metadata and content-type around.
-type RawResponse = Response[io.Reader]
 
 // Response will be returned by CallWithResponse.
 type Response[T any] struct {
@@ -151,26 +139,7 @@ func (r *Req[TResp, TReq]) Request(ctx context.Context, client Client, opts ...C
 		node:     r.node,
 	}
 
-	if r.client.NeedsCodec(ctx, fwReq, opts...) {
-		cresp, cerr := r.client.Request(ctx, fwReq, result, opts...)
-		if cerr != nil {
-			return result, cerr
-		}
-
-		codec, err := codecs.GetMime(cresp.ContentType)
-		if err != nil {
-			return result, orberrors.ErrBadRequest.Wrap(err)
-		}
-
-		err = codec.NewDecoder(cresp.Body).Decode(result)
-		if err != nil {
-			return result, orberrors.ErrBadRequest.Wrap(err)
-		}
-
-		return result, nil
-	}
-
-	cerr := r.client.RequestNoCodec(ctx, fwReq, result, opts...)
+	cerr := r.client.Request(ctx, fwReq, result, opts...)
 
 	return result, cerr
 }
