@@ -19,11 +19,12 @@ var (
 	DefaultPreferredTransports = []string{"memory", "grpc", "drpc", "http", "grpcs", "h2c", "http2", "http3", "https"}
 
 	// DefaultPoolHosts set the number of hosts in a pool.
-	DefaultPoolHosts = 16
-	// DefaultPoolSize sets the connection pool size per service.
-	DefaultPoolSize = 100
+	DefaultPoolHosts = 64
+	// DefaultPoolSize sets the connection pool size.
+	// The effective pool size will be PoolHosts * PoolSize.
+	DefaultPoolSize = 10
 	// DefaultPoolTTL sets the connection pool ttl.
-	DefaultPoolTTL = time.Minute
+	DefaultPoolTTL = 30 * time.Minute
 
 	// DefaultSelector is the default node selector.
 	DefaultSelector = SelectRandomNode
@@ -152,6 +153,14 @@ func WithClientAnyTransport() Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
 		c.AnyTransport = true
+	}
+}
+
+// WithClientPoolHosts overrides the PoolHosts of the client.
+func WithClientPoolHosts(n int) Option {
+	return func(cfg ConfigType) {
+		c := cfg.config()
+		c.PoolHosts = n
 	}
 }
 
@@ -285,13 +294,6 @@ type CallOptions struct {
 	// PreferredTransports contains a list of transport names in preferred order.
 	PreferredTransports []string
 
-	// PoolHosts sets the number of hosts in a pool
-	PoolHosts int
-	// PoolSize sets the connection pool size per service.
-	PoolSize int
-	// PoolTTL sets the connection pool ttl.
-	PoolTTL time.Duration
-
 	AnyTransport bool
 
 	// Selector is the node selector.
@@ -338,27 +340,6 @@ func WithContentType(ct string) CallOption {
 func WithPreferredTransports(n ...string) CallOption {
 	return func(o *CallOptions) {
 		o.PreferredTransports = n
-	}
-}
-
-// WithPoolHosts sets the number of hosts in a pool.
-func WithPoolHosts(n int) CallOption {
-	return func(o *CallOptions) {
-		o.PoolHosts = n
-	}
-}
-
-// WithPoolSize sets the connection pool size per service.
-func WithPoolSize(n int) CallOption {
-	return func(o *CallOptions) {
-		o.PoolSize = n
-	}
-}
-
-// WithPoolTTL sets the connection pool ttl.
-func WithPoolTTL(n time.Duration) CallOption {
-	return func(o *CallOptions) {
-		o.PoolTTL = n
 	}
 }
 
