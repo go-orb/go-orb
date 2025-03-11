@@ -13,6 +13,10 @@ type App struct {
 	NoAction       bool
 	NoGlobalConfig bool
 
+	Configs       []string
+	ConfigsFormat []string
+	ConfigURLs    []string
+
 	// Internal
 	InternalAction func() error
 }

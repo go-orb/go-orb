@@ -12,14 +12,13 @@ Please have a look at our [roadmap](https://github.com/orgs/go-orb/projects/1) f
 ## Overview
 
 Go Orb provides the core requirements for distributed systems development including RPC and Event driven communication.
-The Go Orb philosophy is sane defaults with a pluggable architecture. We provide defaults to get you started quickly
-but everything can be easily swapped out.
+The Go Orb philosophy is sane defaults with a pluggable architecture. We provide defaults to get you started quickly but everything can be easily swapped out.
 
 ## Features
 
 Go Orb abstracts away the details of distributed systems. Here are the main features.
 
-- **Config** - Load dynamic config from anywhere. The config interface provides a way to load application level config from any source such as env vars, file. You can merge the sources and even define fallbacks.
+- **Config** - Load dynamic config from anywhere. The config interface provides a way to load application level config from any source such as env vars, file and http. You can merge the sources and even define fallbacks.
 
 - **Service Discovery** - Automatic service registration and name resolution. Service discovery is at the core of Go Orb service development. When service A needs to speak to service B it needs the location of that service. The default discovery mechanism is multicast DNS (mdns), a zeroconf system.
 
@@ -61,6 +60,7 @@ See the config system entry on howto configure it.
 
 With orb you can configure your plugins with a config file or environment options.
 
+
 ```yaml
 service1:
   server:
@@ -73,6 +73,10 @@ service1:
         plugin: grpc
         insecure: true
         reflection: false
+  client:
+    middlewares:
+      - name: log
+      - name: retry
   registry:
     enabled: true
     plugin: mdns
@@ -109,6 +113,10 @@ service1:
 
       - name: drpc
         plugin: drpc
+  client:
+    middlewares:
+      - name: log
+      - name: retry
   registry:
     plugin: consul
     address: consul:8500
