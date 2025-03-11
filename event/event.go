@@ -82,7 +82,7 @@ type Client interface {
 	HandleRequest(ctx context.Context, topic string, cb func(context.Context, *Req[[]byte, []byte]))
 
 	// Clone creates a clone of the handler, this is useful for parallel requests.
-	Clone() Client
+	Clone() Type
 
 	// GetCodec returns the codec used by the handler for publish and subscribe.
 	GetPublishCodec() codecs.Marshaler
