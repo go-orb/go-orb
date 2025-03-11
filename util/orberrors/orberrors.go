@@ -2,6 +2,7 @@
 package orberrors
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -117,6 +118,10 @@ func From(err error) *Error {
 	var orbErr *Error
 	if errors.As(err, &orbErr) {
 		return orbErr
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return ErrRequestTimeout.Wrap(err)
 	}
 
 	// Else make a copy.
