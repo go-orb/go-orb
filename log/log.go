@@ -44,37 +44,38 @@ func New(opts ...Option) (Logger, error) {
 }
 
 // NewConfigDatas will create a new logger with the given configs,
-// as well as this logger's fields.
-// TODO(jochumdev): Simplify this.
+// as well as the given fields.
 func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option) (Logger, error) {
-	var cfg Config
-	if configs == nil {
-		cfg = NewConfig(opts...)
+	// Initialize configuration
+	cfg := NewConfig(opts...)
 
+	// Parse configuration
+	if configs == nil {
+		var err error
 		data, err := config.ParseStruct(append(sections, DefaultConfigSection), &cfg)
+
 		if err != nil {
 			return Logger{}, fmt.Errorf("while creating a new config: %w", err)
 		}
 
 		configs = []source.Data{data}
-	} else {
-		cfg = NewConfig(opts...)
-		if err := config.Parse(append(sections, DefaultConfigSection), configs, &cfg); err != nil {
-			return Logger{}, fmt.Errorf("while creating a new config: %w", err)
-		}
+	} else if err := config.Parse(append(sections, DefaultConfigSection), configs, &cfg); err != nil {
+		return Logger{}, fmt.Errorf("while creating a new config: %w", err)
 	}
 
+	// Get the plugin
 	pf, ok := plugins.Get(cfg.Plugin)
 	if !ok {
-		slog.Error("getting a logger plugin", "plugin", cfg.Plugin)
 		return Logger{}, fmt.Errorf("while getting the log plugin '%s'", cfg.Plugin)
 	}
 
+	// Get or create the provider
 	provider, err := pf(sections, configs, opts...)
 	if err != nil {
 		return Logger{}, err
 	}
 
+	// Get provider from cache or initialize it
 	cachedProvider, ok := pluginsCache.Get(provider.Key())
 	if !ok {
 		if err := provider.Start(); err != nil {
@@ -85,27 +86,24 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 		cachedProvider = provider
 	}
 
+	// Get handler and create level handler
 	handler, err := cachedProvider.Handler()
 	if err != nil {
 		return Logger{}, err
 	}
 
-	lvl, err := ParseLevel(cfg.Level)
+	lvlHandler, err := NewLevelHandler(stringToSlogLevel(cfg.Level), handler)
 	if err != nil {
 		return Logger{}, err
 	}
 
-	lvlHandler, err := NewLevelHandler(lvl, handler)
-	if err != nil {
-		return Logger{}, err
-	}
-
-	fields := []any{}
+	// Create logger with fields
+	fields := make([]any, 0, len(cfg.Fields)*2)
 	for k, v := range cfg.Fields {
 		fields = append(fields, slog.Any(k, v))
 	}
 
-	r := Logger{
+	logger := Logger{
 		Logger:         slog.New(lvlHandler),
 		pluginProvider: cachedProvider,
 		config:         cfg,
@@ -113,10 +111,10 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 	}
 
 	if len(fields) > 0 {
-		r.Logger = r.Logger.With(fields...)
+		logger.Logger = logger.Logger.With(fields...)
 	}
 
-	return r, nil
+	return logger, nil
 }
 
 // Provide provides a new logger.
@@ -171,12 +169,7 @@ func (l Logger) WithLevel(level string) Logger {
 			return l
 		}
 
-		lvl, err := ParseLevel(level)
-		if err != nil {
-			return l
-		}
-
-		l.Logger = slog.New(&LevelHandler{lvl, handler})
+		l.Logger = slog.New(&LevelHandler{stringToSlogLevel(level), handler})
 	}
 
 	return l
@@ -255,12 +248,7 @@ func (l Logger) Type() string {
 
 // Level returns the level as int.
 func (l Logger) Level() slog.Level {
-	lvl, err := ParseLevel(l.config.Level)
-	if err != nil {
-		l.Error("While parsing the level", "error", err)
-	}
-
-	return lvl
+	return stringToSlogLevel(l.config.Level)
 }
 
 // Trace logs at TraceLevel.

@@ -14,7 +14,10 @@ import (
 //		slog.Level | string | constraints.Integer
 //	}
 const (
-	LevelTrace  slog.Level = slog.LevelDebug - 1
+	// LevelTrace must be added, because [slog] package does not have one by default.
+	// Generate it by subtracting 4 levels from [slog.Debug] following the example of
+	// [slog.LevelWarn] and [slog.LevelError] which are set to 4 and 8.
+	LevelTrace  slog.Level = slog.LevelDebug - 4
 	LevelDebug  slog.Level = slog.LevelDebug
 	LevelInfo   slog.Level = slog.LevelInfo
 	LevelWarn   slog.Level = slog.LevelWarn
@@ -23,24 +26,46 @@ const (
 	LevelFatal  slog.Level = slog.LevelError + 4
 )
 
-// ParseLevel parses a string level to an Level.
-func ParseLevel(l string) (slog.Level, error) {
+// slogLevelToString converts a slog.Level to a string.
+func slogLevelToString(l slog.Level) string {
+	switch l {
+	case LevelTrace:
+		return "TRACE"
+	case LevelDebug:
+		return "DEBUG"
+	case LevelInfo:
+		return "INFO"
+	case LevelWarn:
+		return "WARN"
+	case LevelNotice:
+		return "NOTICE"
+	case LevelError:
+		return "ERROR"
+	case LevelFatal:
+		return "FATAL"
+	default:
+		return fmt.Sprintf("Level(%d)", l)
+	}
+}
+
+// stringToSlogLevel parses a string level to an Level.
+func stringToSlogLevel(l string) slog.Level {
 	switch strings.ToUpper(l) {
 	case "TRACE":
-		return LevelTrace, nil
+		return LevelTrace
 	case "DEBUG":
-		return LevelDebug, nil
+		return LevelDebug
 	case "INFO":
-		return LevelInfo, nil
+		return LevelInfo
 	case "WARN":
-		return LevelWarn, nil
+		return LevelWarn
 	case "NOTICE":
-		return LevelNotice, nil
+		return LevelNotice
 	case "ERROR":
-		return LevelError, nil
+		return LevelError
 	case "FATAL":
-		return LevelFatal, nil
+		return LevelFatal
 	default:
-		return LevelInfo, fmt.Errorf("parselevel: unknown level %s", l)
+		return stringToSlogLevel(DefaultLevel)
 	}
 }

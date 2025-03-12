@@ -1,5 +1,7 @@
 package log
 
+import "log/slog"
+
 //
 //nolint:gochecknoglobals
 var (
@@ -57,14 +59,21 @@ func NewConfig(opts ...Option) Config {
 }
 
 // WithLevel sets the log level to user.
-// TODO(davincible): would love to take in something like (	slog.Level | string | constraints.Integer) here,
-// but not sure how that would work.
-func WithLevel(n string) Option {
+func WithLevel[T slog.Level | string](n T) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
-		c.Level = n
+		switch t := any(n).(type) {
+		case slog.Level:
+			c.Level = slogLevelToString(t)
+		case string:
+			c.Level = t
+		default:
+			c.Level = DefaultLevel
+		}
 	}
 }
+
+// WithPlugin sets the logger plugin to be used.
 
 // WithPlugin sets the logger plugin to be used.
 // A logger plugin is the underlying handler the logger will use to process
