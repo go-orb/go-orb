@@ -4,7 +4,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"log/slog"
 
@@ -12,21 +11,14 @@ import (
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/registry"
 	"github.com/go-orb/go-orb/types"
-	"github.com/go-orb/go-orb/util/orberrors"
 )
 
 // ComponentType is the client component type name.
 const ComponentType = "client"
 
-// NodeMap is the type for a string map with list of registry nodes.
-type NodeMap map[string][]*registry.Node
-
 // Client is the interface for clients.
 type Client interface {
 	types.Component
-
-	// Logger returns the logger.
-	Logger() log.Logger
 
 	// Config returns the internal config, this is for tests.
 	Config() Config
@@ -34,11 +26,11 @@ type Client interface {
 	// With closes all transports and configures the client with the given options.
 	With(opts ...Option) error
 
-	// ResolveService resolves a service to a list of nodes.
-	ResolveService(ctx context.Context, service string, preferredTransports ...string) (NodeMap, error)
-
 	// Request does the actual call.
-	Request(ctx context.Context, req *Req[any, any], result any, opts ...CallOption) error
+	Request(ctx context.Context, service string, endpoint string, req any, result any, opts ...CallOption) error
+
+	// Stream creates a streaming client to the specified service endpoint.
+	Stream(ctx context.Context, service string, endpoint string, opts ...CallOption) (StreamIface[any, any], error)
 }
 
 // Type is the client type it is returned when you use ProvideClient
@@ -47,126 +39,25 @@ type Type struct {
 	Client
 }
 
-// Response will be returned by CallWithResponse.
-type Response[T any] struct {
-	ContentType string
-	Body        T
+// RequestInfosKey is the key for the request infos in the context.
+type RequestInfosKey struct{}
+
+// RequestInfos contains the request infos.
+type RequestInfos struct {
+	Service   string
+	Endpoint  string
+	Transport string
+	Address   string
 }
 
-// Req is a request for Client.
-type Req[TResp any, TReq any] struct {
-	service  string
-	endpoint string
-
-	// The unencoded request
-	request TReq
-
-	client Client
-
-	node *registry.Node
+// RequestInfo returns the request infos from the context.
+func RequestInfo(ctx context.Context) (RequestInfos, bool) {
+	v, ok := ctx.Value(RequestInfosKey{}).(*RequestInfos)
+	return *v, ok
 }
 
-// Service returns the Service from the request.
-func (r *Req[TResp, TReq]) Service() string {
-	return r.service
-}
-
-// Endpoint returns the Endpoint from the request.
-func (r *Req[TResp, TReq]) Endpoint() string {
-	return r.endpoint
-}
-
-// Req returns the Request.
-func (r *Req[TResp, TReq]) Req() TReq {
-	return r.request
-}
-
-// Node returns the Node.
-func (r *Req[TResp, TReq]) Node(ctx context.Context, opts *CallOptions) (*registry.Node, error) {
-	if r.node != nil {
-		return r.node, nil
-	}
-
-	if opts.URL != "" {
-		myU1rl, err := url.Parse(opts.URL)
-		if err != nil {
-			return nil, orberrors.ErrBadRequest.Wrap(err)
-		}
-
-		node := &registry.Node{
-			ID:        "url",
-			Address:   myU1rl.Host,
-			Transport: myU1rl.Scheme,
-		}
-
-		r.node = node
-
-		return node, nil
-	}
-
-	// Resolve the service to a list of nodes in a per transport map.
-	nodes, err := r.client.ResolveService(ctx, r.service, opts.PreferredTransports...)
-	if err != nil {
-		r.client.Logger().Error("Failed to resolve service", "error", err, "service", r.service)
-		return nil, err
-	}
-
-	// Run the configured Selector to get a node from the resolved nodes.
-	node, err := opts.Selector(ctx, r.service, nodes, opts.PreferredTransports, opts.AnyTransport)
-	if err != nil {
-		r.client.Logger().Error("Failed to resolve service", "error", err, "service", r.service)
-		return nil, err
-	}
-
-	r.node = node
-
-	return r.node, nil
-}
-
-// Request forward's the Request to Client.Request() and decodes the result into resp with the type TResp.
-func (r *Req[TResp, TReq]) Request(ctx context.Context, client Client, opts ...CallOption) (resp *TResp, err error) {
-	r.client = client
-
-	var result = new(TResp)
-
-	// Create a [any, any] copy of Request to forward it.
-	// TODO(jochumdev): see if there's a better way to do this.
-	fwReq := &Req[any, any]{
-		service:  r.service,
-		endpoint: r.endpoint,
-		request:  r.request,
-		client:   r.client,
-		node:     r.node,
-	}
-
-	cerr := r.client.Request(ctx, fwReq, result, opts...)
-
-	return result, cerr
-}
-
-// NewRequest creates a request for a service+endpoint.
+// Request is a typesafe shortcut for making a request.
 //
-// Example (with call):
-//
-// resp, err := client.NewRequest[FooResponse](
-// "service1", "Say.Hello", myRequest,
-// ).Call(context.Background(), clientFromWire)
-//
-// Response will be of type *FooResponse.
-func NewRequest[TResp any, TReq any](
-	service string,
-	endpoint string,
-	req TReq,
-) *Req[TResp, TReq] {
-	return &Req[TResp, TReq]{
-		service:  service,
-		endpoint: endpoint,
-
-		request: req,
-	}
-}
-
-// Request makes a request with the client, it's a shortcut for NewRequest(...).Request(...)
 // Example:
 //
 // resp , err := client.Request[FooResponse](context.Background(), clientWire, "service1", "Say.Hello", fooRequest)
@@ -180,7 +71,11 @@ func Request[TResp any, TReq any](
 	req TReq,
 	opts ...CallOption,
 ) (*TResp, error) {
-	return NewRequest[TResp](service, endpoint, req).Request(ctx, client, opts...)
+	result := new(TResp)
+
+	err := client.Request(ctx, service, endpoint, req, result, opts...)
+
+	return result, err
 }
 
 // Provide creates a new client instance with the implementation from cfg.Plugin.

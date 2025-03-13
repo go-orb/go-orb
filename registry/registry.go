@@ -130,23 +130,17 @@ func (v *Value) String() string {
 		v.Name, v.Type, len(v.Values))
 }
 
-// Provide is the registry provider for wire.
-// It parses the config from "configs", fetches the "Plugin" from the config and
-// then forwards all it's arguments to the factory which it get's from "Plugins".
-func Provide(
+// New creates a new registry without side-effects.
+func New(
 	name types.ServiceName,
 	version types.ServiceVersion,
-	configs types.ConfigData,
 	components *types.Components,
+	cfg Config,
+	configs types.ConfigData,
+	sections []string,
 	logger log.Logger,
-	opts ...Option) (Type, error) {
-	cfg := NewConfig(opts...)
-
-	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, configs, &cfg); err != nil {
-		return Type{}, err
-	}
-
+	opts ...Option,
+) (Type, error) {
 	if cfg.Plugin == "" {
 		logger.Warn("empty registry plugin, using the default", "default", DefaultRegistry)
 		cfg.Plugin = DefaultRegistry
@@ -172,13 +166,38 @@ func Provide(
 		return Type{}, err
 	}
 
+	return Type{Registry: instance}, nil
+}
+
+// Provide is the registry provider for wire.
+// It parses the config from "configs", fetches the "Plugin" from the config and
+// then forwards all it's arguments to the factory which it get's from "Plugins".
+func Provide(
+	name types.ServiceName,
+	version types.ServiceVersion,
+	configs types.ConfigData,
+	components *types.Components,
+	logger log.Logger,
+	opts ...Option) (Type, error) {
+	cfg := NewConfig(opts...)
+
+	sections := append(types.SplitServiceName(name), DefaultConfigSection)
+	if err := config.Parse(sections, configs, &cfg); err != nil {
+		return Type{}, err
+	}
+
+	reg, err := New(name, version, components, cfg, configs, sections, logger, opts...)
+	if err != nil {
+		return Type{}, err
+	}
+
 	// Register the registry as a component.
-	err = components.Add(&instance, types.PriorityRegistry)
+	err = components.Add(&reg, types.PriorityRegistry)
 	if err != nil {
 		logger.Warn("while registering registry as a component", "error", err)
 	}
 
-	return instance, nil
+	return reg, nil
 }
 
 // ProvideNoOpts is the registry provider for wire without options.

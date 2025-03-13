@@ -29,8 +29,6 @@ var (
 
 	// DefaultSelector is the default node selector.
 	DefaultSelector = SelectRandomNode
-	// DefaultBackoff is the default backoff function for retries.
-	DefaultBackoff = BackoffExponential
 
 	// DefaultDialTimeout is the default dial timeout.
 	DefaultDialTimeout = time.Second * 5
@@ -48,6 +46,11 @@ var (
 
 	// DefaultCallOptionsRetries is 0, so it uses the middlewares default.
 	DefaultCallOptionsRetries = 0
+
+	// DefaultMaxCallRecvMsgSize is the default maximum size of the call receive message size.
+	DefaultMaxCallRecvMsgSize = 10 * 1024 * 1024
+	// DefaultMaxCallSendMsgSize is the default maximum size of the call send message size.
+	DefaultMaxCallSendMsgSize = 10 * 1024 * 1024
 )
 
 // RetryFunc is the type for a retry func.
@@ -92,9 +95,6 @@ type Config struct {
 
 	// SelectorFunc get's executed by client.SelectNode which get it's info's from client.ResolveService.
 	Selector SelectorFunc `json:"-" yaml:"-"`
-
-	// Backoff func
-	Backoff BackoffFunc `json:"-" yaml:"-"`
 
 	// Transport Dial Timeout. Used for initial dial to establish a connection.
 	DialTimeout time.Duration `json:"dialTimeout" yaml:"dialTimeout"`
@@ -175,14 +175,6 @@ func WithClientSelector(n SelectorFunc) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
 		c.Selector = n
-	}
-}
-
-// WithClientBackoff overrides the clients backoff func.
-func WithClientBackoff(n BackoffFunc) Option {
-	return func(cfg ConfigType) {
-		c := cfg.config()
-		c.Backoff = n
 	}
 }
 
@@ -270,8 +262,6 @@ type CallOptions struct {
 
 	// Selector is the node selector.
 	Selector SelectorFunc
-	// Backoff func
-	Backoff BackoffFunc
 	// Check if retriable func
 	RetryFunc RetryFunc
 	// Number of Call attempts
@@ -292,8 +282,18 @@ type CallOptions struct {
 	URL string
 	// TLS config.
 	TLSConfig *tls.Config
+
+	// Metadata to be sent with the request.
+	Metadata map[string]string
+
 	// ResponseMetadata will be written into `ResponseMetadata` when given.
 	ResponseMetadata map[string]string
+
+	// MaxCallRecvMsgSize is the maximum size of the call receive message size.
+	MaxCallRecvMsgSize int
+
+	// MaxCallSendMsgSize is the maximum size of the call send message size.
+	MaxCallSendMsgSize int
 }
 
 // CallOption used by Call or Stream.
@@ -326,14 +326,6 @@ func WithAnyTransport() CallOption {
 func WithSelector(fn SelectorFunc) CallOption {
 	return func(o *CallOptions) {
 		o.Selector = fn
-	}
-}
-
-// WithBackoff is a CallOption which overrides that which
-// set in Options.CallOptions.
-func WithBackoff(fn BackoffFunc) CallOption {
-	return func(o *CallOptions) {
-		o.Backoff = fn
 	}
 }
 
@@ -398,9 +390,30 @@ func WithTLSConfig(n *tls.Config) CallOption {
 	}
 }
 
+// WithMetadata sets the metadata to be sent with the request.
+func WithMetadata(n map[string]string) CallOption {
+	return func(o *CallOptions) {
+		o.Metadata = n
+	}
+}
+
 // WithResponseMetadata will write response Metadata into the give map.
 func WithResponseMetadata(n map[string]string) CallOption {
 	return func(o *CallOptions) {
 		o.ResponseMetadata = n
+	}
+}
+
+// WithMaxCallRecvMsgSize sets the maximum size of the call receive message size.
+func WithMaxCallRecvMsgSize(n int) CallOption {
+	return func(o *CallOptions) {
+		o.MaxCallRecvMsgSize = n
+	}
+}
+
+// WithMaxCallSendMsgSize sets the maximum size of the call send message size.
+func WithMaxCallSendMsgSize(n int) CallOption {
+	return func(o *CallOptions) {
+		o.MaxCallSendMsgSize = n
 	}
 }

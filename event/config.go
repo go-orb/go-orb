@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/go-orb/go-orb/codecs"
-	"github.com/google/uuid"
+	"github.com/lithammer/shortuuid/v3"
 )
 
 //nolint:gochecknoglobals
@@ -231,7 +231,7 @@ func WithRetryLimit(retries int) ConsumeOption {
 // NewConsumeOptions generates new subscribe options with defaults.
 func NewConsumeOptions(opts ...ConsumeOption) ConsumeOptions {
 	cfg := ConsumeOptions{
-		Group: uuid.New().String(),
+		Group: shortuuid.New(),
 	}
 
 	// Apply options.

@@ -9,6 +9,9 @@ import (
 	"github.com/go-orb/go-orb/registry"
 )
 
+// NodeMap hold registry nodes grouped by transport.
+type NodeMap map[string][]*registry.Node
+
 // SelectorFunc get's executed by client.SelectNode which get it's info's from client.ResolveService.
 type SelectorFunc func(
 	ctx context.Context,

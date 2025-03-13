@@ -92,6 +92,8 @@ func HTTP(code int) *Error {
 	switch code {
 	case 503:
 		return ErrUnavailable
+	case 501:
+		return ErrNotImplemented
 	case 500:
 		return ErrInternalServerError
 	case 499:
@@ -151,6 +153,7 @@ var (
 	ErrRequestTimeout      = newHTTP(http.StatusRequestTimeout) // 408
 	ErrCanceled            = newHTTP(499)
 	ErrUnimplemented       = newHTTP(http.StatusInternalServerError) // 500
+	ErrNotImplemented      = newHTTP(http.StatusNotImplemented)      // 501
 	ErrUnavailable         = newHTTP(http.StatusServiceUnavailable)  // 503
 	ErrInternalServerError = newHTTP(http.StatusInternalServerError) // 500
 )

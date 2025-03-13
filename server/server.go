@@ -118,7 +118,7 @@ func Provide(
 		mSections := sections
 		mSections = append(mSections, "entrypoints", strconv.Itoa(idx))
 
-		ep, err := pFunc(mSections, configs, logger, reg, WithMiddlewares(mws...), WithHandlers(handlers...))
+		ep, err := pFunc(mSections, configs, logger, reg, WithEntrypointMiddlewares(mws...), WithEntrypointHandlers(handlers...))
 		if err != nil {
 			return Server{}, err
 		}

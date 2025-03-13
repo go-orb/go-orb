@@ -12,8 +12,8 @@ import (
 
 //nolint:gochecknoglobals
 var (
-	// DefaultSeperator is used to split a service name into config section keys.
-	DefaultSeperator = "."
+	// DefaultSeparator is used to split a service name into config section keys.
+	DefaultSeparator = "."
 )
 
 // ServiceName is the name of the Service.
@@ -36,12 +36,12 @@ type ServiceVersion string
 //	      ...
 //	```
 func SplitServiceName[T ~string](serviceName T) []string {
-	return strings.Split(string(serviceName), DefaultSeperator)
+	return strings.Split(string(serviceName), DefaultSeparator)
 }
 
 // JoinServiceName joins a splitted servicename back together.
 func JoinServiceName(sections []string) ServiceName {
-	return ServiceName(strings.Join(sections, DefaultSeperator))
+	return ServiceName(strings.Join(sections, DefaultSeparator))
 }
 
 // ConfigData holds a single config file marshaled to map[string]any,

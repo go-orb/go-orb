@@ -9,8 +9,11 @@ import (
 
 // MemoryServer is the interface that a memory server has to implement to be accepted by the client.
 type MemoryServer interface {
-	// Request is the same as Request but without encoding.
-	Request(ctx context.Context, req *Req[any, any], result any, opts *CallOptions) error
+	// Request does the actual call.
+	Request(ctx context.Context, infos RequestInfos, req any, result any, opts *CallOptions) error
+
+	// Stream creates a streaming client to the specified service endpoint.
+	Stream(ctx context.Context, infos RequestInfos, opts *CallOptions) (StreamIface[any, any], error)
 }
 
 //nolint:gochecknoglobals

@@ -17,7 +17,7 @@ type MiddlewareConfig struct {
 }
 
 // MiddlewareRequestHandler is the middleware handler for client.Request without a codec in between.
-type MiddlewareRequestHandler func(ctx context.Context, req *Req[any, any], result any, opts *CallOptions) error
+type MiddlewareRequestHandler func(ctx context.Context, service string, endpoint string, req any, result any, opts *CallOptions) error
 
 // Middleware is the middleware for clients.
 type Middleware interface {

@@ -33,24 +33,53 @@ func (e *EntrypointConfig) config() *EntrypointConfig {
 	return e
 }
 
-// WithDisabled disables an entrypoint.
-func WithDisabled() Option {
+// NewEntrypointConfig creates a new entrypoint config with the given opts.
+func NewEntrypointConfig(opts ...Option) *EntrypointConfig {
+	cfg := &EntrypointConfig{
+		Enabled: true,
+	}
+
+	for _, option := range opts {
+		option(cfg)
+	}
+
+	return cfg
+}
+
+// WithEntrypointName sets the name of the entrypoint.
+func WithEntrypointName(p string) Option {
+	return func(cfg EntrypointConfigType) {
+		c := cfg.config()
+		c.Name = p
+	}
+}
+
+// WithEntrypointPlugin sets the plugin of the entrypoint.
+func WithEntrypointPlugin(p string) Option {
+	return func(cfg EntrypointConfigType) {
+		c := cfg.config()
+		c.Plugin = p
+	}
+}
+
+// WithEntrypointDisabled disables an entrypoint.
+func WithEntrypointDisabled() Option {
 	return func(cfg EntrypointConfigType) {
 		c := cfg.config()
 		c.Enabled = false
 	}
 }
 
-// WithMiddlewares appends the given middlewares.
-func WithMiddlewares(mws ...Middleware) Option {
+// WithEntrypointMiddlewares appends the given middlewares.
+func WithEntrypointMiddlewares(mws ...Middleware) Option {
 	return func(cfg EntrypointConfigType) {
 		c := cfg.config()
 		c.OptMiddlewares = append(c.OptMiddlewares, mws...)
 	}
 }
 
-// WithHandlers appends the given handlers.
-func WithHandlers(hs ...RegistrationFunc) Option {
+// WithEntrypointHandlers appends the given handlers.
+func WithEntrypointHandlers(hs ...RegistrationFunc) Option {
 	return func(cfg EntrypointConfigType) {
 		c := cfg.config()
 		c.OptHandlers = append(c.OptHandlers, hs...)
@@ -64,6 +93,17 @@ type Config struct {
 	Entrypoints []EntrypointConfig `json:"entrypoints,omitempty" yaml:"entrypoints,omitempty"`
 
 	functionalEntrypoints []EntrypointConfigType `json:"-" yaml:"-"`
+}
+
+// NewConfig creates a new config struct with the given opts.
+func NewConfig(opts ...ConfigOption) Config {
+	cfg := Config{}
+
+	for _, option := range opts {
+		option(&cfg)
+	}
+
+	return cfg
 }
 
 // ConfigOption allows to set options for MyConfig.
