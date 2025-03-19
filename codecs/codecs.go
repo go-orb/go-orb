@@ -20,12 +20,10 @@ type Map map[string]Marshaler
 type Marshaler interface {
 	// Marshal encodes "v" into byte sequence.
 	// "v" must be a pointer value.
-	// Deprecated: Use Marshaler.Marshal
 	Marshal(v any) ([]byte, error)
 
 	// Unmarshal decodes "data" into "v".
 	// "v" must be a pointer value.
-	// Deprecated: Use Marshaler.Unmarshal
 	Unmarshal(data []byte, v any) error
 
 	// Marshals returns if this codec is able to encode the given type.
