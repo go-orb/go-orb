@@ -26,6 +26,9 @@ type Client interface {
 	// With closes all transports and configures the client with the given options.
 	With(opts ...Option) error
 
+	// SelectService selects a service node.
+	SelectService(ctx context.Context, service string, opts ...CallOption) (string, string, error)
+
 	// Request does the actual call.
 	Request(ctx context.Context, service string, endpoint string, req any, result any, opts ...CallOption) error
 
