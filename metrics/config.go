@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 )
 
@@ -30,13 +31,13 @@ type ConfigType interface {
 type Config struct {
 	Plugin string // Plugin sets the metrics sink plugin to use.
 
-	Hostname             string        // Hostname to use. If not provided and EnableHostname, it will be os.Hostname
-	EnableHostname       bool          // Hostname to use. If not provided and EnableHostname, it will be os.Hostname
-	EnableHostnameLabel  bool          // Enable prefixing gauge values with hostname
-	EnableRuntimeMetrics bool          // Enables profiling of runtime metrics (GC, Goroutines, Memory)
-	EnableTypePrefix     bool          // Prefixes key with a type ("counter", "gauge", "timer")
-	TimerGranularity     time.Duration // Granularity of timers.
-	ProfileInterval      time.Duration // Interval to profile runtime metrics
+	Hostname             string          // Hostname to use. If not provided and EnableHostname, it will be os.Hostname
+	EnableHostname       bool            // Hostname to use. If not provided and EnableHostname, it will be os.Hostname
+	EnableHostnameLabel  bool            // Enable prefixing gauge values with hostname
+	EnableRuntimeMetrics bool            // Enables profiling of runtime metrics (GC, Goroutines, Memory)
+	EnableTypePrefix     bool            // Prefixes key with a type ("counter", "gauge", "timer")
+	TimerGranularity     config.Duration // Granularity of timers.
+	ProfileInterval      config.Duration // Interval to profile runtime metrics
 
 	AllowedPrefixes []string // A list of metric prefixes to allow, with '.' as the separator
 	BlockedPrefixes []string // A list of metric prefixes to block, with '.' as the separator
@@ -57,8 +58,8 @@ func NewConfig(opts ...Option) *Config {
 		EnableHostname:       true,
 		EnableRuntimeMetrics: true,
 		EnableTypePrefix:     false,
-		TimerGranularity:     time.Millisecond,
-		ProfileInterval:      time.Second,
+		TimerGranularity:     config.Duration(time.Millisecond),
+		ProfileInterval:      config.Duration(time.Second),
 		FilterDefault:        true,
 	}
 

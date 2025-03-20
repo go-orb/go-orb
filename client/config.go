@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"time"
+
+	"github.com/go-orb/go-orb/config"
 )
 
 //nolint:gochecknoglobals
@@ -89,22 +91,22 @@ type Config struct {
 	AnyTransport bool `json:"anyTransport" yaml:"anyTransport"`
 
 	// Connection Pool
-	PoolHosts int           `json:"poolHosts" yaml:"poolHosts"`
-	PoolSize  int           `json:"poolSize"  yaml:"poolSize"`
-	PoolTTL   time.Duration `json:"poolTtl"   yaml:"poolTtl"`
+	PoolHosts int             `json:"poolHosts" yaml:"poolHosts"`
+	PoolSize  int             `json:"poolSize"  yaml:"poolSize"`
+	PoolTTL   config.Duration `json:"poolTtl"   yaml:"poolTtl"`
 
 	// SelectorFunc get's executed by client.SelectNode which get it's info's from client.ResolveService.
 	Selector SelectorFunc `json:"-" yaml:"-"`
 
 	// Transport Dial Timeout. Used for initial dial to establish a connection.
-	DialTimeout time.Duration `json:"dialTimeout" yaml:"dialTimeout"`
+	DialTimeout config.Duration `json:"dialTimeout" yaml:"dialTimeout"`
 	// ConnectionTimeout of one request to the server.
 	// Set this lower than the RequestTimeout to enbale retries on connection timeout.
-	ConnectionTimeout time.Duration `json:"connectionTimeout" yaml:"connectionTimeout"`
+	ConnectionTimeout config.Duration `json:"connectionTimeout" yaml:"connectionTimeout"`
 	// Request/Response timeout of entire srv.Call, for single request timeout set ConnectionTimeout.
-	RequestTimeout time.Duration `json:"requestTimeout" yaml:"requestTimeout"`
+	RequestTimeout config.Duration `json:"requestTimeout" yaml:"requestTimeout"`
 	// Stream timeout for the stream
-	StreamTimeout time.Duration `json:"streamTimeout" yaml:"streamTimeout"`
+	StreamTimeout config.Duration `json:"streamTimeout" yaml:"streamTimeout"`
 	// TLS config.
 	TLSConfig *tls.Config
 }
@@ -166,7 +168,7 @@ func WithClientPoolSize(n int) Option {
 func WithClientPoolTTL(n time.Duration) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
-		c.PoolTTL = n
+		c.PoolTTL = config.Duration(n)
 	}
 }
 
@@ -182,7 +184,7 @@ func WithClientSelector(n SelectorFunc) Option {
 func WithClientDialTimeout(n time.Duration) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
-		c.DialTimeout = n
+		c.DialTimeout = config.Duration(n)
 	}
 }
 
@@ -190,7 +192,7 @@ func WithClientDialTimeout(n time.Duration) Option {
 func WithClientConnectionTimeout(n time.Duration) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
-		c.ConnectionTimeout = n
+		c.ConnectionTimeout = config.Duration(n)
 	}
 }
 
@@ -198,7 +200,7 @@ func WithClientConnectionTimeout(n time.Duration) Option {
 func WithClientRequestTimeout(n time.Duration) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
-		c.RequestTimeout = n
+		c.RequestTimeout = config.Duration(n)
 	}
 }
 
@@ -206,7 +208,7 @@ func WithClientRequestTimeout(n time.Duration) Option {
 func WithClientStreamTimeout(n time.Duration) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
-		c.StreamTimeout = n
+		c.StreamTimeout = config.Duration(n)
 	}
 }
 
@@ -234,11 +236,11 @@ func NewConfig(opts ...Option) Config {
 		PreferredTransports: DefaultPreferredTransports,
 		PoolHosts:           DefaultPoolHosts,
 		PoolSize:            DefaultPoolSize,
-		PoolTTL:             DefaultPoolTTL,
-		DialTimeout:         DefaultDialTimeout,
-		ConnectionTimeout:   DefaultConnectionTimeout,
-		RequestTimeout:      DefaultRequestTimeout,
-		StreamTimeout:       DefaultStreamTimeout,
+		PoolTTL:             config.Duration(DefaultPoolTTL),
+		DialTimeout:         config.Duration(DefaultDialTimeout),
+		ConnectionTimeout:   config.Duration(DefaultConnectionTimeout),
+		RequestTimeout:      config.Duration(DefaultRequestTimeout),
+		StreamTimeout:       config.Duration(DefaultStreamTimeout),
 		Selector:            DefaultSelector,
 	}
 

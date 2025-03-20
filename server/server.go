@@ -52,8 +52,6 @@ func New(
 		return Server{}, err
 	}
 
-	logger.Info("server config", "config", cfg)
-
 	// Configure Middlewares.
 	mws := []Middleware{}
 
