@@ -109,6 +109,8 @@ type ServiceContext struct {
 	appContext *AppContext
 	name       string
 	version    string
+
+	Config map[string]any
 }
 
 // App returns the application.

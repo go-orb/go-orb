@@ -8,6 +8,7 @@ import (
 
 	"log/slog"
 
+	"github.com/go-orb/go-orb/cli"
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/types"
@@ -132,15 +133,19 @@ func (v *Value) String() string {
 
 // New creates a new registry without side-effects.
 func New(
-	name types.ServiceName,
-	version types.ServiceVersion,
+	name string,
+	version string,
+	configData map[string]any,
 	components *types.Components,
-	cfg Config,
-	configs types.ConfigData,
-	sections []string,
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error) {
+	cfg := NewConfig(opts...)
+
+	if err := config.Parse(nil, DefaultConfigSection, configData, &cfg); err != nil {
+		return Type{}, err
+	}
+
 	if cfg.Plugin == "" {
 		logger.Warn("empty registry plugin, using the default", "default", DefaultRegistry)
 		cfg.Plugin = DefaultRegistry
@@ -154,14 +159,14 @@ func New(
 	}
 
 	// Configure the logger.
-	cLogger, err := logger.WithConfig(sections, configs)
+	cLogger, err := logger.WithConfig([]string{DefaultConfigSection}, configData)
 	if err != nil {
 		return Type{}, err
 	}
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	instance, err := provider(name, version, configs, components, cLogger, opts...)
+	instance, err := provider(name, version, configData, components, cLogger, opts...)
 	if err != nil {
 		return Type{}, err
 	}
@@ -173,20 +178,12 @@ func New(
 // It parses the config from "configs", fetches the "Plugin" from the config and
 // then forwards all it's arguments to the factory which it get's from "Plugins".
 func Provide(
-	name types.ServiceName,
-	version types.ServiceVersion,
-	configs types.ConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
 	logger log.Logger,
-	opts ...Option) (Type, error) {
-	cfg := NewConfig(opts...)
-
-	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, configs, &cfg); err != nil {
-		return Type{}, err
-	}
-
-	reg, err := New(name, version, components, cfg, configs, sections, logger, opts...)
+	opts ...Option,
+) (Type, error) {
+	reg, err := New(svcCtx.Name(), svcCtx.Version(), svcCtx.Config, components, logger, opts...)
 	if err != nil {
 		return Type{}, err
 	}
@@ -202,11 +199,9 @@ func Provide(
 
 // ProvideNoOpts is the registry provider for wire without options.
 func ProvideNoOpts(
-	name types.ServiceName,
-	version types.ServiceVersion,
-	configs types.ConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
 	logger log.Logger,
 ) (Type, error) {
-	return Provide(name, version, configs, components, logger)
+	return Provide(svcCtx, components, logger)
 }

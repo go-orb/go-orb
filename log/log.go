@@ -7,8 +7,8 @@ import (
 
 	"log/slog"
 
+	"github.com/go-orb/go-orb/cli"
 	"github.com/go-orb/go-orb/config"
-	"github.com/go-orb/go-orb/config/source"
 
 	"github.com/go-orb/go-orb/types"
 )
@@ -45,7 +45,7 @@ func New(opts ...Option) (Logger, error) {
 
 // NewConfigDatas will create a new logger with the given configs,
 // as well as the given fields.
-func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option) (Logger, error) {
+func NewConfigDatas(sections []string, configs map[string]any, opts ...Option) (Logger, error) {
 	// Initialize configuration
 	cfg := NewConfig(opts...)
 
@@ -58,8 +58,8 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 			return Logger{}, fmt.Errorf("while creating a new config: %w", err)
 		}
 
-		configs = []source.Data{data}
-	} else if err := config.Parse(append(sections, DefaultConfigSection), configs, &cfg); err != nil {
+		configs = data
+	} else if err := config.Parse(sections, DefaultConfigSection, configs, &cfg); err != nil {
 		return Logger{}, fmt.Errorf("while creating a new config: %w", err)
 	}
 
@@ -120,14 +120,12 @@ func NewConfigDatas(sections []string, configs types.ConfigData, opts ...Option)
 // Provide provides a new logger.
 // It will set the slog.Logger as package wide default logger.
 func Provide(
-	serviceName types.ServiceName,
-	configs types.ConfigData,
+	_ cli.ServiceContextHasConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
 	opts ...Option,
 ) (Logger, error) {
-	sections := types.SplitServiceName(serviceName)
-
-	logger, err := NewConfigDatas(sections, configs, opts...)
+	logger, err := NewConfigDatas([]string{}, svcCtx.Config, opts...)
 	if err != nil {
 		return Logger{}, err
 	}
@@ -142,20 +140,20 @@ func Provide(
 
 // ProvideNoOpts provides a new logger without options.
 func ProvideNoOpts(
-	serviceName types.ServiceName,
-	configs types.ConfigData,
+	hasConfig cli.ServiceContextHasConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
 ) (Logger, error) {
-	return Provide(serviceName, configs, components)
+	return Provide(hasConfig, svcCtx, components)
 }
 
 // ProvideWithServiceNameField provides a new logger with the service name field.
 func ProvideWithServiceNameField(
-	serviceName types.ServiceName,
-	configs types.ConfigData,
+	hasConfig cli.ServiceContextHasConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
 ) (Logger, error) {
-	return Provide(serviceName, configs, components, WithFields(map[string]any{"service": serviceName}))
+	return Provide(hasConfig, svcCtx, components, WithFields(map[string]any{"service": svcCtx.Name()}))
 }
 
 // WithLevel creates a copy of the logger with a new level.
@@ -177,8 +175,8 @@ func (l Logger) WithLevel(level string) Logger {
 
 // WithConfig returns a new logger if there's a config for it in configs else the current one.
 // It adds the fields from the current logger.
-func (l Logger) WithConfig(sections []string, configs types.ConfigData, opts ...Option) (Logger, error) {
-	if !config.HasKey[string](append(sections, DefaultConfigSection), "plugin", configs) {
+func (l Logger) WithConfig(sections []string, configs map[string]any, opts ...Option) (Logger, error) {
+	if !config.HasKey[string](sections, DefaultConfigSection, configs) {
 		return l, nil
 	}
 

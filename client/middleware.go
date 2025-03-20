@@ -29,7 +29,7 @@ type Middleware interface {
 }
 
 // MiddlewareFactory is used to create a new client Middleware.
-type MiddlewareFactory func(configSection []string, configs types.ConfigData, client Type, logger log.Logger) (Middleware, error)
+type MiddlewareFactory func(config map[string]any, client Type, logger log.Logger) (Middleware, error)
 
 // Middlewares contains a map of all available middlewares.
 //

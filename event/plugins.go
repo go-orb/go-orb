@@ -1,15 +1,14 @@
 package event
 
 import (
+	"github.com/go-orb/go-orb/cli"
 	"github.com/go-orb/go-orb/log"
-	"github.com/go-orb/go-orb/types"
 	"github.com/go-orb/go-orb/util/container"
 )
 
 // ProviderFunc is provider function type used by plugins to create a new client.
 type ProviderFunc func(
-	name types.ServiceName,
-	data types.ConfigData,
+	svcCtx *cli.ServiceContext,
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error)

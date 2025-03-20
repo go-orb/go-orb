@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/go-orb/go-orb/codecs"
 	"github.com/go-orb/go-orb/config"
-	"github.com/go-orb/go-orb/config/source"
 	"github.com/go-orb/go-orb/types"
 )
 
@@ -16,26 +14,16 @@ func ProvideSingleServiceContext(appContext *AppContext) (*ServiceContext, error
 	return NewServiceContext(appContext, appContext.Name(), appContext.Version()), nil
 }
 
-// ProvideServiceName extracts the service name from the service context.
-func ProvideServiceName(serviceContext *ServiceContext) (types.ServiceName, error) {
-	return types.ServiceName(serviceContext.Name()), nil
-}
-
-// ProvideServiceVersion extracts the service version from the service context.
-func ProvideServiceVersion(serviceContext *ServiceContext) (types.ServiceVersion, error) {
-	return types.ServiceVersion(serviceContext.Version()), nil
-}
-
 // ProvideParsedFlagsFromArgs provides parsed flags from the app context.
 func ProvideParsedFlagsFromArgs(appContext *AppContext, parser ParserFunc, args []string) ([]*Flag, error) {
 	return parser(appContext, args)
 }
 
-func flagToMap(globalSections []string, flag *Flag, cliResult map[string]any) {
+func flagToMap(globalSections []string, multiServiceConfig bool, flag *Flag, cliResult map[string]any) {
 	for _, cp := range flag.ConfigPaths {
 		sections := cp.Path[:len(cp.Path)-1]
 
-		if !cp.IsGlobal {
+		if !cp.IsGlobal && !multiServiceConfig {
 			sections = append(globalSections, sections...)
 		}
 
@@ -60,98 +48,117 @@ func flagToMap(globalSections []string, flag *Flag, cliResult map[string]any) {
 	}
 }
 
-// ProvideConfigData provides config data from serviceContext and flags.
-func ProvideConfigData(serviceContext *ServiceContext, flags []*Flag) (types.ConfigData, error) {
-	results := types.ConfigData{}
+// AppConfigData is the config data type.
+type AppConfigData map[string]any
 
-	// Load configs from memory (App().Configs and App().ConfigsFormat).
-	if err := loadInMemoryConfigs(serviceContext, &results); err != nil {
-		return nil, err
+// ServiceContextHasConfigData is a marker type.
+type ServiceContextHasConfigData struct{}
+
+// ProvideAppConfigData provides config data from appContext and flags.
+func ProvideAppConfigData(appContext *AppContext) (AppConfigData, error) {
+	cfg := map[string]any{}
+
+	// Load configs from memory (App().HardcodedConfigs).
+	if err := loadHardcodedConfigs(appContext, cfg); err != nil {
+		return AppConfigData{}, err
 	}
 
-	// Load configs from URLs (App().ConfigURLs).
-	if err := loadConfigURLs(serviceContext, &results); err != nil {
-		return nil, err
+	// Load configs from URLs (App().HardcodedConfigURLs).
+	if err := loadHardcodedConfigURLs(appContext, cfg); err != nil {
+		return AppConfigData{}, err
 	}
 
-	// Initialize CLI-based config.
-	mJSON, err := codecs.GetMime(codecs.MimeJSON)
-	if err != nil {
-		return nil, err
-	}
-
-	cliResult := source.Data{
-		Data:      make(map[string]any),
-		Marshaler: mJSON,
-	}
-	results = append(results, cliResult)
-
-	// Process command-line flags.
-	if err := processFlags(serviceContext, flags, &results, cliResult.Data); err != nil {
-		return nil, err
-	}
-
-	return results, nil
+	return AppConfigData(cfg), nil
 }
 
-// loadInMemoryConfigs loads configs from memory strings (serviceContext.App().Configs).
-func loadInMemoryConfigs(serviceContext *ServiceContext, results *types.ConfigData) error {
-	app := serviceContext.App()
-	if app.Configs == nil || app.ConfigsFormat == nil || len(app.Configs) != len(app.ConfigsFormat) {
+// ProvideServiceConfigData provides config data to serviceContext from flags.
+func ProvideServiceConfigData(
+	serviceContext *ServiceContext,
+	appConfigData AppConfigData,
+	flags []*Flag,
+) (ServiceContextHasConfigData, error) {
+	result := map[string]any(appConfigData)
+
+	// Process command-line flags.
+	cfg, err := processFlags(serviceContext, flags)
+	if err != nil {
+		return ServiceContextHasConfigData{}, err
+	}
+
+	if err := config.Merge(&result, cfg); err != nil {
+		return ServiceContextHasConfigData{}, err
+	}
+
+	// Finally, set the config on the service context.
+	serviceContext.Config = result
+
+	return ServiceContextHasConfigData{}, nil
+}
+
+// loadHardcodedConfigs loads configs from memory strings (serviceContext.App().HardcodedConfigs).
+func loadHardcodedConfigs(appContext *AppContext, into map[string]any) error {
+	app := appContext.App()
+	if app.HardcodedConfigs == nil {
 		return nil
 	}
 
-	for i, configData := range app.Configs {
-		b64 := base64.URLEncoding.EncodeToString([]byte(configData))
-		urlString := fmt.Sprintf("file:///memory%d.%s?base64=%s", i, app.ConfigsFormat[i], b64)
+	for i, configData := range app.HardcodedConfigs {
+		b64 := base64.URLEncoding.EncodeToString([]byte(configData.Data))
+		urlString := fmt.Sprintf("file:///memory%d.%s?base64=%s", i, configData.Format, b64)
 
-		config, err := loadConfigFromURL(urlString)
+		cfg, err := loadConfigFromURL(urlString)
 		if err != nil {
 			return err
 		}
 
-		*results = append(*results, config...)
+		if err := config.Merge(&into, cfg); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-// loadConfigURLs loads configs from URL strings (serviceContext.App().ConfigURLs).
-func loadConfigURLs(serviceContext *ServiceContext, results *types.ConfigData) error {
-	app := serviceContext.App()
-	if app.ConfigURLs == nil {
+// loadHardcodedConfigURLs loads configs from URL strings (serviceContext.App().HardcodedConfigURLs).
+func loadHardcodedConfigURLs(appContext *AppContext, into map[string]any) error {
+	app := appContext.App()
+	if app.HardcodedConfigURLs == nil {
 		return nil
 	}
 
-	for _, urlString := range app.ConfigURLs {
-		config, err := loadConfigFromURL(urlString)
+	for _, urlString := range app.HardcodedConfigURLs {
+		cfg, err := loadConfigFromURL(urlString)
 		if err != nil {
 			return err
 		}
 
-		*results = append(*results, config...)
+		if err := config.Merge(&into, cfg); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 // loadConfigFromURL loads config from a single URL string.
-func loadConfigFromURL(urlString string) (types.ConfigData, error) {
+func loadConfigFromURL(urlString string) (map[string]any, error) {
 	u, err := url.Parse(urlString)
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL %s: %w", urlString, err)
 	}
 
-	config, err := config.Read([]*url.URL{u})
+	cfg, err := config.Read(u)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config from %s: %w", urlString, err)
 	}
 
-	return config, nil
+	return cfg, nil
 }
 
 // processFlags processes CLI flags and loads any config files specified.
-func processFlags(serviceContext *ServiceContext, flags []*Flag, results *types.ConfigData, cliData map[string]any) error {
+func processFlags(serviceContext *ServiceContext, flags []*Flag) (map[string]any, error) {
+	cliData := map[string]any{}
+
 	for _, flag := range flags {
 		// Special handling for --config flag which loads additional config files.
 		if flag.Name == "config" {
@@ -161,20 +168,22 @@ func processFlags(serviceContext *ServiceContext, flags []*Flag, results *types.
 			}
 
 			for _, urlString := range urls {
-				config, err := loadConfigFromURL(urlString)
+				cfg, err := loadConfigFromURL(urlString)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
-				*results = append(*results, config...)
+				if err := config.Merge(&cliData, cfg); err != nil {
+					return nil, err
+				}
 			}
 
 			continue
 		}
 
 		// Add regular flags to the CLI config data.
-		flagToMap(types.SplitServiceName(serviceContext.Name()), flag, cliData)
+		flagToMap(types.SplitServiceName(serviceContext.Name()), serviceContext.App().MultiServiceConfig, flag, cliData)
 	}
 
-	return nil
+	return cliData, nil
 }

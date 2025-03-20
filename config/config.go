@@ -8,9 +8,9 @@ import (
 	"net/url"
 	"strconv"
 
+	"dario.cat/mergo"
 	"github.com/go-orb/go-orb/codecs"
 	"github.com/go-orb/go-orb/config/source"
-	"github.com/go-orb/go-orb/types"
 )
 
 func isAlphaNumeric(s string) bool {
@@ -23,7 +23,22 @@ func isAlphaNumeric(s string) bool {
 	return true
 }
 
-func walkMap(sections []string, in map[string]any) (map[string]any, error) {
+// WalkMap walks into the sections and returns the map[string]any of that section.
+//
+// If a section is a slice, the next section should be a number.
+//
+// Example:
+//
+//	config := map[string]any{
+//	    "foo": map[string]any{
+//	        "bar": map[string]any{
+//	            "baz": "value",
+//	        },
+//	    },
+//	}
+//
+// WalkMap([]string{"foo", "bar"}, config) returns map[string]any{"baz": "value"}.
+func WalkMap(sections []string, in map[string]any) (map[string]any, error) {
 	data := in
 
 	for i := 0; i < len(sections); i++ {
@@ -37,16 +52,16 @@ func walkMap(sections []string, in map[string]any) (map[string]any, error) {
 
 			sliceData, err := SingleGet(data, section, []any{})
 			if err != nil {
-				return data, err
+				return data, fmt.Errorf("while walking sections '%s': %w", sections, err)
 			}
 
 			if int64(len(sliceData)) <= snum {
-				return data, ErrNotExistent
+				return data, fmt.Errorf("while walking sections '%s': %w", sections, ErrNotExistent)
 			}
 
 			tmpData, ok := sliceData[snum].(map[string]any)
 			if !ok {
-				return data, ErrNotExistent
+				return data, fmt.Errorf("while walking sections '%s': %w", sections, ErrNotExistent)
 			}
 
 			data = tmpData
@@ -57,39 +72,23 @@ func walkMap(sections []string, in map[string]any) (map[string]any, error) {
 
 		var err error
 		if data, err = SingleGet(data, section, map[string]any{}); err != nil {
-			return data, err
+			return data, fmt.Errorf("while walking sections '%s': %w", sections, err)
 		}
 	}
 
 	return data, nil
 }
 
-// Read reads urls into []Data where Data is map[string]any.
-//
-// By default it will error out if any of these config URLs fail, but you can
-// ignore errors for a single url by adding "?ignore_error=true".
-func Read(urls []*url.URL) (types.ConfigData, error) {
-	result := types.ConfigData{}
+// Read reads url into map[string]any.
+func Read(url *url.URL) (map[string]any, error) {
+	configSource, err := getSourceForURL(url)
+	if err != nil {
+		return nil, err
+	}
 
-	for _, myURL := range urls {
-		configSource, err := getSourceForURL(myURL)
-		if err != nil {
-			result = append(result, source.Data{URL: myURL, Error: err})
-			return result, err
-		}
-
-		dResult := configSource.Read(myURL)
-		if dResult.Error != nil {
-			result = append(result, dResult)
-
-			if myURL.Query().Get("ignore_error") == "true" {
-				continue
-			}
-
-			return result, dResult.Error
-		}
-
-		result = append(result, dResult)
+	result, err := configSource.Read(url)
+	if err != nil {
+		return nil, err
 	}
 
 	return result, nil
@@ -97,110 +96,145 @@ func Read(urls []*url.URL) (types.ConfigData, error) {
 
 // Parse parses the config from config.Read into the given struct.
 // Param target should be a pointer to the config to parse into.
-func Parse(sections []string, configs types.ConfigData, target any) error {
-	for _, configData := range []source.Data(configs) {
-		if configData.Error != nil {
-			continue
-		}
+func Parse[TMap any](sections []string, key string, config map[string]any, target TMap) error {
+	data := map[string]any{}
 
-		var err error
+	var err error
 
-		// Walk into the sections.
-		data, err := walkMap(sections, configData.Data)
+	if len(sections) > 0 {
+		data, err = WalkMap(sections, config)
 		if err != nil {
 			if errors.Is(err, ErrNotExistent) {
-				continue
+				return nil
 			}
 
 			return err
 		}
-
-		buf := bytes.Buffer{}
-
-		// Here we need to take the data from the configs, in the format of map[string]any
-		// and parse it into the struct. Because we cannot do this in one operation,
-		// we first marshal the map[string]any into a (usually json) byte slice,
-		// We then unmarshal the byte slice into the target struct.
-		// If there is a way to do this in one operation, this code should be updated.
-
-		if err := configData.Marshaler.NewEncoder(&buf).Encode(data); err != nil {
-			return fmt.Errorf("parse config: encode: %w", err)
-		}
-
-		if err := configData.Marshaler.NewDecoder(&buf).Decode(target); err != nil {
-			return fmt.Errorf("parse config: decode: %w", err)
-		}
 	}
 
-	return nil
-}
-
-// HasKey returns a boolean which indidcates if the given sections and key exists in the configs.
-func HasKey[T any](sections []string, key string, configs types.ConfigData) bool {
-	var tmp T
-
-	for _, configData := range []source.Data(configs) {
-		if configData.Error != nil {
-			continue
-		}
-
-		var err error
-
-		// Walk into the sections.
-		data, err := walkMap(sections, configData.Data)
+	if key != "" {
+		data, err = SingleGet(data, key, map[string]any{})
 		if err != nil {
 			if errors.Is(err, ErrNotExistent) {
-				continue
+				return nil
 			}
 
-			return false
+			return err
 		}
-
-		if _, err := SingleGet(data, key, tmp); err != nil {
-			// Ignore unknown configSection in config.
-			if errors.Is(err, ErrNotExistent) {
-				continue
-			}
-
-			return false
-		}
-
-		return true
 	}
 
-	return false
-}
+	if data == nil {
+		return nil
+	}
 
-// Dump is a helper function to dump configDatas to the console.
-func Dump(configs types.ConfigData) error {
 	codec, err := codecs.GetMime(codecs.MimeJSON)
 	if err != nil {
 		return err
 	}
 
-	for _, config := range configs {
-		jsonb, err := codec.Marshal(config.Data)
-		if err == nil {
-			fmt.Println(string(jsonb)) //nolint:forbidigo
-		}
+	b, err := codec.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	if err := codec.Unmarshal(b, target); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// ParseStruct is a helper to make any struct with `json` tags a source.Data (map[string]any{} with some more fields) with sections.
-func ParseStruct[TParse any](sections []string, toParse TParse) (source.Data, error) {
-	result := source.Data{Data: make(map[string]any)}
+// ParseSlice parses the config from config.Read into the given slice.
+// Param target should be a pointer to the slice to parse into.
+func ParseSlice[TSlice any](sections []string, key string, config map[string]any, target TSlice) error {
+	var (
+		err error
+	)
+
+	data := config
+	if len(sections) > 0 {
+		data, err = WalkMap(sections, config)
+		if err != nil {
+			if errors.Is(err, ErrNotExistent) {
+				return nil
+			}
+
+			return err
+		}
+	}
+
+	sliceData, err := SingleGet(data, key, []any{})
+	if err != nil {
+		if errors.Is(err, ErrNotExistent) {
+			return nil
+		}
+
+		return err
+	}
+
+	if sliceData == nil {
+		return nil
+	}
 
 	codec, err := codecs.GetMime(codecs.MimeJSON)
 	if err != nil {
-		result.Error = err
-		return result, result.Error
+		return err
 	}
 
-	result.Marshaler = codec
+	b, err := codec.Marshal(sliceData)
+	if err != nil {
+		return err
+	}
 
-	data := result.Data
+	if err := codec.Unmarshal(b, target); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Merge merges the given source into the destination.
+func Merge[T any](dst *T, src T) error {
+	return mergo.Merge(dst, src, mergo.WithOverride)
+}
+
+// Dump is a helper function to dump config to []byte.
+func Dump(codecMime string, config map[string]any) ([]byte, error) {
+	codec, err := codecs.GetMime(codecMime)
+	if err != nil {
+		return nil, err
+	}
+
+	return codec.Marshal(config)
+}
+
+// HasKey returns a boolean which indidcates if the given sections and key exists in the configs.
+func HasKey[T any](sections []string, key string, config map[string]any) bool {
+	var tmp T
+
+	var err error
+
+	// Walk into the sections.
+	data, err := WalkMap(sections, config)
+	if err != nil {
+		return false
+	}
+
+	if _, err := SingleGet(data, key, tmp); err != nil {
+		return false
+	}
+
+	return true
+}
+
+// ParseStruct is a helper to make any struct with `json` tags a map[string]any with sections.
+func ParseStruct[TParse any](sections []string, toParse TParse) (map[string]any, error) {
+	codec, err := codecs.GetMime(codecs.MimeJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	data := map[string]any{}
 	for _, s := range sections {
 		if tmp, ok := data[s]; ok {
 			switch t2 := tmp.(type) {
@@ -208,7 +242,7 @@ func ParseStruct[TParse any](sections []string, toParse TParse) (source.Data, er
 				data = t2
 			default:
 				// Should never happen.
-				data = result.Data
+				data = map[string]any{}
 			}
 		} else {
 			tmp := map[string]any{}
@@ -219,14 +253,14 @@ func ParseStruct[TParse any](sections []string, toParse TParse) (source.Data, er
 
 	buf := bytes.Buffer{}
 	if err := codec.NewEncoder(&buf).Encode(toParse); err != nil {
-		return result, fmt.Errorf("encoding: %w", err)
+		return nil, fmt.Errorf("encoding: %w", err)
 	}
 
 	if err := codec.NewDecoder(&buf).Decode(&data); err != nil {
-		return result, fmt.Errorf("decoding: %w", err)
+		return nil, fmt.Errorf("decoding: %w", err)
 	}
 
-	return result, nil
+	return data, nil
 }
 
 func getSourceForURL(u *url.URL) (source.Source, error) {

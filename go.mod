@@ -3,6 +3,7 @@ module github.com/go-orb/go-orb
 go 1.23.0
 
 require (
+	dario.cat/mergo v1.0.1
 	github.com/cornelk/hashmap v1.0.8
 	github.com/go-orb/wire v0.7.0
 	github.com/hashicorp/go-multierror v1.1.1

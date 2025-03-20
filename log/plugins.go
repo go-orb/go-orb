@@ -5,7 +5,6 @@ import (
 
 	"log/slog"
 
-	"github.com/go-orb/go-orb/types"
 	"github.com/go-orb/go-orb/util/container"
 )
 
@@ -28,7 +27,7 @@ type ProviderType struct {
 }
 
 // ProviderFunc is the function a Plugin must provide which returns a Provider encapsulated into a ProviderType.
-type ProviderFunc func(section []string, configs types.ConfigData, opts ...Option) (ProviderType, error)
+type ProviderFunc func(section []string, configs map[string]any, opts ...Option) (ProviderType, error)
 
 // Plugins is the registry for Logger plugins.
 var plugins = container.NewMap[string, ProviderFunc]() //nolint:gochecknoglobals

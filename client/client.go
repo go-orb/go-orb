@@ -7,6 +7,7 @@ import (
 
 	"log/slog"
 
+	"github.com/go-orb/go-orb/cli"
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/registry"
@@ -81,18 +82,17 @@ func Request[TResp any, TReq any](
 	return result, err
 }
 
-// Provide creates a new client instance with the implementation from cfg.Plugin.
-func Provide(
-	name types.ServiceName,
-	configs types.ConfigData,
+// New creates a new client instance with the implementation from cfg.Plugin.
+func New(
+	configData map[string]any,
 	components *types.Components,
 	logger log.Logger,
-	reg registry.Type,
-	opts ...Option) (Type, error) {
+	registry registry.Type,
+	opts ...Option,
+) (Type, error) {
 	cfg := NewConfig(opts...)
 
-	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, configs, &cfg); err != nil {
+	if err := config.Parse(nil, DefaultConfigSection, configData, &cfg); err != nil {
 		return Type{}, err
 	}
 
@@ -107,23 +107,32 @@ func Provide(
 	}
 
 	// Configure the logger.
-	cLogger, err := logger.WithConfig(sections, configs)
+	cLogger, err := logger.WithConfig([]string{DefaultConfigSection}, configData)
 	if err != nil {
 		return Type{}, err
 	}
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	return provider(name, configs, components, cLogger, reg, opts...)
+	return provider(configData, components, cLogger, registry, opts...)
+}
+
+// Provide creates a new client instance with the implementation from cfg.Plugin.
+func Provide(
+	svcCtx *cli.ServiceContext,
+	components *types.Components,
+	logger log.Logger,
+	reg registry.Type,
+	opts ...Option) (Type, error) {
+	return New(svcCtx.Config, components, logger, reg, opts...)
 }
 
 // ProvideNoOpts provides a new client without options.
 func ProvideNoOpts(
-	name types.ServiceName,
-	configs types.ConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
 	logger log.Logger,
 	reg registry.Type,
 ) (Type, error) {
-	return Provide(name, configs, components, logger, reg)
+	return Provide(svcCtx, components, logger, reg)
 }

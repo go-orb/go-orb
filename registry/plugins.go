@@ -8,9 +8,9 @@ import (
 
 // ProviderFunc is provider function type used by plugins to create a new registry.
 type ProviderFunc func(
-	serviceName types.ServiceName,
-	serviceVersion types.ServiceVersion,
-	data types.ConfigData,
+	name string,
+	version string,
+	configData map[string]any,
 	components *types.Components,
 	logger log.Logger,
 	opts ...Option,

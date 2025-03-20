@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/go-orb/go-orb/cli"
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/types"
@@ -121,18 +122,15 @@ type Record struct {
 	Expiry *time.Time `json:"expiry,omitempty"`
 }
 
-// Provide provides a new KVStore.
-func Provide(
-	name types.ServiceName,
-	configs types.ConfigData,
-	components *types.Components,
+// New creates a new kvstore instance with the implementation from cfg.Plugin.
+func New(
+	configData map[string]any,
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error) {
 	cfg := NewConfig(opts...)
 
-	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, configs, &cfg); err != nil {
+	if err := config.Parse(nil, DefaultConfigSection, configData, &cfg); err != nil {
 		return Type{}, err
 	}
 
@@ -149,19 +147,34 @@ func Provide(
 	}
 
 	// Configure the logger.
-	cLogger, err := logger.WithConfig(sections, configs)
+	cLogger, err := logger.WithConfig([]string{DefaultConfigSection}, configData)
 	if err != nil {
 		return Type{}, err
 	}
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	instance, err := provider(name, configs, cLogger, opts...)
+	instance, err := provider(configData, cLogger, opts...)
 	if err != nil {
 		return Type{}, err
 	}
 
-	// Register the registry as a component.
+	return instance, nil
+}
+
+// Provide provides a new KVStore.
+func Provide(
+	svcCtx *cli.ServiceContext,
+	components *types.Components,
+	logger log.Logger,
+	opts ...Option,
+) (Type, error) {
+	instance, err := New(svcCtx.Config, logger, opts...)
+	if err != nil {
+		return Type{}, err
+	}
+
+	// Register the kvstore as a component.
 	err = components.Add(instance, types.PriorityKVStore)
 	if err != nil {
 		logger.Warn("while registering kvstore as a component", "error", err)
@@ -172,10 +185,9 @@ func Provide(
 
 // ProvideNoOpts provides a new KVStore without options.
 func ProvideNoOpts(
-	name types.ServiceName,
-	configs types.ConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
 	logger log.Logger,
 ) (Type, error) {
-	return Provide(name, configs, components, logger)
+	return Provide(svcCtx, components, logger)
 }

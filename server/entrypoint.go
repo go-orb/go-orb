@@ -51,8 +51,7 @@ type Entrypoint interface {
 // EntrypointProvider is the function type to create a new entrypoint.
 // It should create a new config, configure it the run EntrypointFromConfig with it.
 type EntrypointProvider func(
-	sections []string,
-	configs types.ConfigData,
+	configData map[string]any,
 	logger log.Logger,
 	reg registry.Type,
 	opts ...Option,

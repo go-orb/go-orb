@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/go-orb/go-orb/cli"
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/types"
@@ -55,17 +56,14 @@ type Type struct {
 // It parses the config from "configs", fetches the "Plugin" from the config and
 // then forwards all it's arguments to the factory which it get's from "Plugins".
 func Provide(
-	name types.ServiceName,
-	version types.ServiceVersion,
-	configs types.ConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error) {
 	cfg := NewConfig(opts...)
 
-	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, configs, &cfg); err != nil {
+	if err := config.Parse(nil, DefaultConfigSection, svcCtx.Config, &cfg); err != nil {
 		return Type{}, err
 	}
 
@@ -82,14 +80,14 @@ func Provide(
 	}
 
 	// Configure the logger.
-	cLogger, err := logger.WithConfig(sections, configs)
+	cLogger, err := logger.WithConfig([]string{DefaultConfigSection}, svcCtx.Config)
 	if err != nil {
 		return Type{}, err
 	}
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	instance, err := provider(name, version, configs, cLogger, opts...)
+	instance, err := provider(svcCtx, cLogger, opts...)
 	if err != nil {
 		return Type{}, err
 	}

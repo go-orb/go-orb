@@ -25,7 +25,8 @@ type Middleware interface {
 // MiddlewareProvider is the provider for a middleware, each Middleware must supply this to register itself.
 type MiddlewareProvider func(
 	configSection []string,
-	configs types.ConfigData,
+	configKey string,
+	configData map[string]any,
 	logger log.Logger,
 ) (Middleware, error)
 

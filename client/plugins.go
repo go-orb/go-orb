@@ -9,8 +9,7 @@ import (
 
 // ProviderFunc is provider function type used by plugins to create a new client.
 type ProviderFunc func(
-	name types.ServiceName,
-	data types.ConfigData,
+	configData map[string]any,
 	components *types.Components,
 	logger log.Logger,
 	registry registry.Type,

@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/go-orb/go-orb/cli"
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/registry"
@@ -33,13 +34,11 @@ type Server struct {
 	entrypoints *container.Map[string, Entrypoint]
 }
 
-// Provide creates a new server.
+// New creates a new server.
 //
 //nolint:funlen,gocyclo
-func Provide(
-	name types.ServiceName,
-	configs types.ConfigData,
-	components *types.Components,
+func New(
+	configData map[string]any,
 	logger log.Logger,
 	reg registry.Type,
 	opts ...ConfigOption,
@@ -49,8 +48,7 @@ func Provide(
 		o(&cfg)
 	}
 
-	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, configs, &cfg); err != nil {
+	if err := config.Parse(nil, DefaultConfigSection, configData, &cfg); err != nil {
 		return Server{}, err
 	}
 
@@ -63,7 +61,7 @@ func Provide(
 			return Server{}, fmt.Errorf("%w: '%s', did you register it?", ErrUnknownMiddleware, cfgMw.Plugin)
 		}
 
-		mw, err := pFunc(append(sections, "middlewares", strconv.Itoa(idx)), configs, logger)
+		mw, err := pFunc(append([]string{DefaultConfigSection}, "middlewares"), strconv.Itoa(idx), configData, logger)
 		if err != nil {
 			return Server{}, err
 		}
@@ -115,10 +113,12 @@ func Provide(
 			return Server{}, fmt.Errorf("%w: '%s', did you register it?", ErrUnknownEntrypoint, cfgEp.Plugin)
 		}
 
-		mSections := sections
-		mSections = append(mSections, "entrypoints", strconv.Itoa(idx))
+		epConfig, err := config.WalkMap(append([]string{DefaultConfigSection}, "entrypoints", strconv.Itoa(idx)), configData)
+		if err != nil && !errors.Is(err, config.ErrNotExistent) {
+			return Server{}, err
+		}
 
-		ep, err := pFunc(mSections, configs, logger, reg, WithEntrypointMiddlewares(mws...), WithEntrypointHandlers(handlers...))
+		ep, err := pFunc(epConfig, logger, reg, WithEntrypointMiddlewares(mws...), WithEntrypointHandlers(handlers...))
 		if err != nil {
 			return Server{}, err
 		}
@@ -134,8 +134,24 @@ func Provide(
 		entrypoints: eps,
 	}
 
+	return srv, nil
+}
+
+// Provide creates a new server.
+func Provide(
+	svcCtx *cli.ServiceContext,
+	components *types.Components,
+	logger log.Logger,
+	reg registry.Type,
+	opts ...ConfigOption,
+) (Server, error) {
+	srv, err := New(svcCtx.Config, logger, reg, opts...)
+	if err != nil {
+		return Server{}, err
+	}
+
 	// Register the server as a component.
-	err := components.Add(&srv, types.PriorityServer)
+	err = components.Add(&srv, types.PriorityServer)
 	if err != nil {
 		logger.Warn("while registering server as a component", "error", err)
 	}
@@ -145,13 +161,12 @@ func Provide(
 
 // ProvideNoOpts creates a new server without functional options.
 func ProvideNoOpts(
-	name types.ServiceName,
-	configs types.ConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
 	logger log.Logger,
 	reg registry.Type,
 ) (Server, error) {
-	return Provide(name, configs, components, logger, reg)
+	return Provide(svcCtx, components, logger, reg)
 }
 
 // Start will start the HTTP servers on all entrypoints.

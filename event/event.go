@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/go-orb/go-orb/cli"
 	"github.com/go-orb/go-orb/codecs"
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
@@ -222,15 +223,13 @@ func HandleRequest[TReq any, TResp any](
 
 // Provide creates a new client instance with the implementation from cfg.Plugin.
 func Provide(
-	name types.ServiceName,
-	configs types.ConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
 	logger log.Logger,
 	opts ...Option) (Type, error) {
 	cfg := NewConfig(opts...)
 
-	sections := append(types.SplitServiceName(name), DefaultConfigSection)
-	if err := config.Parse(sections, configs, &cfg); err != nil {
+	if err := config.Parse(nil, DefaultConfigSection, svcCtx.Config, &cfg); err != nil {
 		return Type{}, err
 	}
 
@@ -245,14 +244,14 @@ func Provide(
 	}
 
 	// Configure the logger.
-	cLogger, err := logger.WithConfig(sections, configs)
+	cLogger, err := logger.WithConfig([]string{DefaultConfigSection}, svcCtx.Config)
 	if err != nil {
 		return Type{}, err
 	}
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	instance, err := provider(name, configs, cLogger, opts...)
+	instance, err := provider(svcCtx, cLogger, opts...)
 	if err != nil {
 		return Type{}, err
 	}
@@ -268,9 +267,9 @@ func Provide(
 
 // ProvideNoOpts creates a new client instance with the implementation from cfg.Plugin.
 func ProvideNoOpts(
-	name types.ServiceName,
-	configs types.ConfigData,
+	svcCtx *cli.ServiceContext,
 	components *types.Components,
-	logger log.Logger) (Type, error) {
-	return Provide(name, configs, components, logger)
+	logger log.Logger,
+) (Type, error) {
+	return Provide(svcCtx, components, logger)
 }
