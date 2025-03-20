@@ -97,9 +97,14 @@ func Read(url *url.URL) (map[string]any, error) {
 // Parse parses the config from config.Read into the given struct.
 // Param target should be a pointer to the config to parse into.
 func Parse[TMap any](sections []string, key string, config map[string]any, target TMap) error {
-	data := map[string]any{}
+	if config == nil {
+		return nil
+	}
 
-	var err error
+	var (
+		data map[string]any
+		err  error
+	)
 
 	if len(sections) > 0 {
 		data, err = WalkMap(sections, config)
@@ -110,6 +115,8 @@ func Parse[TMap any](sections []string, key string, config map[string]any, targe
 
 			return err
 		}
+	} else {
+		data = config
 	}
 
 	if key != "" {
@@ -121,10 +128,6 @@ func Parse[TMap any](sections []string, key string, config map[string]any, targe
 
 			return err
 		}
-	}
-
-	if data == nil {
-		return nil
 	}
 
 	codec, err := codecs.GetMime(codecs.MimeJSON)
@@ -147,11 +150,15 @@ func Parse[TMap any](sections []string, key string, config map[string]any, targe
 // ParseSlice parses the config from config.Read into the given slice.
 // Param target should be a pointer to the slice to parse into.
 func ParseSlice[TSlice any](sections []string, key string, config map[string]any, target TSlice) error {
+	if config == nil {
+		return nil
+	}
+
 	var (
-		err error
+		data map[string]any
+		err  error
 	)
 
-	data := config
 	if len(sections) > 0 {
 		data, err = WalkMap(sections, config)
 		if err != nil {
@@ -161,6 +168,8 @@ func ParseSlice[TSlice any](sections []string, key string, config map[string]any
 
 			return err
 		}
+	} else {
+		data = config
 	}
 
 	sliceData, err := SingleGet(data, key, []any{})
