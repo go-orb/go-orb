@@ -3,7 +3,6 @@ package config
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -56,12 +55,12 @@ func WalkMap(sections []string, in map[string]any) (map[string]any, error) {
 			}
 
 			if int64(len(sliceData)) <= snum {
-				return data, fmt.Errorf("while walking sections '%s': %w", sections, ErrNotExistent)
+				return data, fmt.Errorf("while walking sections '%s': %w", sections, ErrNoSuchKey)
 			}
 
 			tmpData, ok := sliceData[snum].(map[string]any)
 			if !ok {
-				return data, fmt.Errorf("while walking sections '%s': %w", sections, ErrNotExistent)
+				return data, fmt.Errorf("while walking sections '%s': %w", sections, ErrNoSuchKey)
 			}
 
 			data = tmpData
@@ -109,10 +108,6 @@ func Parse[TMap any](sections []string, key string, config map[string]any, targe
 	if len(sections) > 0 {
 		data, err = WalkMap(sections, config)
 		if err != nil {
-			if errors.Is(err, ErrNotExistent) {
-				return nil
-			}
-
 			return err
 		}
 	} else {
@@ -122,10 +117,6 @@ func Parse[TMap any](sections []string, key string, config map[string]any, targe
 	if key != "" {
 		data, err = SingleGet(data, key, map[string]any{})
 		if err != nil {
-			if errors.Is(err, ErrNotExistent) {
-				return nil
-			}
-
 			return err
 		}
 	}
@@ -162,10 +153,6 @@ func ParseSlice[TSlice any](sections []string, key string, config map[string]any
 	if len(sections) > 0 {
 		data, err = WalkMap(sections, config)
 		if err != nil {
-			if errors.Is(err, ErrNotExistent) {
-				return nil
-			}
-
 			return err
 		}
 	} else {
@@ -174,10 +161,6 @@ func ParseSlice[TSlice any](sections []string, key string, config map[string]any
 
 	sliceData, err := SingleGet(data, key, []any{})
 	if err != nil {
-		if errors.Is(err, ErrNotExistent) {
-			return nil
-		}
-
 		return err
 	}
 

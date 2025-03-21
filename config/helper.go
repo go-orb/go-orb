@@ -16,7 +16,7 @@ import (
 func SingleGet[T any](data map[string]any, key string, def T) (T, error) {
 	value, ok := data[key]
 	if !ok {
-		return def, ErrNotExistent
+		return def, ErrNoSuchKey
 	}
 
 	switch any(def).(type) {

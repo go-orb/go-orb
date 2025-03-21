@@ -3,6 +3,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"log/slog"
@@ -92,7 +93,7 @@ func New(
 ) (Type, error) {
 	cfg := NewConfig(opts...)
 
-	if err := config.Parse(nil, DefaultConfigSection, configData, &cfg); err != nil {
+	if err := config.Parse(nil, DefaultConfigSection, configData, &cfg); err != nil && !errors.Is(err, config.ErrNoSuchKey) {
 		return Type{}, err
 	}
 

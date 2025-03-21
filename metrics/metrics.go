@@ -2,6 +2,7 @@
 package metrics
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -63,7 +64,7 @@ func Provide(
 ) (Type, error) {
 	cfg := NewConfig(opts...)
 
-	if err := config.Parse(nil, DefaultConfigSection, svcCtx.Config, &cfg); err != nil {
+	if err := config.Parse(nil, DefaultConfigSection, svcCtx.Config, &cfg); err != nil && !errors.Is(err, config.ErrNoSuchKey) {
 		return Type{}, err
 	}
 

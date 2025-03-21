@@ -3,6 +3,7 @@ package event
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -229,7 +230,7 @@ func Provide(
 	opts ...Option) (Type, error) {
 	cfg := NewConfig(opts...)
 
-	if err := config.Parse(nil, DefaultConfigSection, svcCtx.Config, &cfg); err != nil {
+	if err := config.Parse(nil, DefaultConfigSection, svcCtx.Config, &cfg); err != nil && !errors.Is(err, config.ErrNoSuchKey) {
 		return Type{}, err
 	}
 

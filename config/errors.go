@@ -6,8 +6,8 @@ var (
 	// ErrUnknownPlugin happens when there's no config factory for the given plugin.
 	ErrUnknownPlugin = errors.New("unknown config given. Did you import the config plugin?")
 
-	// ErrNotExistent happens when a config key is not existent.
-	ErrNotExistent = errors.New("no such config key")
+	// ErrNoSuchKey happens when a config key is not existent.
+	ErrNoSuchKey = errors.New("no such config key")
 
 	// ErrTypesDontMatch happens when types don't match during Get[T]().
 	ErrTypesDontMatch = errors.New("config key requested type and actual type don't match")

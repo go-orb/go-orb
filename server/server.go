@@ -36,7 +36,7 @@ type Server struct {
 
 // New creates a new server.
 //
-//nolint:funlen,gocyclo
+//nolint:funlen,gocyclo,cyclop
 func New(
 	configData map[string]any,
 	logger log.Logger,
@@ -48,7 +48,7 @@ func New(
 		o(&cfg)
 	}
 
-	if err := config.Parse(nil, DefaultConfigSection, configData, &cfg); err != nil {
+	if err := config.Parse(nil, DefaultConfigSection, configData, &cfg); err != nil && !errors.Is(err, config.ErrNoSuchKey) {
 		return Server{}, err
 	}
 
@@ -114,7 +114,7 @@ func New(
 		}
 
 		epConfig, err := config.WalkMap(append([]string{DefaultConfigSection}, "entrypoints", strconv.Itoa(idx)), configData)
-		if err != nil && !errors.Is(err, config.ErrNotExistent) {
+		if err != nil && !errors.Is(err, config.ErrNoSuchKey) {
 			return Server{}, err
 		}
 

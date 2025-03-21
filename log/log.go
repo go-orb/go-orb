@@ -3,6 +3,7 @@ package log
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"log/slog"
@@ -54,12 +55,12 @@ func NewConfigDatas(sections []string, configs map[string]any, opts ...Option) (
 		var err error
 		data, err := config.ParseStruct(append(sections, DefaultConfigSection), &cfg)
 
-		if err != nil {
+		if err != nil && !errors.Is(err, config.ErrNoSuchKey) {
 			return Logger{}, fmt.Errorf("while creating a new config: %w", err)
 		}
 
 		configs = data
-	} else if err := config.Parse(sections, DefaultConfigSection, configs, &cfg); err != nil {
+	} else if err := config.Parse(sections, DefaultConfigSection, configs, &cfg); err != nil && !errors.Is(err, config.ErrNoSuchKey) {
 		return Logger{}, fmt.Errorf("while creating a new config: %w", err)
 	}
 
