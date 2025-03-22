@@ -46,6 +46,9 @@ type Entrypoint interface {
 
 	// EntrypointID returns the id (uuid) of this entrypoint in the registry.
 	EntrypointID() string
+
+	// Metadata returns the metadata of this entrypoint.
+	Metadata() map[string]string
 }
 
 // EntrypointProvider is the function type to create a new entrypoint.

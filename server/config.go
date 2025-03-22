@@ -21,9 +21,10 @@ var _ (EntrypointConfigType) = (*EntrypointConfig)(nil)
 
 // EntrypointConfig is the base config for all entrypoints.
 type EntrypointConfig struct {
-	Plugin  string `json:"plugin"         yaml:"plugin"`
-	Enabled bool   `json:"enabled"        yaml:"enabled"`
-	Name    string `json:"name,omitempty" yaml:"name,omitempty"`
+	Plugin   string            `json:"plugin"             yaml:"plugin"`
+	Enabled  bool              `json:"enabled"            yaml:"enabled"`
+	Name     string            `json:"name,omitempty"     yaml:"name,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 
 	OptMiddlewares []Middleware       `json:"-" yaml:"-"`
 	OptHandlers    []RegistrationFunc `json:"-" yaml:"-"`
@@ -83,6 +84,21 @@ func WithEntrypointHandlers(hs ...RegistrationFunc) Option {
 	return func(cfg EntrypointConfigType) {
 		c := cfg.config()
 		c.OptHandlers = append(c.OptHandlers, hs...)
+	}
+}
+
+// WithEntrypointMetadata sets the metadata of the entrypoint.
+func WithEntrypointMetadata(metadata map[string]string) Option {
+	return func(cfg EntrypointConfigType) {
+		c := cfg.config()
+
+		if c.Metadata == nil {
+			c.Metadata = make(map[string]string)
+		}
+
+		for k, v := range metadata {
+			c.Metadata[k] = v
+		}
 	}
 }
 
