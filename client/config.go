@@ -399,6 +399,16 @@ func WithMetadata(n map[string]string) CallOption {
 	}
 }
 
+// WithRegistryMetadata adds a metadata key-value pair for node selection
+func WithRegistryMetadata(key, value string) CallOption {
+	return func(o *CallOptions) {
+		if o.Metadata == nil {
+			o.Metadata = make(map[string]string)
+		}
+		o.Metadata[key] = value
+	}
+}
+
 // WithResponseMetadata will write response Metadata into the give map.
 func WithResponseMetadata(n map[string]string) CallOption {
 	return func(o *CallOptions) {
