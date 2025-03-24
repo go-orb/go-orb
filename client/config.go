@@ -282,6 +282,7 @@ type CallOptions struct {
 	// PreferredTransports contains a list of transport names in preferred order.
 	PreferredTransports []string
 
+	// Allow any transport in any order.
 	AnyTransport bool
 
 	// Selector is the node selector.
