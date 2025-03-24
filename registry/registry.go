@@ -2,9 +2,10 @@
 package registry
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"strings"
+	"time"
 
 	"log/slog"
 
@@ -24,32 +25,56 @@ var (
 	ErrWatcherStopped = errors.New("watcher stopped")
 )
 
-// Registry provides an interface for service discovery
-// and an abstraction over varying implementations
-// {consul, etcd, zookeeper, ...}.
+// ServiceNode is a service node.
+type ServiceNode struct {
+	// Name is the name of the service. Should be DNS compatible.
+	Name string `json:"name"`
+	// Version is the version of the service.
+	Version string `json:"version"`
+
+	// Metadata is the metadata of the service.
+	Metadata map[string]string `json:"metadata"`
+
+	// Scheme is the scheme of the service.
+	Scheme string `json:"scheme"`
+	// Address is the address of the service.
+	Address string `json:"address"`
+
+	// Namespace is the namespace of the node.
+	Namespace string `json:"namespace"`
+
+	// Region is the region of the node.
+	Region string `json:"region"`
+
+	// TTL is the time to live for the service.
+	// Keep it 0 if you don't want to use TTL.
+	TTL time.Duration `json:"ttl"`
+}
+
+func (r ServiceNode) String() string {
+	return fmt.Sprintf("ServiceNode{%s %s %s %s %s %s}", r.Namespace, r.Region, r.Name, r.Version, r.Address, r.Scheme)
+}
+
+// Registry is a component for service discovery.
 type Registry interface {
 	types.Component
 
-	// ServiceName returns types.ServiceName that has been provided to Provide().
-	ServiceName() string
-
-	// ServiceVersion returns types.ServiceVersion that has been provided to Provide().
-	ServiceVersion() string
-
 	// Register registers a service within the registry.
-	Register(srv *Service, opts ...RegisterOption) error
+	Register(ctx context.Context, srv ServiceNode) error
 
 	// Deregister deregisters a service within the registry.
-	Deregister(srv *Service, opts ...DeregisterOption) error
+	Deregister(ctx context.Context, srv ServiceNode) error
 
 	// GetService returns a service from the registry.
-	GetService(name string, opts ...GetOption) ([]*Service, error)
+	// Leave schemes empty to get all schemes.
+	GetService(ctx context.Context, namespace, region, name string, schemes []string) ([]ServiceNode, error)
 
 	// ListServices lists services within the registry.
-	ListServices(opts ...ListOption) ([]*Service, error)
+	// Leave schemes empty to get all schemes.
+	ListServices(ctx context.Context, namespace, region string, schemes []string) ([]ServiceNode, error)
 
 	// Watch returns a Watcher which you can watch on.
-	Watch(opts ...WatchOption) (Watcher, error)
+	Watch(ctx context.Context, opts ...WatchOption) (Watcher, error)
 }
 
 // Type is the registry type it is returned when you use ProvideRegistry
@@ -58,83 +83,8 @@ type Type struct {
 	Registry
 }
 
-// Service represents a service in a registry.
-type Service struct {
-	Name      string            `json:"name"`
-	Version   string            `json:"version"`
-	Metadata  map[string]string `json:"metadata"`
-	Endpoints []*Endpoint       `json:"endpoints"`
-	Nodes     []*Node           `json:"nodes"`
-}
-
-// String returns a string representation of the Service.
-func (s *Service) String() string {
-	nodes := []string{}
-	for _, n := range s.Nodes {
-		nodes = append(nodes, n.String())
-	}
-
-	return fmt.Sprintf("Service{Name: %s, Version: %s, Nodes: (%s), Endpoints: %d}",
-		s.Name, s.Version, strings.Join(nodes, ", "), len(s.Endpoints))
-}
-
-// Node represents a service node in a registry.
-// One service can be comprised of multiple nodes.
-type Node struct {
-	ID string `json:"id"`
-	// ip:port
-	Address string `json:"address"`
-	// grpc/h2c/http/http3 uvm., since go-orb!
-	Transport string            `json:"transport"`
-	Metadata  map[string]string `json:"metadata"`
-}
-
-// String returns a string representation of the Node.
-func (n *Node) String() string {
-	return fmt.Sprintf("Node{ID: %s, Address: %s, Transport: %s}",
-		n.ID, n.Address, n.Transport)
-}
-
-// Endpoint represents a service endpoint in a registry.
-type Endpoint struct {
-	Name     string            `json:"name"`
-	Request  *Value            `json:"request"`
-	Response *Value            `json:"response"`
-	Metadata map[string]string `json:"metadata"`
-}
-
-// String returns a string representation of the Endpoint.
-func (e *Endpoint) String() string {
-	var reqName, respName string
-	if e.Request != nil {
-		reqName = e.Request.Name
-	}
-
-	if e.Response != nil {
-		respName = e.Response.Name
-	}
-
-	return fmt.Sprintf("Endpoint{Name: %s, Request: %s, Response: %s}",
-		e.Name, reqName, respName)
-}
-
-// Value is a value container used in the registry.
-type Value struct {
-	Name   string   `json:"name"`
-	Type   string   `json:"type"`
-	Values []*Value `json:"values"`
-}
-
-// String returns a string representation of the Value.
-func (v *Value) String() string {
-	return fmt.Sprintf("Value{Name: %s, Type: %s, Values: %d}",
-		v.Name, v.Type, len(v.Values))
-}
-
 // New creates a new registry without side-effects.
 func New(
-	name string,
-	version string,
 	configData map[string]any,
 	components *types.Components,
 	logger log.Logger,
@@ -166,7 +116,7 @@ func New(
 
 	cLogger = cLogger.With(slog.String("component", ComponentType), slog.String("plugin", cfg.Plugin))
 
-	instance, err := provider(name, version, configData, components, cLogger, opts...)
+	instance, err := provider(configData, components, cLogger, opts...)
 	if err != nil {
 		return Type{}, err
 	}
@@ -183,7 +133,7 @@ func Provide(
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error) {
-	reg, err := New(svcCtx.Name(), svcCtx.Version(), svcCtx.Config, components, logger, opts...)
+	reg, err := New(svcCtx.Config, components, logger, opts...)
 	if err != nil {
 		return Type{}, err
 	}

@@ -43,14 +43,13 @@ type Entrypoint interface {
 
 	// Address returns the address the entrypoint is listening on.
 	Address() string
-
-	// EntrypointID returns the id (uuid) of this entrypoint in the registry.
-	EntrypointID() string
 }
 
 // EntrypointProvider is the function type to create a new entrypoint.
 // It should create a new config, configure it the run EntrypointFromConfig with it.
 type EntrypointProvider func(
+	name string,
+	version string,
 	configData map[string]any,
 	logger log.Logger,
 	reg registry.Type,
@@ -59,6 +58,8 @@ type EntrypointProvider func(
 
 // EntrypointNew is the function type to create a new entrypoint.
 type EntrypointNew func(
+	name string,
+	version string,
 	acfg any,
 	logger log.Logger,
 	reg registry.Type,

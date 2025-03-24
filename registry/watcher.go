@@ -7,14 +7,6 @@ import "time"
 type Watcher interface {
 	// Next is a blocking call
 	Next() (*Result, error)
-	Stop() error
-}
-
-// Result is returned by a call to Next on
-// the watcher. Actions can be create, update, delete.
-type Result struct {
-	Action  string   `json:"action"`
-	Service *Service `json:"service"`
 }
 
 // EventType defines registry event type.
@@ -23,11 +15,18 @@ type EventType int
 const (
 	// Create is emitted when a new service is registered.
 	Create EventType = iota
-	// Delete is emitted when an existing service is deregsitered.
+	// Delete is emitted when an existing service is deregistered.
 	Delete
-	// Update is emitted when an existing servicec is updated.
+	// Update is emitted when an existing service is updated.
 	Update
 )
+
+// Result is returned by a call to Next on
+// the watcher. Actions can be create, update, delete.
+type Result struct {
+	Action EventType   `json:"action"`
+	Node   ServiceNode `json:"node"`
+}
 
 // String returns human readable event type.
 func (t EventType) String() string {
@@ -52,5 +51,5 @@ type Event struct {
 	// Timestamp is event timestamp
 	Timestamp time.Time
 	// Service is registry service
-	Service *Service
+	Service ServiceNode
 }

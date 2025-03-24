@@ -109,6 +109,12 @@ type Config struct {
 	StreamTimeout config.Duration `json:"streamTimeout" yaml:"streamTimeout"`
 	// TLS config.
 	TLSConfig *tls.Config
+
+	// Namespace registry filter.
+	Namespace string `json:"namespace" yaml:"namespace"`
+
+	// Region registry filter.
+	Region string `json:"region" yaml:"region"`
 }
 
 func (c *Config) config() *Config {
@@ -228,6 +234,22 @@ func WithClientMiddleware(m MiddlewareConfig) Option {
 	}
 }
 
+// WithClientNamespace sets the namespace filter.
+func WithClientNamespace(n string) Option {
+	return func(cfg ConfigType) {
+		c := cfg.config()
+		c.Namespace = n
+	}
+}
+
+// WithClientRegion sets the region filter.
+func WithClientRegion(r string) Option {
+	return func(cfg ConfigType) {
+		c := cfg.config()
+		c.Region = r
+	}
+}
+
 // NewConfig generates a new config with all the defaults.
 func NewConfig(opts ...Option) Config {
 	cfg := Config{
@@ -296,6 +318,12 @@ type CallOptions struct {
 
 	// MaxCallSendMsgSize is the maximum size of the call send message size.
 	MaxCallSendMsgSize int
+
+	// Namespace registry filter.
+	Namespace string
+
+	// Region registry filter.
+	Region string
 }
 
 // CallOption used by Call or Stream.
@@ -417,5 +445,19 @@ func WithMaxCallRecvMsgSize(n int) CallOption {
 func WithMaxCallSendMsgSize(n int) CallOption {
 	return func(o *CallOptions) {
 		o.MaxCallSendMsgSize = n
+	}
+}
+
+// WithNamespace sets the namespace filter.
+func WithNamespace(n string) CallOption {
+	return func(o *CallOptions) {
+		o.Namespace = n
+	}
+}
+
+// WithRegion sets the region filter.
+func WithRegion(r string) CallOption {
+	return func(o *CallOptions) {
+		o.Region = r
 	}
 }
