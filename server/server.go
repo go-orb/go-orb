@@ -38,6 +38,8 @@ type Server struct {
 //
 //nolint:funlen,gocyclo,cyclop
 func New(
+	name string,
+	version string,
 	configData map[string]any,
 	logger log.Logger,
 	reg registry.Type,
@@ -95,7 +97,7 @@ func New(
 			return Server{}, fmt.Errorf("%w: '%s', did you register it?", ErrUnknownEntrypoint, cfgNewEp.config().Plugin)
 		}
 
-		ep, err := newFunc(cfgNewEp, logger, reg)
+		ep, err := newFunc(name, version, cfgNewEp, logger, reg)
 		if err != nil {
 			return Server{}, err
 		}
@@ -118,7 +120,7 @@ func New(
 			return Server{}, err
 		}
 
-		ep, err := pFunc(epConfig, logger, reg, WithEntrypointMiddlewares(mws...), WithEntrypointHandlers(handlers...))
+		ep, err := pFunc(name, version, epConfig, logger, reg, WithEntrypointMiddlewares(mws...), WithEntrypointHandlers(handlers...))
 		if err != nil {
 			return Server{}, err
 		}
@@ -145,7 +147,7 @@ func Provide(
 	reg registry.Type,
 	opts ...ConfigOption,
 ) (Server, error) {
-	srv, err := New(svcCtx.Config, logger, reg, opts...)
+	srv, err := New(svcCtx.Name(), svcCtx.Version(), svcCtx.Config, logger, reg, opts...)
 	if err != nil {
 		return Server{}, err
 	}
