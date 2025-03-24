@@ -38,7 +38,7 @@ func (e *Error) Toerror() error {
 	return e
 }
 
-// Wrap clones this error and wraps another error.
+// Wrap creates a new error and wraps another error.
 func (e *Error) Wrap(err error) *Error {
 	if e == nil {
 		return nil
@@ -48,6 +48,19 @@ func (e *Error) Wrap(err error) *Error {
 		Code:    e.Code,
 		Message: e.Message,
 		Wrapped: err,
+	}
+}
+
+// WrapNew creates a new error and wraps another error with a new message.
+func (e *Error) WrapNew(message string) *Error {
+	if e == nil {
+		return nil
+	}
+
+	return &Error{
+		Code:    e.Code,
+		Message: e.Message,
+		Wrapped: errors.New(message),
 	}
 }
 
