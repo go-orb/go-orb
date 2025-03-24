@@ -17,7 +17,7 @@ type MemoryServer interface {
 }
 
 //nolint:gochecknoglobals
-var memoryServers = container.NewMap[string, MemoryServer]()
+var memoryServers = container.NewSafeMap[string, MemoryServer]()
 
 // RegisterMemoryServer registers a memory server for a service.
 func RegisterMemoryServer(service string, server MemoryServer) {
