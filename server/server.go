@@ -36,7 +36,7 @@ type Server struct {
 
 // New creates a new server.
 //
-//nolint:funlen,gocyclo,cyclop
+//nolint:funlen,gocyclo
 func New(
 	name string,
 	version string,
@@ -45,10 +45,7 @@ func New(
 	reg registry.Type,
 	opts ...ConfigOption,
 ) (Server, error) {
-	cfg := Config{}
-	for _, o := range opts {
-		o(&cfg)
-	}
+	cfg := NewConfig(opts...)
 
 	if err := config.Parse(nil, DefaultConfigSection, configData, &cfg); err != nil && !errors.Is(err, config.ErrNoSuchKey) {
 		return Server{}, err
@@ -87,17 +84,19 @@ func New(
 	eps := container.NewMap[string, Entrypoint]()
 
 	if len(cfg.functionalEntrypoints) == 0 && len(cfg.Entrypoints) == 0 {
-		cfg.Entrypoints = append(cfg.Entrypoints, EntrypointConfig{Name: "memory", Plugin: "memory", Enabled: true})
-		cfg.Entrypoints = append(cfg.Entrypoints, EntrypointConfig{Name: "grpcs", Plugin: "grpc", Enabled: true})
+		cfg.Entrypoints["memory"] = EntrypointConfig{Plugin: "memory", Enabled: true}
+		cfg.Entrypoints["grpcs"] = EntrypointConfig{Plugin: "grpc", Enabled: true}
 	}
 
-	for _, cfgNewEp := range cfg.functionalEntrypoints {
+	for epName, cfgNewEp := range cfg.functionalEntrypoints {
 		newFunc, ok := PluginsNew.Get(cfgNewEp.config().Plugin)
 		if !ok {
 			return Server{}, fmt.Errorf("%w: '%s', did you register it?", ErrUnknownEntrypoint, cfgNewEp.config().Plugin)
 		}
 
-		ep, err := newFunc(name, version, cfgNewEp, logger, reg)
+		epLogger := logger.With("component", ComponentType, "plugin", cfgNewEp.config().Plugin, "entrypoint", epName)
+
+		ep, err := newFunc(name, version, epName, cfgNewEp, epLogger, reg)
 		if err != nil {
 			return Server{}, err
 		}
@@ -109,18 +108,20 @@ func New(
 		eps.Set(ep.Name(), ep)
 	}
 
-	for idx, cfgEp := range cfg.Entrypoints {
+	for epName, cfgEp := range cfg.Entrypoints {
 		pFunc, ok := Plugins.Get(cfgEp.Plugin)
 		if !ok {
 			return Server{}, fmt.Errorf("%w: '%s', did you register it?", ErrUnknownEntrypoint, cfgEp.Plugin)
 		}
 
-		epConfig, err := config.WalkMap(append([]string{DefaultConfigSection}, "entrypoints", strconv.Itoa(idx)), configData)
+		epConfig, err := config.WalkMap(append([]string{DefaultConfigSection}, "entrypoints", epName), configData)
 		if err != nil && !errors.Is(err, config.ErrNoSuchKey) {
 			return Server{}, err
 		}
 
-		ep, err := pFunc(name, version, epConfig, logger, reg, WithEntrypointMiddlewares(mws...), WithEntrypointHandlers(handlers...))
+		epLogger := logger.With("component", ComponentType, "plugin", cfgEp.Plugin, "entrypoint", epName)
+
+		ep, err := pFunc(name, version, epName, epConfig, epLogger, reg, WithEntrypointMiddlewares(mws...), WithEntrypointHandlers(handlers...))
 		if err != nil {
 			return Server{}, err
 		}

@@ -21,9 +21,8 @@ var _ (EntrypointConfigType) = (*EntrypointConfig)(nil)
 
 // EntrypointConfig is the base config for all entrypoints.
 type EntrypointConfig struct {
-	Plugin  string `json:"plugin"         yaml:"plugin"`
-	Enabled bool   `json:"enabled"        yaml:"enabled"`
-	Name    string `json:"name,omitempty" yaml:"name,omitempty"`
+	Plugin  string `json:"plugin"  yaml:"plugin"`
+	Enabled bool   `json:"enabled" yaml:"enabled"`
 
 	OptMiddlewares []Middleware       `json:"-" yaml:"-"`
 	OptHandlers    []RegistrationFunc `json:"-" yaml:"-"`
@@ -44,14 +43,6 @@ func NewEntrypointConfig(opts ...Option) *EntrypointConfig {
 	}
 
 	return cfg
-}
-
-// WithEntrypointName sets the name of the entrypoint.
-func WithEntrypointName(p string) Option {
-	return func(cfg EntrypointConfigType) {
-		c := cfg.config()
-		c.Name = p
-	}
 }
 
 // WithEntrypointPlugin sets the plugin of the entrypoint.
@@ -88,16 +79,19 @@ func WithEntrypointHandlers(hs ...RegistrationFunc) Option {
 
 // Config is the global config for servers.
 type Config struct {
-	Middlewares []MiddlewareConfig `json:"middlwares,omitempty"  yaml:"middlewares,omitempty"`
-	Handlers    []string           `json:"handlers,omitempty"    yaml:"handlers,omitempty"`
-	Entrypoints []EntrypointConfig `json:"entrypoints,omitempty" yaml:"entrypoints,omitempty"`
+	Middlewares []MiddlewareConfig          `json:"middlewares,omitempty" yaml:"middlewares,omitempty"`
+	Handlers    []string                    `json:"handlers,omitempty"    yaml:"handlers,omitempty"`
+	Entrypoints map[string]EntrypointConfig `json:"entrypoints,omitempty" yaml:"entrypoints,omitempty"`
 
-	functionalEntrypoints []EntrypointConfigType `json:"-" yaml:"-"`
+	functionalEntrypoints map[string]EntrypointConfigType `json:"-" yaml:"-"`
 }
 
 // NewConfig creates a new config struct with the given opts.
 func NewConfig(opts ...ConfigOption) Config {
-	cfg := Config{}
+	cfg := Config{
+		Entrypoints:           make(map[string]EntrypointConfig),
+		functionalEntrypoints: make(map[string]EntrypointConfigType),
+	}
 
 	for _, option := range opts {
 		option(&cfg)
@@ -110,8 +104,8 @@ func NewConfig(opts ...ConfigOption) Config {
 type ConfigOption func(*Config)
 
 // WithEntrypointConfig allows you to create an entrypoint functionally.
-func WithEntrypointConfig(config EntrypointConfigType) ConfigOption {
+func WithEntrypointConfig(epName string, config EntrypointConfigType) ConfigOption {
 	return func(c *Config) {
-		c.functionalEntrypoints = append(c.functionalEntrypoints, config)
+		c.functionalEntrypoints[epName] = config
 	}
 }

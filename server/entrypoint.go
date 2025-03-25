@@ -50,6 +50,7 @@ type Entrypoint interface {
 type EntrypointProvider func(
 	name string,
 	version string,
+	epName string,
 	configData map[string]any,
 	logger log.Logger,
 	reg registry.Type,
@@ -60,6 +61,7 @@ type EntrypointProvider func(
 type EntrypointNew func(
 	name string,
 	version string,
+	epName string,
 	acfg any,
 	logger log.Logger,
 	reg registry.Type,
