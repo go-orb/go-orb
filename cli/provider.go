@@ -89,6 +89,14 @@ func ProvideServiceConfigData(
 		return ServiceContextHasConfigData{}, err
 	}
 
+	// If multi-service config is enabled, walk the map to get the service-specific config.
+	if serviceContext.App().MultiServiceConfig {
+		result, err = config.WalkMap(types.SplitServiceName(serviceContext.Name()), result)
+		if err != nil {
+			return ServiceContextHasConfigData{}, err
+		}
+	}
+
 	// Finally, set the config on the service context.
 	serviceContext.Config = result
 
