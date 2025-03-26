@@ -18,9 +18,9 @@ import (
 
 // isValidChar checks if a character is valid for a service name.
 //
-// lowercase ascii characters, numbers, hyphens, and periods are allowed.
+// lowercase ascii characters, numbers, hyphens, plus sign and periods are allowed.
 func isValidChar(c byte) bool {
-	if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '-') || (c == '.') {
+	if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '-') || (c == '.') || (c == '+') {
 		return true
 	}
 
@@ -50,30 +50,34 @@ var (
 // ServiceNode is a service node.
 type ServiceNode struct {
 	// Name is the name of the service. Should be DNS compatible.
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 	// Version is the version of the service.
-	Version string `json:"version"`
+	Version string `json:"version,omitempty"`
 
 	// Metadata is the metadata of the service.
-	Metadata map[string]string `json:"metadata"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 
 	// Node is the name of the node, this is normally the entrypoint name.
-	Node string `json:"node"`
+	Node string `json:"node,omitempty"`
+
+	// Network is the network of the service, tcp, udp or unix.
+	// Empty is tcp and the default.
+	Network string `json:"network,omitempty"`
 
 	// Scheme is the scheme of the service.
-	Scheme string `json:"scheme"`
+	Scheme string `json:"scheme,omitempty"`
 	// Address is the address of the service.
-	Address string `json:"address"`
+	Address string `json:"address,omitempty"`
 
 	// Namespace is the namespace of the node.
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 
 	// Region is the region of the node.
-	Region string `json:"region"`
+	Region string `json:"region,omitempty"`
 
 	// TTL is the time to live for the service.
 	// Keep it 0 if you don't want to use TTL.
-	TTL time.Duration `json:"ttl"`
+	TTL time.Duration `json:"ttl,omitempty"`
 }
 
 // Valid checks if a serviceNode has a valid namespace, region, and name.
@@ -110,6 +114,10 @@ func (r ServiceNode) Valid() error {
 
 	if !isValidNameText(r.Scheme) {
 		return orberrors.ErrBadRequest.WrapF("service scheme must be alphanumeric, got %s", r.Scheme)
+	}
+
+	if !isValidNameText(r.Network) {
+		return orberrors.ErrBadRequest.WrapF("service network must be alphanumeric, got %s", r.Network)
 	}
 
 	return nil
