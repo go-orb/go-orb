@@ -70,7 +70,7 @@ service1:
     middlewares:
       - middleware-1
     entrypoints:
-      - name: grpc
+      grpc: 
         plugin: grpc
         insecure: true
         reflection: false
@@ -94,21 +94,21 @@ service1:
       - middleware-1
       - middleware-2
     entrypoints:
-      - name: hertzhttp
+      hertzhttp:
         plugin: hertz
         http2: false
         insecure: true
 
-      - name: grpc
+      grpc:
         plugin: grpc
         insecure: true
         reflection: false
 
-      - name: http
+      http:
         plugin: http
         insecure: true
 
-      - name: drpc
+      drpc:
         plugin: drpc
   client:
     middlewares:
