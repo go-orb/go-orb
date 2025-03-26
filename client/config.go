@@ -19,7 +19,20 @@ var (
 	// DefaultContentType is the default Content-Type for calls.
 	DefaultContentType = "application/x-protobuf"
 	// DefaultPreferredTransports set's in which order a transport will be selected.
-	DefaultPreferredTransports = []string{"memory", "grpc", "drpc", "http", "grpcs", "h2c", "http2", "http3", "https"}
+	DefaultPreferredTransports = []string{
+		"memory",
+		"unix+grpc",
+		"unix+drpc",
+		"unix+http",
+		"grpc",
+		"drpc",
+		"http",
+		"grpcs",
+		"h2c",
+		"http2",
+		"http3",
+		"https",
+	}
 
 	// DefaultPoolHosts set the number of hosts in a pool.
 	DefaultPoolHosts = 64

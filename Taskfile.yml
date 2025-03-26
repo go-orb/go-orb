@@ -1,0 +1,10 @@
+version: "3"
+
+tasks:
+  lint:
+    cmds:
+      - cmd: golangci-lint run
+
+  local-lint:
+    cmds:
+      - cmd: golangci-lint run

@@ -41,6 +41,9 @@ type Entrypoint interface {
 	// Transport returns the client transport that is required to talk to this entrypoint.
 	Transport() string
 
+	// Network returns the network the entrypoint is listening on.
+	Network() string
+
 	// Address returns the address the entrypoint is listening on.
 	Address() string
 }
