@@ -155,7 +155,7 @@ go-orb has support for sending nearly anything you throw in as `application/json
 #### pre encoded / proxy
 
 ```go
-resp , err := client.Call[map[string]any](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", `{"name": "Alex"}`, client.WithContentType(codecs.MimeJSON))
+resp , err := client.Request[map[string]any](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", `{"name": "Alex"}`, client.WithContentType(codecs.MimeJSON))
 ```
 
 #### map[string]any{}
@@ -164,7 +164,7 @@ resp , err := client.Call[map[string]any](context.Background(), clientDi, "org.o
 req := make(map[string]any)
 req["name"] = "Alex"
 
-resp , err := client.Call[map[string]any](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", req, client.WithContentType(codecs.MimeJSON))
+resp , err := client.Request[map[string]any](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", req, client.WithContentType(codecs.MimeJSON))
 ```
 
 #### Structured logging
