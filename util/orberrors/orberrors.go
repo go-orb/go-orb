@@ -64,6 +64,19 @@ func (e *Error) WrapNew(message string) *Error {
 	}
 }
 
+// WrapF creates a new error and wraps another error with a new message and args.
+func (e *Error) WrapF(message string, args ...any) *Error {
+	if e == nil {
+		return nil
+	}
+
+	return &Error{
+		Code:    e.Code,
+		Message: e.Message,
+		Wrapped: fmt.Errorf(message, args...),
+	}
+}
+
 // Unwrap returns the wrapped error.
 func (e *Error) Unwrap() error {
 	if e == nil {
