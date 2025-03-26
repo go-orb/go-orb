@@ -120,17 +120,17 @@ func New(
 
 // Provide creates a new client instance with the implementation from cfg.Plugin.
 func Provide(
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 	logger log.Logger,
 	reg registry.Type,
 	opts ...Option) (Type, error) {
-	return New(svcCtx.Config, components, logger, reg, opts...)
+	return New(svcCtx.Config(), components, logger, reg, opts...)
 }
 
 // ProvideNoOpts provides a new client without options.
 func ProvideNoOpts(
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 	logger log.Logger,
 	reg registry.Type,

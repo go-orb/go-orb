@@ -164,12 +164,12 @@ func New(
 
 // Provide provides a new KVStore.
 func Provide(
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error) {
-	instance, err := New(svcCtx.Config, logger, opts...)
+	instance, err := New(svcCtx.Config(), logger, opts...)
 	if err != nil {
 		return Type{}, err
 	}
@@ -185,7 +185,7 @@ func Provide(
 
 // ProvideNoOpts provides a new KVStore without options.
 func ProvideNoOpts(
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 	logger log.Logger,
 ) (Type, error) {

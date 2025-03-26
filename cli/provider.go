@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -19,13 +20,11 @@ func ProvideParsedFlagsFromArgs(appContext *AppContext, parser ParserFunc, args 
 	return parser(appContext, args)
 }
 
-func flagToMap(globalSections []string, multiServiceConfig bool, flag *Flag, cliResult map[string]any) {
+func flagToMap(globalSections []string, flag *Flag, cliResult map[string]any) {
 	for _, cp := range flag.ConfigPaths {
-		sections := cp.Path[:len(cp.Path)-1]
+		sections := cp[:len(cp)-1]
 
-		if !cp.IsGlobal && !multiServiceConfig {
-			sections = append(globalSections, sections...)
-		}
+		sections = append(globalSections, sections...)
 
 		data := cliResult
 		for _, s := range sections {
@@ -44,15 +43,12 @@ func flagToMap(globalSections []string, multiServiceConfig bool, flag *Flag, cli
 			}
 		}
 
-		data[cp.Path[len(cp.Path)-1]] = flag.Value
+		data[cp[len(cp)-1]] = flag.Value
 	}
 }
 
 // AppConfigData is the config data type.
 type AppConfigData map[string]any
-
-// ServiceContextHasConfigData is a marker type.
-type ServiceContextHasConfigData struct{}
 
 // ProvideAppConfigData provides config data from appContext and flags.
 func ProvideAppConfigData(appContext *AppContext) (AppConfigData, error) {
@@ -76,31 +72,28 @@ func ProvideServiceConfigData(
 	serviceContext *ServiceContext,
 	appConfigData AppConfigData,
 	flags []*Flag,
-) (ServiceContextHasConfigData, error) {
+) (*ServiceContextWithConfig, error) {
 	result := map[string]any(appConfigData)
 
 	// Process command-line flags.
 	cfg, err := processFlags(serviceContext, flags)
 	if err != nil {
-		return ServiceContextHasConfigData{}, err
+		return nil, err
 	}
 
 	if err := config.Merge(&result, cfg); err != nil {
-		return ServiceContextHasConfigData{}, err
+		return nil, err
 	}
 
 	// If multi-service config is enabled, walk the map to get the service-specific config.
-	if serviceContext.App().MultiServiceConfig {
+	if !serviceContext.App().NoMultiServiceConfig {
 		result, err = config.WalkMap(types.SplitServiceName(serviceContext.Name()), result)
-		if err != nil {
-			return ServiceContextHasConfigData{}, err
+		if err != nil && !errors.Is(err, config.ErrNoSuchKey) {
+			return nil, err
 		}
 	}
 
-	// Finally, set the config on the service context.
-	serviceContext.Config = result
-
-	return ServiceContextHasConfigData{}, nil
+	return NewServiceContextWithConfig(serviceContext.appContext, serviceContext.name, serviceContext.version, result), nil
 }
 
 // loadHardcodedConfigs loads configs from memory strings (serviceContext.App().HardcodedConfigs).
@@ -190,7 +183,11 @@ func processFlags(serviceContext *ServiceContext, flags []*Flag) (map[string]any
 		}
 
 		// Add regular flags to the CLI config data.
-		flagToMap(types.SplitServiceName(serviceContext.Name()), serviceContext.App().MultiServiceConfig, flag, cliData)
+		if !serviceContext.App().NoMultiServiceConfig {
+			flagToMap(types.SplitServiceName(serviceContext.Name()), flag, cliData)
+		} else {
+			flagToMap(nil, flag, cliData)
+		}
 	}
 
 	return cliData, nil

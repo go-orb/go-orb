@@ -121,12 +121,11 @@ func NewConfigDatas(sections []string, configs map[string]any, opts ...Option) (
 // Provide provides a new logger.
 // It will set the slog.Logger as package wide default logger.
 func Provide(
-	_ cli.ServiceContextHasConfigData,
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 	opts ...Option,
 ) (Logger, error) {
-	logger, err := NewConfigDatas([]string{}, svcCtx.Config, opts...)
+	logger, err := NewConfigDatas([]string{}, svcCtx.Config(), opts...)
 	if err != nil {
 		return Logger{}, err
 	}
@@ -141,20 +140,18 @@ func Provide(
 
 // ProvideNoOpts provides a new logger without options.
 func ProvideNoOpts(
-	hasConfig cli.ServiceContextHasConfigData,
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 ) (Logger, error) {
-	return Provide(hasConfig, svcCtx, components)
+	return Provide(svcCtx, components)
 }
 
 // ProvideWithServiceNameField provides a new logger with the service name field.
 func ProvideWithServiceNameField(
-	hasConfig cli.ServiceContextHasConfigData,
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 ) (Logger, error) {
-	return Provide(hasConfig, svcCtx, components, WithFields(map[string]any{"service": svcCtx.Name()}))
+	return Provide(svcCtx, components, WithFields(map[string]any{"service": svcCtx.Name()}))
 }
 
 // WithLevel creates a copy of the logger with a new level.
@@ -176,12 +173,12 @@ func (l Logger) WithLevel(level string) Logger {
 
 // WithConfig returns a new logger if there's a config for it in configs else the current one.
 // It adds the fields from the current logger.
-func (l Logger) WithConfig(sections []string, configs map[string]any, opts ...Option) (Logger, error) {
-	if !config.HasKey[string](sections, DefaultConfigSection, configs) {
+func (l Logger) WithConfig(sections []string, configData map[string]any, opts ...Option) (Logger, error) {
+	if !config.HasKey[map[string]any](sections, DefaultConfigSection, configData) {
 		return l, nil
 	}
 
-	newLogger, err := NewConfigDatas(sections, configs, opts...)
+	newLogger, err := NewConfigDatas(sections, configData, opts...)
 	if err != nil {
 		return Logger{}, err
 	}

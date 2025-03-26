@@ -45,11 +45,6 @@ func (c *AppContext) App() *App {
 	return c.app
 }
 
-// ProcessID returns the process ID of the application.
-func (c *AppContext) ProcessID() string {
-	return c.app.ProcessID()
-}
-
 // Name returns the name of the application.
 func (c *AppContext) Name() string {
 	return c.app.Name
@@ -109,8 +104,6 @@ type ServiceContext struct {
 	appContext *AppContext
 	name       string
 	version    string
-
-	Config map[string]any
 }
 
 // App returns the application.
@@ -138,11 +131,6 @@ func (c *ServiceContext) StopWaitGroup() *sync.WaitGroup {
 	return c.appContext.StopWaitGroup
 }
 
-// ProcessID returns the process ID of the application.
-func (c *ServiceContext) ProcessID() string {
-	return c.appContext.ProcessID()
-}
-
 // Name returns the name of the service.
 func (c *ServiceContext) Name() string {
 	return c.name
@@ -164,5 +152,24 @@ func NewServiceContext(appContext *AppContext, name string, version string) *Ser
 		appContext: appContext,
 		name:       name,
 		version:    version,
+	}
+}
+
+// ServiceContextWithConfig is a ServiceContext with a config.
+type ServiceContextWithConfig struct {
+	*ServiceContext
+	configData map[string]any
+}
+
+// Config returns the configuration of the service.
+func (c *ServiceContextWithConfig) Config() map[string]any {
+	return c.configData
+}
+
+// NewServiceContextWithConfig creates a new Service context for the given service with config.
+func NewServiceContextWithConfig(appContext *AppContext, name string, version string, configData map[string]any) *ServiceContextWithConfig {
+	return &ServiceContextWithConfig{
+		ServiceContext: NewServiceContext(appContext, name, version),
+		configData:     configData,
 	}
 }

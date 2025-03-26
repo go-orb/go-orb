@@ -13,7 +13,29 @@ import (
 	"github.com/go-orb/go-orb/config"
 	"github.com/go-orb/go-orb/log"
 	"github.com/go-orb/go-orb/types"
+	"github.com/go-orb/go-orb/util/orberrors"
 )
+
+// isValidChar checks if a character is valid for a service name.
+//
+// lowercase ascii characters, numbers, hyphens, and periods are allowed.
+func isValidChar(c byte) bool {
+	if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '-') || (c == '.') {
+		return true
+	}
+
+	return false
+}
+
+func isValidNameText(s string) bool {
+	for _, c := range s {
+		if !isValidChar(byte(c)) {
+			return false
+		}
+	}
+
+	return true
+}
 
 // ComponentType is the components name.
 const ComponentType = "registry"
@@ -35,6 +57,9 @@ type ServiceNode struct {
 	// Metadata is the metadata of the service.
 	Metadata map[string]string `json:"metadata"`
 
+	// Node is the name of the node, this is normally the entrypoint name.
+	Node string `json:"node"`
+
 	// Scheme is the scheme of the service.
 	Scheme string `json:"scheme"`
 	// Address is the address of the service.
@@ -49,6 +74,45 @@ type ServiceNode struct {
 	// TTL is the time to live for the service.
 	// Keep it 0 if you don't want to use TTL.
 	TTL time.Duration `json:"ttl"`
+}
+
+// Valid checks if a serviceNode has a valid namespace, region, and name.
+//
+// lowercase ascii characters, numbers, hyphens, and periods are allowed.
+func (r ServiceNode) Valid() error {
+	if r.Name == "" {
+		return orberrors.ErrBadRequest.WrapNew("service name must not be empty")
+	}
+
+	if r.Node == "" {
+		return orberrors.ErrBadRequest.WrapNew("service node must not be empty")
+	}
+
+	if r.Scheme == "" {
+		return orberrors.ErrBadRequest.WrapNew("service scheme must not be empty")
+	}
+
+	if !isValidNameText(r.Namespace) {
+		return orberrors.ErrBadRequest.WrapF("namespace must be alphanumeric, got %s", r.Namespace)
+	}
+
+	if !isValidNameText(r.Region) {
+		return orberrors.ErrBadRequest.WrapF("region must be alphanumeric, got %s", r.Region)
+	}
+
+	if !isValidNameText(r.Name) {
+		return orberrors.ErrBadRequest.WrapF("service name must be alphanumeric, got %s", r.Name)
+	}
+
+	if !isValidNameText(r.Node) {
+		return orberrors.ErrBadRequest.WrapF("service node must be alphanumeric, got %s", r.Node)
+	}
+
+	if !isValidNameText(r.Scheme) {
+		return orberrors.ErrBadRequest.WrapF("service scheme must be alphanumeric, got %s", r.Scheme)
+	}
+
+	return nil
 }
 
 func (r ServiceNode) String() string {
@@ -128,12 +192,12 @@ func New(
 // It parses the config from "configs", fetches the "Plugin" from the config and
 // then forwards all it's arguments to the factory which it get's from "Plugins".
 func Provide(
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error) {
-	reg, err := New(svcCtx.Config, components, logger, opts...)
+	reg, err := New(svcCtx.Config(), components, logger, opts...)
 	if err != nil {
 		return Type{}, err
 	}
@@ -149,7 +213,7 @@ func Provide(
 
 // ProvideNoOpts is the registry provider for wire without options.
 func ProvideNoOpts(
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 	logger log.Logger,
 ) (Type, error) {

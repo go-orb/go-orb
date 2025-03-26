@@ -142,13 +142,13 @@ func New(
 
 // Provide creates a new server.
 func Provide(
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 	logger log.Logger,
 	reg registry.Type,
 	opts ...ConfigOption,
 ) (Server, error) {
-	srv, err := New(svcCtx.Name(), svcCtx.Version(), svcCtx.Config, logger, reg, opts...)
+	srv, err := New(svcCtx.Name(), svcCtx.Version(), svcCtx.Config(), logger, reg, opts...)
 	if err != nil {
 		return Server{}, err
 	}
@@ -164,7 +164,7 @@ func Provide(
 
 // ProvideNoOpts creates a new server without functional options.
 func ProvideNoOpts(
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 	logger log.Logger,
 	reg registry.Type,

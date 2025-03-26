@@ -57,14 +57,14 @@ type Type struct {
 // It parses the config from "configs", fetches the "Plugin" from the config and
 // then forwards all it's arguments to the factory which it get's from "Plugins".
 func Provide(
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	components *types.Components,
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error) {
 	cfg := NewConfig(opts...)
 
-	if err := config.Parse(nil, DefaultConfigSection, svcCtx.Config, &cfg); err != nil && !errors.Is(err, config.ErrNoSuchKey) {
+	if err := config.Parse(nil, DefaultConfigSection, svcCtx.Config(), &cfg); err != nil && !errors.Is(err, config.ErrNoSuchKey) {
 		return Type{}, err
 	}
 
@@ -81,7 +81,7 @@ func Provide(
 	}
 
 	// Configure the logger.
-	cLogger, err := logger.WithConfig([]string{DefaultConfigSection}, svcCtx.Config)
+	cLogger, err := logger.WithConfig([]string{DefaultConfigSection}, svcCtx.Config())
 	if err != nil {
 		return Type{}, err
 	}

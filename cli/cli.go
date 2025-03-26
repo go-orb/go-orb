@@ -10,16 +10,14 @@ type HardcodedConfig struct {
 
 // App represents a CLI Application.
 type App struct {
-	processID string
-
 	Name     string
 	Version  string
 	Usage    string
 	Commands []*Command
 	Flags    []*Flag
 
-	// MultiServiceConfig defines if the config is used with sections or without.
-	// If true, the config is used with sections.
+	// NoMultiServiceConfig defines if the config is used with sections or without.
+	// If false, the config is used with sections.
 	// For example:
 	// ```yaml
 	// service1: # service1 section
@@ -30,13 +28,13 @@ type App struct {
 	//     level: INFO
 	// ```
 	//
-	// If false, the config is used without sections.
+	// If true, the config is used without sections.
 	// For example:
 	// ```yaml
 	// logger:
 	//   level: INFO
 	// ```
-	MultiServiceConfig bool
+	NoMultiServiceConfig bool
 
 	// NoAction defines if there will be no main action.
 	NoAction bool
@@ -51,11 +49,6 @@ type App struct {
 
 	// Internal
 	InternalAction func() error
-}
-
-// ProcessID returns the process ID of the application.
-func (a *App) ProcessID() string {
-	return a.processID
 }
 
 // Command is a CLI Command for App.

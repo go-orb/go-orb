@@ -8,7 +8,7 @@ import (
 
 // ProviderFunc is provider function type is used to create a new metrics plugin.
 type ProviderFunc func(
-	svcCtx *cli.ServiceContext,
+	svcCtx *cli.ServiceContextWithConfig,
 	logger log.Logger,
 	opts ...Option,
 ) (Type, error)

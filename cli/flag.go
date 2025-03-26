@@ -7,12 +7,6 @@ import (
 	"fmt"
 )
 
-// FlagConfigPath is a config path for a flag.
-type FlagConfigPath struct {
-	Path     []string
-	IsGlobal bool
-}
-
 // FlagOption is an option for NewFlag.
 type FlagOption func(*Flag)
 
@@ -23,7 +17,7 @@ type Flag struct {
 	Usage   string
 
 	// The path in map(\[string\])+any
-	ConfigPaths []FlagConfigPath
+	ConfigPaths [][]string
 
 	Default any
 	Value   any
@@ -48,7 +42,7 @@ func NewFlag[T any](
 }
 
 // FlagConfigPaths appends the config paths for the flag.
-func FlagConfigPaths(n ...FlagConfigPath) FlagOption {
+func FlagConfigPaths(n ...[]string) FlagOption {
 	return func(o *Flag) {
 		o.ConfigPaths = append(o.ConfigPaths, n...)
 	}

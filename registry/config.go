@@ -1,5 +1,11 @@
 package registry
 
+import (
+	"time"
+
+	"github.com/go-orb/go-orb/config"
+)
+
 //nolint:gochecknoglobals
 var (
 	// DefaultConfigSection is the section in the config to use.
@@ -9,7 +15,7 @@ var (
 	DefaultRegistry = "mdns"
 
 	// DefaultTimeout is the default timeout for the registry.
-	DefaultTimeout = 100
+	DefaultTimeout = config.Duration(500 * time.Millisecond)
 )
 
 var _ (ConfigType) = (*Config)(nil)
@@ -44,8 +50,8 @@ type ConfigType interface {
 
 // Config is the configuration that can be used in a registry.
 type Config struct {
-	Plugin  string `json:"plugin,omitempty"  yaml:"plugin,omitempty"`
-	Timeout int    `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+	Plugin  string          `json:"plugin,omitempty"  yaml:"plugin,omitempty"`
+	Timeout config.Duration `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 }
 
 func (c *Config) config() *Config {
@@ -61,10 +67,10 @@ func WithPlugin(n string) Option {
 }
 
 // WithTimeout sets the default registry timeout used.
-func WithTimeout(n int) Option {
+func WithTimeout(n time.Duration) Option {
 	return func(cfg ConfigType) {
 		c := cfg.config()
-		c.Timeout = n
+		c.Timeout = config.Duration(n)
 	}
 }
 
