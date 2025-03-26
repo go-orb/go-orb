@@ -103,10 +103,6 @@ service1:
         plugin: grpc
         insecure: true
         reflection: false
-        handlers:
-          - ImOnlyOnGRPC
-        middlewares:
-          - ImAGRPCSpecificMiddlware
 
       - name: http
         plugin: http
