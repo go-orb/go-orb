@@ -4,10 +4,11 @@ Go Orb is a framework for distributed systems development, it can be seen as the
 
 The core of go-orb has been completely refactored, to support the removal of reflect and introduction of wire.
 
-## In active Development
+## BETA Status
 
-While its possible to try out go-orb currently, it is in active development and not ready for production use.
-Please have a look at our [roadmap](https://github.com/orgs/go-orb/projects/1) for more details.
+Go Orb is in BETA status, backward incompatible changes will only be introduced with minor (v0.4.0) releases.
+
+Please try out go-orb, report any issues you find and spread the word.
 
 ## Overview
 
