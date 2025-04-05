@@ -133,7 +133,7 @@ New:
 req := HelloRequest{Name: "test"}
 
 // Look at resp, it's now returned as a result.
-resp , err := client.Call[HelloResponse](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", &req)
+resp , err := client.Request[HelloResponse](context.Background(), clientDi, "org.orb.svc.hello", "Say.Hello", &req)
 ```
 
 Old:
