@@ -52,27 +52,27 @@ type KVStore interface {
 
 	// Get takes a key, database, table and optional GetOptions. It returns the Record or an error.
 	// Leave database and/or table empty to use the defaults.
-	Get(key, database, table string, opts ...GetOption) ([]Record, error)
+	Get(ctx context.Context, key, database, table string, opts ...GetOption) ([]Record, error)
 
 	// Set takes a key, database, table and data, and optional SetOptions.
 	// Leave database and/or table empty to use the defaults.
-	Set(key, database, table string, data []byte, opts ...SetOption) error
+	Set(ctx context.Context, key, database, table string, data []byte, opts ...SetOption) error
 
 	// Purge takes a key, database and table and purges it.
 	// Leave database and/or table empty to use the defaults.
-	Purge(key, database, table string) error
+	Purge(ctx context.Context, key, database, table string) error
 
 	// Keys returns any keys that match, or an empty list with no error if none matched.
 	// Leave database and/or table empty to use the defaults.
-	Keys(database, table string, opts ...KeysOption) ([]string, error)
+	Keys(ctx context.Context, database, table string, opts ...KeysOption) ([]string, error)
 
 	// DropTable drops the table.
 	// Leave database and/or table empty to use the defaults.
-	DropTable(database, table string) error
+	DropTable(ctx context.Context, database, table string) error
 
 	// DropDatabase drops the database.
 	// Leave database empty to use the default.
-	DropDatabase(database string) error
+	DropDatabase(ctx context.Context, database string) error
 }
 
 // WatchOp represents the type of Watch operation (Update, Delete). It is a
