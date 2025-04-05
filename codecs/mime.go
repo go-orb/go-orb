@@ -14,3 +14,6 @@ const MimeTOML = "application/toml"
 
 // MimeXML is the mime type for XML.
 const MimeXML = "application/xml"
+
+// MimeMsgpack is the mime type for MessagePack.
+const MimeMsgpack = "application/msgpack"
