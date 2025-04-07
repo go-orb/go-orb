@@ -12,7 +12,7 @@ import (
 	"github.com/go-orb/go-orb/config/source"
 )
 
-func isAlphaNumeric(s string) bool {
+func isNumeric(s string) bool {
 	for _, v := range s {
 		if v < '0' || v > '9' {
 			return false
@@ -43,7 +43,7 @@ func WalkMap(sections []string, in map[string]any) (map[string]any, error) {
 	for i := 0; i < len(sections); i++ {
 		section := sections[i]
 
-		if i+1 < len(sections) && isAlphaNumeric(sections[i+1]) {
+		if i+1 < len(sections) && isNumeric(sections[i+1]) {
 			snum, err := strconv.ParseInt(sections[i+1], 10, 64)
 			if err != nil {
 				return data, fmt.Errorf("while parsing the section number: %w", err)

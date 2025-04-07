@@ -28,7 +28,6 @@ var (
 		"drpc",
 		"http",
 		"grpcs",
-		"h2c",
 		"http2",
 		"http3",
 		"https",

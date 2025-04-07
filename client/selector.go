@@ -15,8 +15,7 @@ type SelectorFunc func(
 	nodes []registry.ServiceNode,
 ) (registry.ServiceNode, error)
 
-// SelectRandomNode selects a random node, it tries' on preferredTransport after another, if anyTransport is true it
-// will return transports that are not listet as well.
+// SelectRandomNode selects a random node.
 func SelectRandomNode(
 	_ context.Context,
 	_ string,

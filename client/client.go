@@ -29,6 +29,10 @@ type Client interface {
 	With(opts ...Option) error
 
 	// SelectService selects a service node.
+	// Returns:
+	// - address
+	// - transport
+	// - error
 	SelectService(ctx context.Context, service string, opts ...CallOption) (string, string, error)
 
 	// Request does the actual call.
