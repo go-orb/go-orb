@@ -9,11 +9,11 @@ import (
 
 //nolint:gochecknoglobals
 var (
-	// DefaultEventPlugin is the default client implementation to use.
+	// DefaultEventPlugin is the default event implementation to use.
 	DefaultEventPlugin = "natsjs"
 
-	// DefaultConfigSection is the default config section for the client.
-	DefaultConfigSection = "client"
+	// DefaultConfigSection is the default config section for event(s).
+	DefaultConfigSection = "event"
 
 	// DefaultRequestContentType is the default content type used to transport data around.
 	DefaultRequestContentType = codecs.MimeProto
